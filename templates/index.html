@@ -445,21 +445,7 @@
         <div class="acc-grid-container">
             {% for product in accessories %}
             {% set imgs = product.images if product.images else ([product.get('image','')] if product.get('image','') else []) %}
-            <div class="acc-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}" itemscope itemtype="https://schema.org/Product">
-                <meta itemprop="name" content="{{ product.name }}">
-                <meta itemprop="description" content="{{ product.description }}">
-                <meta itemprop="sku" content="TL-ACC-{{ product.id }}">
-                <div itemprop="brand" itemscope itemtype="https://schema.org/Brand">
-                    <meta itemprop="name" content="TagLuxe">
-                </div>
-                {% if product.price_type == 'fixed' and product.price > 0 %}
-                <div itemprop="offers" itemscope itemtype="https://schema.org/Offer">
-                    <meta itemprop="price" content="{{ product.price }}">
-                    <meta itemprop="priceCurrency" content="VND">
-                    <meta itemprop="url" content="{{ site_url }}/product/{{ product.id }}">
-                </div>
-                {% endif %}
-                
+            <div class="acc-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
                 <div class="acc-card-header">
                     <span class="acc-badge">
                         {% if 'PVC' in product.name %}Thẻ Nhựa PVC{% else %}Vỏ Đựng Thẻ{% endif %}
@@ -476,7 +462,7 @@
                        aria-label="{{ product.name }} - mẫu {{ loop.index }}">
                         <img src="{{ url_for('static', filename='uploads/' + img) }}"
                              alt="{{ product.name }} - mẫu {{ loop.index }} | TagLuxe"
-                             loading="lazy" itemprop="image">
+                             loading="lazy">
                         <div class="acc-grid-overlay">
                             <i data-lucide="eye"></i>
                         </div>
