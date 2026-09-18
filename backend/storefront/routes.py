@@ -63,3 +63,12 @@ def robots():
 def ping():
     """Health check endpoint used by keep-alive thread"""
     return 'OK', 200
+
+@storefront_bp.route('/<filename>')
+def google_verification_file(filename):
+    import re
+    if re.fullmatch(r'google[a-zA-Z0-9]+\.html', filename):
+        return f"google-site-verification: {filename}", 200, {'Content-Type': 'text/html; charset=utf-8'}
+    from flask import abort
+    abort(404)
+
