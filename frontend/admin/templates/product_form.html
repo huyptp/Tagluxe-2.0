@@ -1,0 +1,107 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="admin-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>{% if product %}Chỉnh sửa sản phẩm{% else %}Thêm sản phẩm mới{% endif %}</h2>
+        <a href="/admin/products" class="btn btn-outline"><i data-lucide="arrow-left"></i> Quay lại</a>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+            <div>
+                <div class="form-group">
+                    <label>Tên sản phẩm *</label>
+                    <input type="text" name="name" class="form-control" value="{{ product.name if product else '' }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Danh mục</label>
+                    <select name="category" class="form-control">
+                        <option value="lanyard" {% if product and product.category == 'lanyard' %}selected{% endif %}>Dây đeo thẻ</option>
+                        <option value="accessory" {% if product and product.category == 'accessory' %}selected{% endif %}>Sản phẩm đặt kèm</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Mô tả chi tiết</label>
+                    <textarea name="description" class="form-control" rows="5">{{ product.description if product else '' }}</textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Bản rộng (VD: 2.0 cm)</label>
+                        <input type="text" name="width" class="form-control" value="{{ product.width if product else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Nhận in từ (Số lượng)</label>
+                        <input type="number" name="min_order" class="form-control" value="{{ product.min_order if product else '10' }}">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Loại báo giá</label>
+                        <select name="price_type" class="form-control" id="priceTypeSelect" onchange="togglePriceInput()">
+                            <option value="contact" {% if product and product.price_type == 'contact' %}selected{% endif %}>Liên hệ để báo giá</option>
+                            <option value="fixed" {% if product and product.price_type == 'fixed' %}selected{% endif %}>Giá cố định</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="priceInputGroup" style="display: {% if product and product.price_type == 'fixed' %}block{% else %}none{% endif %};">
+                        <label>Giá tiền (VNĐ)</label>
+                        <input type="number" name="price" class="form-control" value="{{ product.price if product else '0' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="form-group">
+                    <label>Ảnh sản phẩm (tối đa 5 ảnh)</label>
+                    {% if product and product.images %}
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                        {% for img in product.images %}
+                        <img src="{{ url_for('static', filename='uploads/' + img) }}"
+                             style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #ddd;"
+                             alt="Ảnh {{ loop.index }}">
+                        {% endfor %}
+                    </div>
+                    <small style="color:#888; display:block; margin-bottom:8px;">Ảnh hiện tại: {{ product.images|length }} ảnh. Tải ảnh mới sẽ <strong>thay thế toàn bộ</strong>.</small>
+                    {% endif %}
+                    <input type="file" name="images" class="form-control" accept="image/*" multiple>
+                    <small style="color:#666; display:block; margin-top:5px;">Chọn 1-5 file JPG/PNG. Giữ Ctrl/Cmd để chọn nhiều ảnh.</small>
+                </div>
+
+                <div class="form-group" style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" name="visible" {% if not product or product.visible %}checked{% endif %}>
+                        <strong>Hiển thị trên website</strong>
+                    </label>
+                </div>
+                
+                <div class="form-group" style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" name="featured" {% if product and product.featured %}checked{% endif %}>
+                        <strong>Sản phẩm nổi bật</strong>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 20px;">
+                    <i data-lucide="save"></i> Lưu thông tin
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function togglePriceInput() {
+    const select = document.getElementById('priceTypeSelect');
+    const priceGroup = document.getElementById('priceInputGroup');
+    if (select.value === 'fixed') {
+        priceGroup.style.display = 'block';
+    } else {
+        priceGroup.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

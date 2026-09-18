@@ -1,0 +1,1661 @@
+<!-- ===== BÁO GIÁ ĐA DANH MỤC: DÂY - THẺ - VỎ ===== -->
+<section id="calculator" class="price-calc-section" aria-label="Bảng tính giá in ấn TagLuxe">
+    <style>
+        .price-calc-section {
+            background-color: #f8fafc;
+            padding: 64px 0 80px 0;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        }
+
+        .calc-header-wrap {
+            text-align: center;
+            max-width: 740px;
+            margin: 0 auto 32px auto;
+        }
+
+        .calc-header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            color: #0f172a;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 12px;
+        }
+
+        .calc-title {
+            font-size: clamp(1.8rem, 3vw, 2.3rem);
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.25;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .calc-desc {
+            font-size: 0.98rem;
+            color: #475569;
+            line-height: 1.6;
+            margin: 0 auto;
+        }
+
+        /* Category Tab Bar - Clean Segmented Pill */
+        .category-tab-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        .category-tab-bar {
+            display: inline-flex;
+            background: #ffffff;
+            padding: 5px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+            gap: 4px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .cat-tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .cat-tab-btn:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+
+        .cat-tab-btn.active {
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        /* 2-Column Main Layout */
+        .calc-main-grid {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .calc-config-card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 28px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+        }
+
+        .calc-step-block {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .calc-step-block:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .step-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .step-num-pill {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: #0f172a;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .step-heading h3 {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .step-heading-hint {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-left: auto;
+        }
+
+        /* Quantity Box */
+        .qty-interactive-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+
+        .qty-input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .qty-label-prompt {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .qty-hint-text {
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+
+        .qty-main-control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .qty-input-wrapper {
+            display: inline-flex;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 4px 12px;
+            transition: all 0.2s ease;
+            min-width: 200px;
+        }
+
+        .qty-input-wrapper:focus-within {
+            border-color: #0f172a;
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+        }
+
+        .qty-direct-number-input {
+            width: 110px;
+            border: none;
+            background: transparent;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1;
+            padding: 4px 0;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .qty-direct-number-input::-webkit-outer-spin-button,
+        .qty-direct-number-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .qty-direct-number-input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .qty-unit-pill {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .qty-stepper-btns {
+            display: flex;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .btn-stepper {
+            padding: 0 14px;
+            height: 40px;
+            background: #ffffff;
+            border: none;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #0f172a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            border-right: 1px solid #f1f5f9;
+        }
+
+        .btn-stepper:last-child {
+            border-right: none;
+        }
+
+        .btn-stepper:hover {
+            background: #f1f5f9;
+        }
+
+        .qty-slider-wrap {
+            margin-top: 4px;
+        }
+
+        .qty-range-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #cbd5e1;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .qty-range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0f172a;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+            transition: transform 0.15s ease;
+        }
+
+        .qty-range-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+        .slider-ticks-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: #64748b;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        /* Option Selectable Cards */
+        .options-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .options-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .opt-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 10px;
+            background: #ffffff;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .opt-card input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .opt-card:hover {
+            border-color: #cbd5e1;
+            background: #fafafa;
+        }
+
+        .opt-card.selected {
+            border-color: #0f172a;
+            background: #f8fafc;
+        }
+
+        .opt-badge-tag {
+            position: absolute;
+            top: -9px;
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        .opt-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+
+        .opt-sub {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .opt-diff {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #0284c7;
+        }
+
+        .opt-card.selected .opt-diff { color: #0f172a; font-weight: 700; }
+
+        /* Feature / Add-on Cards */
+        .addon-toggle-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            background: #ffffff;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .addon-toggle-card input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .addon-toggle-card:hover {
+            border-color: #cbd5e1;
+            background: #fafafa;
+        }
+
+        .addon-toggle-card.selected {
+            border-color: #0f172a;
+            background: #f8fafc;
+        }
+
+        .addon-checkbox-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1.5px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+            background: #ffffff;
+        }
+
+        .addon-toggle-card.selected .addon-checkbox-box {
+            background: #0f172a;
+            border-color: #0f172a;
+            color: #ffffff;
+        }
+
+        .addon-checkbox-box svg {
+            display: none;
+            width: 13px;
+            height: 13px;
+        }
+
+        .addon-toggle-card.selected .addon-checkbox-box svg {
+            display: block;
+        }
+
+        .addon-info { flex: 1; }
+
+        .addon-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .addon-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .addon-price-pill {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #475569;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .addon-desc {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        /* Inputs */
+        .contact-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .calc-field label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .calc-input-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .calc-input-box svg {
+            position: absolute;
+            left: 12px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .calc-txt-input {
+            width: 100%;
+            height: 42px;
+            padding: 0 14px 0 38px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            color: #0f172a;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .calc-txt-input:focus {
+            border-color: #0f172a;
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+        }
+
+        .calc-txt-area {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: #0f172a;
+            outline: none;
+            resize: vertical;
+        }
+
+        .calc-txt-area:focus {
+            border-color: #0f172a;
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+        }
+
+        /* Right Column: Clean Corporate Summary Card */
+        .calc-ticket-sticky {
+            position: sticky;
+            top: 90px;
+        }
+
+        .cost-summary-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 26px 22px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+        }
+
+        .summary-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .summary-title {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: #0f172a;
+            letter-spacing: 0.2px;
+        }
+
+        .summary-category-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .summary-specs-block { margin-bottom: 16px; }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 9px;
+            font-size: 0.88rem;
+        }
+
+        .s-label { color: #64748b; }
+        .s-val { font-weight: 600; color: #0f172a; text-align: right; }
+
+        .summary-total-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .total-box-lbl {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .total-box-amount {
+            font-size: clamp(1.8rem, 2.4vw, 2.2rem);
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.15;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .total-discount-tag {
+            font-size: 0.8rem;
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .summary-benefits {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .summary-benefits li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: #475569;
+            margin-bottom: 7px;
+            line-height: 1.4;
+        }
+
+        .summary-benefits li svg {
+            width: 15px;
+            height: 15px;
+            color: #10b981;
+            flex-shrink: 0;
+        }
+
+        .btn-corporate-submit {
+            width: 100%;
+            height: 48px;
+            background: #0f172a;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-corporate-submit:hover {
+            background: #1e293b;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
+
+        .btn-corporate-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+
+        .calc-alert-err {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .calc-main-grid { grid-template-columns: 1fr; }
+            .calc-ticket-sticky { position: static; }
+        }
+
+        @media (max-width: 640px) {
+            .calc-config-card { padding: 18px 14px; }
+            .category-tab-bar { width: 100%; justify-content: flex-start; }
+            .options-grid-3 { grid-template-columns: 1fr; }
+            .options-grid-2 { grid-template-columns: 1fr; }
+            .contact-grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="calc-header-wrap" data-aos="fade-up">
+            <div class="calc-header-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Bảng Báo Giá Trực Tuyến
+            </div>
+            <h2 class="calc-title">Dự Toán Chi Phí &amp; Đặt In Theo Yêu Cầu</h2>
+            <p class="calc-desc">
+                Chọn danh mục và số lượng bạn cần in để nhận dự toán chi phí chi tiết và file thiết kế demo 2D nhanh chóng.
+            </p>
+        </div>
+
+        <!-- CATEGORY TAB SELECTOR -->
+        <div class="category-tab-container" data-aos="fade-up">
+            <div class="category-tab-bar" role="tablist">
+                <button type="button" class="cat-tab-btn active" id="tabBtn_lanyard" onclick="switchCategory('lanyard')">
+                    <span>Dây Đeo Thẻ</span>
+                </button>
+                <button type="button" class="cat-tab-btn" id="tabBtn_pvc" onclick="switchCategory('pvc')">
+                    <span>Thẻ Nhựa PVC</span>
+                </button>
+                <button type="button" class="cat-tab-btn" id="tabBtn_holder" onclick="switchCategory('holder')">
+                    <span>Vỏ Đựng Thẻ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- FORM & SUMMARY -->
+        <form id="quoteCalculatorForm" class="calc-main-grid" onsubmit="handleQuoteSubmit(event)">
+            <!-- LEFT COLUMN: Configurator -->
+            <div class="calc-config-card" data-aos="fade-right">
+                
+                <!-- BƯỚC 1: SỐ LƯỢNG (Dùng chung cho tất cả danh mục) -->
+                <div class="calc-step-block">
+                    <div class="step-heading">
+                        <div class="step-num-pill">1</div>
+                        <h3 id="stepQtyTitle">Số Lượng Dây Cần In</h3>
+                        <span class="step-heading-hint" id="stepQtyHint">Tối thiểu: 10 cái</span>
+                    </div>
+
+                    <div class="qty-interactive-box">
+                        <div class="qty-input-header">
+                            <label for="qtyDirectInput" class="qty-label-prompt">
+                                Nhập trực tiếp số lượng bạn cần in:
+                            </label>
+                            <span class="qty-hint-text">Gõ số lượng bất kỳ (VD: 35, 75, 120, 450, 1.500, 5.000...)</span>
+                        </div>
+
+                        <div class="qty-main-control-row">
+                            <div class="qty-input-wrapper">
+                                <input type="number" 
+                                       id="qtyDirectInput" 
+                                       class="qty-direct-number-input" 
+                                       min="10" 
+                                       max="100000" 
+                                       step="1" 
+                                       value="50" 
+                                       oninput="onDirectQtyInput(this.value)" 
+                                       onblur="onDirectQtyBlur(this)" 
+                                       placeholder="50"
+                                       aria-label="Số lượng cần in">
+                                <span class="qty-unit-pill" id="qtyDisplayUnit">sợi dây</span>
+                            </div>
+
+                            <div class="qty-stepper-btns">
+                                <button type="button" class="btn-stepper" onclick="stepQty(-10)" title="Giảm 10">-10</button>
+                                <button type="button" class="btn-stepper" onclick="stepQty(10)" title="Tăng 10">+10</button>
+                                <button type="button" class="btn-stepper" onclick="stepQty(50)" title="Tăng 50">+50</button>
+                            </div>
+                        </div>
+
+                        <!-- Slider -->
+                        <div class="qty-slider-wrap">
+                            <input type="range" id="qtySliderInput" class="qty-range-slider" min="10" max="3000" step="5" value="50" oninput="onSliderMove(this.value)">
+                            <div class="slider-ticks-row">
+                                <span id="sliderMinTick">10</span>
+                                <span>100</span>
+                                <span>500</span>
+                                <span>1.000</span>
+                                <span>3.000+</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BƯỚC 2 & 3: CẤU HÌNH THEO DANH MỤC -->
+                
+                <!-- PANEL 1: DÂY ĐEO THẺ -->
+                <div id="panel_lanyard" class="cat-panel">
+                    <!-- Bản rộng dây -->
+                    <div class="calc-step-block">
+                        <div class="step-heading">
+                            <div class="step-num-pill">2</div>
+                            <h3>Bản Rộng Dây Đeo Thẻ</h3>
+                        </div>
+                        <div class="options-grid-3">
+                            <label class="opt-card" id="lanyardWidth_15" onclick="setLanyardWidth('1.5')">
+                                <span class="opt-title">1.5 cm</span>
+                                <span class="opt-sub">Gọn nhẹ • Tiết kiệm</span>
+                                <span class="opt-diff">-1.000 đ/dây</span>
+                            </label>
+                            <label class="opt-card selected" id="lanyardWidth_20" onclick="setLanyardWidth('2.0')">
+                                <div class="opt-badge-tag">Chuẩn</div>
+                                <span class="opt-title">2.0 cm</span>
+                                <span class="opt-sub">Tiêu chuẩn phổ biến nhất</span>
+                                <span class="opt-diff">Đẹp chuẩn in ấn</span>
+                            </label>
+                            <label class="opt-card" id="lanyardWidth_25" onclick="setLanyardWidth('2.5')">
+                                <span class="opt-title">2.5 cm</span>
+                                <span class="opt-sub">Bản to sang trọng</span>
+                                <span class="opt-diff">+2.500 đ/dây</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Phụ kiện dây -->
+                    <div class="calc-step-block">
+                        <div class="step-heading">
+                            <div class="step-num-pill">3</div>
+                            <h3>Phụ Kiện Kèm Theo Dây</h3>
+                            <span class="step-heading-hint">Đồng giá +2.500 đ / món</span>
+                        </div>
+                        <div class="options-grid-2">
+                            <label class="addon-toggle-card" id="lanyardAcc_breakaway" onclick="toggleLanyardAcc('breakaway')">
+                                <div class="addon-checkbox-box">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </div>
+                                <div class="addon-info">
+                                    <div class="addon-title-row">
+                                        <span class="addon-name">Khóa an toàn sau gáy</span>
+                                        <span class="addon-price-pill">+2.500 đ</span>
+                                    </div>
+                                    <span class="addon-desc">Tự bung an toàn khi bị vướng</span>
+                                </div>
+                            </label>
+
+                            <label class="addon-toggle-card" id="lanyardAcc_quick_release" onclick="toggleLanyardAcc('quick_release')">
+                                <div class="addon-checkbox-box">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </div>
+                                <div class="addon-info">
+                                    <div class="addon-title-row">
+                                        <span class="addon-name">Khóa phụ tháo rời nhanh</span>
+                                        <span class="addon-price-pill">+2.500 đ</span>
+                                    </div>
+                                    <span class="addon-desc">Tiện tháo rời đầu thẻ quẹt cửa</span>
+                                </div>
+                            </label>
+
+                            <label class="addon-toggle-card" id="lanyardAcc_stopper" onclick="toggleLanyardAcc('stopper')">
+                                <div class="addon-checkbox-box">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </div>
+                                <div class="addon-info">
+                                    <div class="addon-title-row">
+                                        <span class="addon-name">Cục thắt độ dài dây</span>
+                                        <span class="addon-price-pill">+2.500 đ</span>
+                                    </div>
+                                    <span class="addon-desc">Nút chặn thu gọn chiều dài dây</span>
+                                </div>
+                            </label>
+
+                            <label class="addon-toggle-card" id="lanyardAcc_adjuster" onclick="toggleLanyardAcc('adjuster')">
+                                <div class="addon-checkbox-box">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </div>
+                                <div class="addon-info">
+                                    <div class="addon-title-row">
+                                        <span class="addon-name">Tăng đơ tăng giảm độ dài</span>
+                                        <span class="addon-price-pill">+2.500 đ</span>
+                                    </div>
+                                    <span class="addon-desc">Tăng giảm kích thước dây linh hoạt</span>
+                                </div>
+                            </label>
+
+                            <label class="addon-toggle-card" id="lanyardAcc_black_hook" onclick="toggleLanyardAcc('black_hook')">
+                                <div class="addon-checkbox-box">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </div>
+                                <div class="addon-info">
+                                    <div class="addon-title-row">
+                                        <span class="addon-name">Móc khóa kim loại đen</span>
+                                        <span class="addon-price-pill">+2.500 đ</span>
+                                    </div>
+                                    <span class="addon-desc">Móc kim loại sơn đen mờ sang trọng</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 2: THẺ NHỰA PVC -->
+                <div id="panel_pvc" class="cat-panel" style="display:none;">
+                    <div class="calc-step-block">
+                        <div class="step-heading">
+                            <div class="step-num-pill">2</div>
+                            <h3>Kích Thước Thẻ PVC</h3>
+                            <span class="step-heading-hint">Đa dạng kích cỡ theo nhu cầu</span>
+                        </div>
+                        <div class="options-grid-2">
+                            <label class="opt-card selected" id="pvcSize_standard" onclick="setPvcSize('5.4x8.6')">
+                                <div class="opt-badge-tag">Chuẩn Phổ Biến</div>
+                                <span class="opt-title">5,4 x 8,6 cm</span>
+                                <span class="opt-sub">Bằng thẻ ngân hàng / Chuẩn ATM</span>
+                                <span class="opt-diff">Dày dặn 4 lớp tiêu chuẩn</span>
+                            </label>
+                            <label class="opt-card" id="pvcSize_7x11" onclick="setPvcSize('7x11')">
+                                <span class="opt-title">7 x 11 cm</span>
+                                <span class="opt-sub">Khổ trung sự kiện &amp; BTC</span>
+                                <span class="opt-diff">Hiển thị nổi bật thông tin</span>
+                            </label>
+                            <label class="opt-card" id="pvcSize_9x12" onclick="setPvcSize('9x12')">
+                                <span class="opt-title">9 x 12 cm</span>
+                                <span class="opt-sub">Khổ lớn hội nghị, triển lãm</span>
+                                <span class="opt-diff">Diện tích in ấn rộng rãi</span>
+                            </label>
+                            <label class="opt-card" id="pvcSize_custom" onclick="setPvcSize('custom')">
+                                <span class="opt-title">Ngoại Size</span>
+                                <span class="opt-sub">Kích thước tùy chỉnh theo yêu cầu</span>
+                                <span class="opt-diff">Trao đổi thêm qua Zalo</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="calc-step-block">
+                        <div class="step-heading">
+                            <div class="step-num-pill">3</div>
+                            <h3>Loại Màng Cán Bảo Vệ</h3>
+                            <span class="step-heading-hint" style="color: #059669; font-weight: 700;">✓ Đã bao gồm trong giá thẻ (Không mất thêm tiền)</span>
+                        </div>
+                        <div class="options-grid-3">
+                            <label class="opt-card selected" id="pvcFinish_matte" onclick="setPvcFinish('matte')">
+                                <div class="opt-badge-tag">Khuyên Dùng</div>
+                                <span class="opt-title">Cán Màng Mờ</span>
+                                <span class="opt-sub">Mịn màng • Chống chói</span>
+                                <span class="opt-diff" style="color: #059669; font-weight: 600;">Miễn phí (Đã gồm trong giá)</span>
+                            </label>
+                            <label class="opt-card" id="pvcFinish_textured" onclick="setPvcFinish('textured')">
+                                <span class="opt-title">Cán Màng Nhám</span>
+                                <span class="opt-sub">Hạt sần chống xước</span>
+                                <span class="opt-diff" style="color: #059669; font-weight: 600;">Miễn phí (Đã gồm trong giá)</span>
+                            </label>
+                            <label class="opt-card" id="pvcFinish_glossy" onclick="setPvcFinish('glossy')">
+                                <span class="opt-title">Cán Màng Bóng</span>
+                                <span class="opt-sub">Tươi sáng • Bắt sáng</span>
+                                <span class="opt-diff" style="color: #059669; font-weight: 600;">Miễn phí (Đã gồm trong giá)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="calc-step-block">
+                        <div class="step-heading">
+                            <div class="step-num-pill">4</div>
+                            <h3>Gia Công Đục Lỗ Thẻ</h3>
+                            <span class="step-heading-hint" style="color: #059669; font-weight: 700;">✓ Miễn phí 100% (Không mất thêm tiền)</span>
+                        </div>
+                        <div class="options-grid-3">
+                            <label class="opt-card selected" id="pvcHole_none" onclick="setPvcHole('none')">
+                                <span class="opt-title">Không Đục Lỗ</span>
+                                <span class="opt-sub">Thẻ nguyên bản</span>
+                                <span class="opt-diff">Dùng kèm vỏ / bao đựng thẻ</span>
+                            </label>
+                            <label class="opt-card" id="pvcHole_capsule" onclick="setPvcHole('capsule')">
+                                <div class="opt-badge-tag" style="background:#10b981; color:#fff;">Miễn Phí</div>
+                                <span class="opt-title">Lỗ Con Nhộng (Oval)</span>
+                                <span class="opt-sub">Lỗ dẹt chống xoay thẻ</span>
+                                <span class="opt-diff" style="color: #059669; font-weight: 600;">Không mất thêm tiền (+ 0 đ)</span>
+                            </label>
+                            <label class="opt-card" id="pvcHole_round" onclick="setPvcHole('round')">
+                                <div class="opt-badge-tag" style="background:#10b981; color:#fff;">Miễn Phí</div>
+                                <span class="opt-title">Lỗ Tròn</span>
+                                <span class="opt-sub">Lỗ tròn chuẩn</span>
+                                <span class="opt-diff" style="color: #059669; font-weight: 600;">Không mất thêm tiền (+ 0 đ)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 3: VỎ ĐỰNG THẺ ABS -->
+                <div id="panel_holder" class="cat-panel" style="display:none;">
+                    <div class="calc-step-block">
+                        <div class="step-heading">
+                            <div class="step-num-pill">2</div>
+                            <h3>Kiểu Dáng Vỏ Đựng Thẻ</h3>
+                        </div>
+                        <div class="options-grid-2">
+                            <label class="opt-card selected" id="holderOri_vertical" onclick="setHolderOri('vertical')">
+                                <div class="opt-badge-tag">Phổ Biến</div>
+                                <span class="opt-title">Vỏ Đứng Dọc</span>
+                                <span class="opt-sub">Kích thước thẻ chuẩn ATM dọc (Nhựa ABS)</span>
+                                <span class="opt-diff" style="color: #059669; font-weight: 600;">Đồng giá (+ 0 đ)</span>
+                            </label>
+                            <label class="opt-card" id="holderOri_horizontal" onclick="setHolderOri('horizontal')">
+                                <span class="opt-title">Vỏ Nằm Ngang</span>
+                                <span class="opt-sub">Kích thước thẻ chuẩn ATM ngang (Nhựa ABS)</span>
+                                <span class="opt-diff" style="color: #059669; font-weight: 600;">Đồng giá (+ 0 đ)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="calc-step-block">
+                        <div class="step-heading">
+                            <div class="step-num-pill">3</div>
+                            <h3>Chất Liệu & Quy Cách Vỏ Thẻ</h3>
+                        </div>
+                        <div class="options-grid-3">
+                            <label class="opt-card" id="holderType_silicone" onclick="setHolderType('silicone')">
+                                <div class="opt-badge-tag" style="background: #0284c7; color: #fff;">Siêu Tiết Kiệm</div>
+                                <span class="opt-title">Vỏ Silicon Dẻo</span>
+                                <span class="opt-sub">Dẻo trong suốt, chống nước</span>
+                                <span class="opt-diff" style="color: #0284c7; font-weight: 700;">Đồng giá 3.000 đ/cái</span>
+                            </label>
+                            <label class="opt-card" id="holderType_plain" onclick="setHolderType('plain')">
+                                <div class="opt-badge-tag" style="background: #64748b; color: #fff;">Tiết Kiệm</div>
+                                <span class="opt-title">Vỏ Nhựa ABS Trơn</span>
+                                <span class="opt-sub">Nhựa cứng cáp không in</span>
+                                <span class="opt-diff" style="color: #2563eb; font-weight: 700;">Đồng giá 7.000 đ/cái</span>
+                            </label>
+                            <label class="opt-card selected" id="holderType_custom" onclick="setHolderType('custom')">
+                                <div class="opt-badge-tag">Đã Gồm In UV</div>
+                                <span class="opt-title">Vỏ ABS In Thiết Kế</span>
+                                <span class="opt-sub">In màu UV sắc nét theo yêu cầu</span>
+                                <span class="opt-diff" style="color: #059669; font-weight: 600;">Bảng giá 20k – 35k</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- BƯỚC 4: THÔNG TIN KHÁCH HÀNG & HÓA ĐƠN -->
+                <div class="calc-step-block">
+                    <div class="step-heading">
+                        <div class="step-num-pill">4</div>
+                        <h3>Thông Tin Tư Vấn &amp; Đặt In Demo 2D</h3>
+                    </div>
+
+                    <!-- Tùy chọn Xuất Hóa Đơn VAT 8% -->
+                    <div style="margin-bottom: 20px;">
+                        <div class="addon-toggle-card" id="vatToggleCard" onclick="toggleVatOption()" style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border: 1.5px solid #cbd5e1; border-radius: 9px; cursor: pointer; background: #ffffff;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div class="addon-checkbox-box" id="vatCheckboxBox">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #0f172a; font-size: 0.94rem; display: flex; align-items: center; gap: 8px;">
+                                        Xuất hóa đơn GTGT / VAT (8%)
+                                        <span style="background: #e0f2fe; color: #0369a1; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">Nghị định 8%</span>
+                                    </div>
+                                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
+                                        Áp dụng xuất hóa đơn điện tử hợp lệ đầy đủ cho công ty, trường học &amp; tổ chức
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="vatDiffTag" style="font-weight: 700; font-size: 0.88rem; color: #0369a1; white-space: nowrap;">
+                                +8%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-grid-2">
+                        <div class="calc-field">
+                            <label for="cName">Họ và tên của bạn <span style="color:#ef4444;">*</span></label>
+                            <div class="calc-input-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <input type="text" id="cName" class="calc-txt-input" placeholder="VD: Nguyễn Văn Nam" required>
+                            </div>
+                        </div>
+
+                        <div class="calc-field">
+                            <label for="cPhone">Số điện thoại / Zalo <span style="color:#ef4444;">*</span></label>
+                            <div class="calc-input-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <input type="tel" id="cPhone" class="calc-txt-input" placeholder="VD: 0912 345 678" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="calc-field">
+                        <label for="cNotes">Ghi chú thiết kế / Ngày cần hàng</label>
+                        <textarea id="cNotes" class="calc-txt-area" rows="2" placeholder="VD: In màu xanh navy có logo công ty, cần giao trước ngày 25 tại TP.HCM..."></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Cost Breakdown Summary -->
+            <div class="calc-ticket-sticky" data-aos="fade-left">
+                <div class="cost-summary-card">
+                    
+                    <div class="summary-header-bar">
+                        <div class="summary-title">DỰ TOÁN CHI PHÍ</div>
+                        <div class="summary-category-tag" id="ticketCatBadge">Dây Đeo Thẻ</div>
+                    </div>
+
+                    <div class="summary-specs-block">
+                        <div class="summary-row">
+                            <span class="s-label">Sản phẩm:</span>
+                            <span class="s-val" id="ticketProdName">Dây đeo thẻ in chuyển nhiệt cao cấp</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="s-label">Số lượng:</span>
+                            <span class="s-val" id="ticketQty">50 sợi</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="s-label">Quy cách:</span>
+                            <span class="s-val" id="ticketSpecs">Bản 2.0 cm (Chuẩn)</span>
+                        </div>
+                        <div class="summary-row" id="ticketAccRow" style="display:none;">
+                            <span class="s-label">Tùy chọn thêm:</span>
+                            <span class="s-val" id="ticketAccVal">--</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="s-label">Đơn giá dự kiến:</span>
+                            <span class="s-val" id="ticketUnit">20.000 đ / sợi</span>
+                        </div>
+                        <div class="summary-row" id="ticketSubtotalRow" style="display:none;">
+                            <span class="s-label">Tạm tính (chưa VAT):</span>
+                            <span class="s-val" id="ticketSubtotal">1.000.000 đ</span>
+                        </div>
+                        <div class="summary-row" id="ticketVatRow" style="display:none;">
+                            <span class="s-label">Thuế VAT (8%):</span>
+                            <span class="s-val" id="ticketVat" style="color: #0369a1; font-weight: 700;">+80.000 đ</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Box -->
+                    <div class="summary-total-box">
+                        <div class="total-box-lbl" id="ticketTotalLabel">TỔNG CHI PHÍ TẠM TÍNH (CHƯA VAT)</div>
+                        <div class="total-box-amount" id="ticketTotal">1.000.000 đ</div>
+                        <div class="total-discount-tag" id="ticketDiscount">Đã áp dụng chiết khấu theo số lượng</div>
+                    </div>
+
+                    <!-- Benefits -->
+                    <ul class="summary-benefits">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                            Miễn phí thiết kế demo 2D chuẩn kích thước
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                            In chuyển nhiệt cao cấp, sắc nét bền màu
+                        </li>
+                        <li id="ticketShippingPerk">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                            <span>Hỗ trợ đóng gói &amp; giao hàng toàn quốc</span>
+                        </li>
+                    </ul>
+
+                    <div id="calcAlertErr" class="calc-alert-err"></div>
+
+                    <button type="submit" id="btnSubmitForm" class="btn-corporate-submit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                        <span id="btnSubmitText">GỬI YÊU CẦU TƯ VẤN &amp; IN ẤN</span>
+                    </button>
+
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="quoteSuccessModal" style="display:none; position:fixed; inset:0; background:rgba(10,25,47,0.85); backdrop-filter:blur(6px); z-index:99999; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:#ffffff; border-radius:24px; max-width:480px; width:100%; padding:36px 30px; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,0.3); border:1px solid #e2e8f0;">
+            <div style="width:68px; height:68px; border-radius:50%; background:#ecfdf5; color:#10b981; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <h3 style="font-size:1.45rem; font-weight:800; color:#0a192f; margin:0 0 8px 0;">Gửi Yêu Cầu Tư Vấn &amp; In Ấn Thành Công!</h3>
+            <p style="font-size:0.9rem; color:#64748b; line-height:1.5; margin:0 0 18px 0;">
+                Yêu cầu tư vấn &amp; in ấn của bạn đã được gửi thành công đến đội ngũ <strong>TagLuxe</strong>.
+                Mã: <strong id="modalQuoteId" style="color:#0369a1; font-family:monospace; background:#e0f2fe; padding:2px 8px; border-radius:6px;">#TL-0000</strong>
+            </p>
+            <div id="modalSummaryBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px; text-align:left; font-size:0.86rem; color:#334155; margin-bottom:20px; line-height:1.6;"></div>
+            <a id="modalZaloLink" href="https://zalo.me/0343019097" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:48px; background:#0068ff; color:#ffffff; border-radius:12px; font-weight:800; font-size:0.98rem; text-decoration:none; box-shadow:0 8px 20px rgba(0,104,255,0.3); margin-bottom:10px;">
+                Chat Zalo Ngay Để Nhận Demo 2D
+            </a>
+            <button type="button" onclick="closeQuoteModal()" style="width:100%; height:42px; background:transparent; border:1.5px solid #cbd5e1; border-radius:12px; color:#64748b; font-weight:600; font-size:0.88rem; cursor:pointer;">
+                Đóng cửa sổ
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Logic JavaScript -->
+<script>
+(function() {
+    const state = {
+        category: 'lanyard', // lanyard | pvc | holder | combo
+        qty: 50,
+        // VAT state
+        includeVat: false,
+        // Lanyard state
+        lanyardWidth: '2.0',
+        lanyardAccs: [],
+        // PVC state
+        pvcSize: '5.4x8.6',
+        pvcFinish: 'matte',
+        pvcHole: 'none',
+        // Holder state
+        holderOri: 'vertical',
+        holderType: 'custom',
+        holderPrint: true,
+        lastResult: null
+    };
+
+    function formatVND(n) {
+        return new Intl.NumberFormat('vi-VN').format(n) + ' đ';
+    }
+
+    window.toggleVatOption = function() {
+        state.includeVat = !state.includeVat;
+        const card = document.getElementById('vatToggleCard');
+        if (card) card.classList.toggle('selected', state.includeVat);
+        fetchPrice();
+    };
+
+    let fetchTimer = null;
+    let abortController = null;
+
+    function fetchPrice() {
+        if (fetchTimer) clearTimeout(fetchTimer);
+
+        fetchTimer = setTimeout(() => {
+            if (abortController) abortController.abort();
+            abortController = new AbortController();
+
+            const payload = {
+                category: state.category,
+                quantity: state.qty,
+                width: state.lanyardWidth,
+                accessories: state.lanyardAccs,
+                size: state.pvcSize,
+                finish: state.pvcFinish,
+                punched_hole: state.pvcHole,
+                orientation: state.holderOri,
+                holder_type: state.holderType,
+                printed_logo: state.holderType === 'custom',
+                include_vat: state.includeVat
+            };
+
+            fetch('/api/calculate-price', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: abortController.signal
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (!res.success || !res.data) return;
+                state.lastResult = res.data;
+                renderTicket(res.data);
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('Lỗi tính giá từ máy chủ:', err);
+                }
+            });
+        }, 120);
+    }
+
+    function renderTicket(data) {
+        const cat = state.category;
+        const prodNames = {
+            lanyard: 'Dây đeo thẻ in chuyển nhiệt cao cấp',
+            pvc: 'Thẻ nhựa PVC in theo yêu cầu',
+            holder: 'Vỏ đựng thẻ (Card holder) in theo yêu cầu'
+        };
+
+        const badgeEl = document.getElementById('ticketCatBadge');
+        if (badgeEl) badgeEl.textContent = data.category || 'Báo Giá';
+
+        const prodEl = document.getElementById('ticketProdName');
+        if (prodEl) prodEl.textContent = prodNames[cat] || 'Sản phẩm đặt in';
+
+        const qtyEl = document.getElementById('ticketQty');
+        const unitSuffix = (cat === 'lanyard' ? 'sợi' : (cat === 'pvc' ? 'thẻ' : 'cái'));
+        if (qtyEl) qtyEl.textContent = `${data.quantity} ${unitSuffix}`;
+
+        const specsEl = document.getElementById('ticketSpecs');
+        if (specsEl) specsEl.textContent = data.specs || data.width || '-';
+
+        const accRow = document.getElementById('ticketAccRow');
+        const accText = document.getElementById('ticketAcc');
+        if (accRow && accText) {
+            if (data.accessories && data.accessories.length > 0) {
+                accRow.style.display = 'flex';
+                accText.textContent = data.accessories.join(', ');
+            } else {
+                accRow.style.display = 'none';
+            }
+        }
+
+        const unitEl = document.getElementById('ticketUnit');
+        if (unitEl) {
+            unitEl.textContent = data.is_custom_size ? 'Trao đổi qua Zalo' : `${formatVND(data.unit_price)} / ${unitSuffix}`;
+        }
+
+        const subtotalRow = document.getElementById('ticketSubtotalRow');
+        const subtotalEl = document.getElementById('ticketSubtotal');
+        const vatRow = document.getElementById('ticketVatRow');
+        const vatEl = document.getElementById('ticketVat');
+        const totalLbl = document.getElementById('ticketTotalLabel');
+        const vatDiff = document.getElementById('vatDiffTag');
+
+        if (data.is_custom_size) {
+            if (subtotalRow) subtotalRow.style.display = 'none';
+            if (vatRow) vatRow.style.display = 'none';
+            if (totalLbl) totalLbl.textContent = 'GIÁ THEO YÊU CẦU RIÊNG (NGOẠI SIZE)';
+            if (vatDiff) vatDiff.textContent = 'Tư vấn trực tiếp';
+        } else if (data.include_vat) {
+            if (subtotalRow) {
+                subtotalRow.style.display = 'flex';
+                if (subtotalEl) subtotalEl.textContent = formatVND(data.subtotal);
+            }
+            if (vatRow) {
+                vatRow.style.display = 'flex';
+                if (vatEl) vatEl.textContent = `+${formatVND(data.vat_amount)}`;
+            }
+            if (totalLbl) totalLbl.textContent = 'TỔNG DỰ TOÁN (ĐÃ GỒM 8% VAT)';
+            if (vatDiff) vatDiff.textContent = `+${formatVND(data.vat_amount)}`;
+        } else {
+            if (subtotalRow) subtotalRow.style.display = 'none';
+            if (vatRow) vatRow.style.display = 'none';
+            if (totalLbl) totalLbl.textContent = 'TỔNG CHI PHÍ TẠM TÍNH (CHƯA VAT)';
+            const approxVat = Math.round((data.total_price || 0) * 0.08);
+            if (vatDiff) vatDiff.textContent = `+8% (~${formatVND(approxVat)})`;
+        }
+
+        const totalEl = document.getElementById('ticketTotal');
+        if (totalEl) totalEl.textContent = data.is_custom_size ? 'Báo giá qua Zalo' : formatVND(data.total_price);
+
+        const shipPerk = document.getElementById('ticketShippingPerk');
+        if (shipPerk) {
+            if (data.quantity >= 100) {
+                shipPerk.querySelector('span').textContent = 'Tặng phí vận chuyển nội thành TP.HCM (Đơn từ 100)';
+                shipPerk.style.color = '#fbbf24';
+            } else {
+                shipPerk.querySelector('span').textContent = 'Hỗ trợ đóng gói & giao hàng toàn quốc';
+                shipPerk.style.color = '';
+            }
+        }
+    }
+
+    function getMinQty() {
+        return state.category === 'holder' ? 20 : 10;
+    }
+
+    window.switchCategory = function(cat) {
+        state.category = cat;
+
+        // Switch tab buttons
+        document.querySelectorAll('.cat-tab-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById('tabBtn_' + cat);
+        if (btn) btn.classList.add('active');
+
+        // Switch panels
+        document.querySelectorAll('.cat-panel').forEach(p => p.style.display = 'none');
+        const p = document.getElementById('panel_' + cat);
+        if (p) p.style.display = 'block';
+
+        // Update step titles & units
+        const titles = {
+            lanyard: 'Số Lượng Dây Cần In',
+            pvc: 'Số Lượng Thẻ PVC Cần In',
+            holder: 'Số Lượng Vỏ Đựng Thẻ'
+        };
+        const units = {
+            lanyard: 'sợi dây',
+            pvc: 'thẻ',
+            holder: 'cái'
+        };
+        document.getElementById('stepQtyTitle').textContent = titles[cat];
+        document.getElementById('qtyDisplayUnit').textContent = units[cat];
+
+        const prodNames = {
+            lanyard: 'Dây đeo thẻ in chuyển nhiệt cao cấp',
+            pvc: 'Thẻ nhựa PVC in theo yêu cầu',
+            holder: 'Vỏ đựng thẻ (Card holder) in theo yêu cầu'
+        };
+        const catBadges = {
+            lanyard: 'Dây Đeo Thẻ',
+            pvc: 'Thẻ Nhựa PVC',
+            holder: 'Vỏ Đựng Thẻ'
+        };
+        const prodEl = document.getElementById('ticketProdName');
+        if (prodEl) prodEl.textContent = prodNames[cat] || 'Sản phẩm đặt in';
+        const badgeEl = document.getElementById('ticketCatBadge');
+        if (badgeEl) badgeEl.textContent = catBadges[cat] || 'Báo Giá';
+
+        // Cập nhật số lượng tối thiểu linh hoạt theo sản phẩm (Vỏ thẻ: nhận in từ 20c)
+        const minQty = getMinQty();
+        const hintEl = document.getElementById('stepQtyHint');
+        if (hintEl) hintEl.textContent = cat === 'holder' ? 'Nhận in từ: 20 cái' : 'Tối thiểu: 10 cái';
+        const minTick = document.getElementById('sliderMinTick');
+        if (minTick) minTick.textContent = minQty;
+
+        const directInp = document.getElementById('qtyDirectInput');
+        if (directInp) directInp.min = minQty;
+        const sliderInp = document.getElementById('qtySliderInput');
+        if (sliderInp) sliderInp.min = minQty;
+
+        if (state.qty < minQty) {
+            setQty(minQty, true);
+        } else {
+            fetchPrice();
+        }
+    };
+
+    window.onDirectQtyInput = function(val) {
+        const q = parseInt(val, 10);
+        if (isNaN(q) || q < 1) {
+            return;
+        }
+        setQty(q, false);
+    };
+
+    window.onDirectQtyBlur = function(input) {
+        const minQty = getMinQty();
+        let q = parseInt(input.value, 10);
+        if (isNaN(q) || q < minQty) {
+            q = minQty;
+        }
+        input.value = q;
+        setQty(q, true);
+    };
+
+    window.stepQty = function(delta) {
+        const minQty = getMinQty();
+        setQty(Math.max(minQty, state.qty + delta), true);
+    };
+
+    window.onSliderMove = function(val) {
+        const minQty = getMinQty();
+        setQty(Math.max(minQty, parseInt(val, 10) || minQty), true);
+    };
+
+    function setQty(val, syncInput = true) {
+        const minQty = getMinQty();
+        state.qty = Math.max(minQty, val);
+        if (syncInput) {
+            const inp = document.getElementById('qtyDirectInput');
+            if (inp) inp.value = state.qty;
+        }
+        const slider = document.getElementById('qtySliderInput');
+        if (slider) slider.value = Math.min(state.qty, 3000);
+        fetchPrice();
+    }
+
+    // Lanyard controls
+    window.setLanyardWidth = function(w) {
+        state.lanyardWidth = w;
+        document.querySelectorAll('#panel_lanyard .options-grid-3 .opt-card').forEach(c => c.classList.remove('selected'));
+        const card = document.getElementById('lanyardWidth_' + w.replace('.', ''));
+        if (card) card.classList.add('selected');
+        fetchPrice();
+    };
+
+    window.toggleLanyardAcc = function(acc) {
+        const idx = state.lanyardAccs.indexOf(acc);
+        if (idx > -1) state.lanyardAccs.splice(idx, 1);
+        else state.lanyardAccs.push(acc);
+
+        const card = document.getElementById('lanyardAcc_' + acc);
+        if (card) card.classList.toggle('selected', state.lanyardAccs.includes(acc));
+        fetchPrice();
+    };
+
+    // PVC controls
+    window.setPvcSize = function(s) {
+        state.pvcSize = s;
+        document.querySelectorAll('#panel_pvc .calc-step-block:first-of-type .opt-card').forEach(c => c.classList.remove('selected'));
+        const sizeMap = {
+            '5.4x8.6': 'pvcSize_standard',
+            '7x11': 'pvcSize_7x11',
+            '9x12': 'pvcSize_9x12',
+            'custom': 'pvcSize_custom'
+        };
+        const cardId = sizeMap[s] || ('pvcSize_' + s);
+        const card = document.getElementById(cardId);
+        if (card) card.classList.add('selected');
+        fetchPrice();
+    };
+
+    window.setPvcFinish = function(f) {
+        state.pvcFinish = f;
+        document.querySelectorAll('#panel_pvc .options-grid-3 .opt-card').forEach(c => c.classList.remove('selected'));
+        const card = document.getElementById('pvcFinish_' + f);
+        if (card) card.classList.add('selected');
+        fetchPrice();
+    };
+
+    window.setPvcHole = function(h) {
+        state.pvcHole = h;
+        document.querySelectorAll('#panel_pvc .calc-step-block:last-of-type .opt-card').forEach(c => c.classList.remove('selected'));
+        const card = document.getElementById('pvcHole_' + h);
+        if (card) card.classList.add('selected');
+        fetchPrice();
+    };
+
+    // Holder controls
+    window.setHolderOri = function(ori) {
+        state.holderOri = ori;
+        document.querySelectorAll('#panel_holder .options-grid-2 .opt-card').forEach(c => c.classList.remove('selected'));
+        const card = document.getElementById('holderOri_' + ori);
+        if (card) card.classList.add('selected');
+        fetchPrice();
+    };
+
+    window.setHolderType = function(type) {
+        state.holderType = type;
+        state.holderPrint = (type === 'custom');
+        document.querySelectorAll('#panel_holder .options-grid-3 .opt-card').forEach(c => c.classList.remove('selected'));
+        const card = document.getElementById('holderType_' + type);
+        if (card) card.classList.add('selected');
+        fetchPrice();
+    };
+
+    window.setHolderPrint = function(hasLogo) {
+        setHolderType(hasLogo ? 'custom' : 'plain');
+    };
+
+    window.handleQuoteSubmit = function(e) {
+        e.preventDefault();
+        const errBox = document.getElementById('calcAlertErr');
+        errBox.style.display = 'none';
+
+        const nameInput = document.getElementById('cName');
+        const phoneInput = document.getElementById('cPhone');
+        const notesInput = document.getElementById('cNotes');
+
+        const name = (nameInput ? nameInput.value : '').trim();
+        const rawPhone = (phoneInput ? phoneInput.value : '').trim();
+        const notes = (notesInput ? notesInput.value : '').trim();
+
+        if (!name) {
+            showError('Vui lòng nhập họ và tên của bạn.');
+            nameInput.focus();
+            return;
+        }
+
+        let cleanPhone = rawPhone.replace(/[\s\.\-\(\)]/g, '');
+        if (cleanPhone.startsWith('+84')) cleanPhone = '0' + cleanPhone.slice(3);
+        if (cleanPhone.startsWith('84') && cleanPhone.length === 11) cleanPhone = '0' + cleanPhone.slice(2);
+
+        if (!/^0[1-9]\d{8}$/.test(cleanPhone)) {
+            showError('Số điện thoại không hợp lệ. Vui lòng nhập số gồm 10 chữ số (VD: 0912345678).');
+            phoneInput.focus();
+            return;
+        }
+
+        const minQty = getMinQty();
+        if (state.qty < minQty) {
+            showError(state.category === 'holder' 
+                ? 'Vỏ đựng thẻ nhận in tối thiểu từ 20 cái trở lên.' 
+                : 'Số lượng đặt in tối thiểu là 10 đơn vị.');
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmitForm');
+        const btnText = document.getElementById('btnSubmitText');
+        btn.disabled = true;
+        btnText.textContent = 'Đang gửi yêu cầu...';
+
+        fetch('/api/submit-quote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                category: state.category,
+                customer_name: name,
+                phone: cleanPhone,
+                quantity: state.qty,
+                width: state.lanyardWidth,
+                accessories: state.lanyardAccs,
+                size: state.pvcSize,
+                notes: notes,
+                finish: state.pvcFinish,
+                punched_hole: state.pvcHole,
+                orientation: state.holderOri,
+                holder_type: state.holderType,
+                printed_logo: state.holderType === 'custom',
+                include_vat: state.includeVat
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btnText.textContent = 'GỬI YÊU CẦU TƯ VẤN & IN ẤN';
+
+            if (data.success && data.quote) {
+                const q = data.quote;
+                const quoteId = q.id || 'TAGLUXE';
+                document.getElementById('modalQuoteId').textContent = '#' + quoteId;
+
+                const vatLine = q.include_vat ? `<div style="color:#0369a1;"><strong>Thuế GTGT:</strong> Đã gồm 8% VAT (+${formatVND(q.vat_amount)})</div>` : '';
+                const summaryHtml = `
+                    <div><strong>Danh mục:</strong> ${q.category}</div>
+                    <div><strong>Khách hàng:</strong> ${q.customer_name} - ${q.phone}</div>
+                    <div><strong>Số lượng:</strong> ${q.quantity} (${q.specs || q.width})</div>
+                    ${q.accessories && q.accessories.length ? `<div><strong>Tùy chọn:</strong> ${Array.isArray(q.accessories) ? q.accessories.join(', ') : q.accessories}</div>` : ''}
+                    ${vatLine}
+                    <div style="margin-top:6px; padding-top:6px; border-top:1px dashed #cbd5e1; font-weight:800; color:#b45309; font-size:1.05rem;">
+                        ${q.include_vat ? 'Tổng thanh toán (gồm VAT)' : 'Tổng ước tính'}: ${formatVND(q.total_price)}
+                    </div>
+                `;
+                document.getElementById('modalSummaryBox').innerHTML = summaryHtml;
+
+                const accText = q.accessories && q.accessories.length ? `\n- Tùy chọn: ${Array.isArray(q.accessories) ? q.accessories.join(', ') : q.accessories}` : '';
+                const vatZalo = q.include_vat ? `\n- Hóa đơn: Xuất VAT 8% (+${formatVND(q.vat_amount)})\n- Tổng thanh toán (gồm VAT): ${formatVND(q.total_price)}` : `\n- Tạm tính: ${formatVND(q.total_price)} (Chưa VAT)`;
+                const zaloMsg = encodeURIComponent(
+                    `Chào TagLuxe, mình vừa gửi yêu cầu tư vấn & in ấn #${quoteId} trên website:\n` +
+                    `- Danh mục: ${q.category}\n` +
+                    `- Khách hàng: ${q.customer_name} (${q.phone})\n` +
+                    `- Số lượng: ${q.quantity} (${q.specs || q.width})` +
+                    accText +
+                    vatZalo + `\n` +
+                    `TagLuxe tư vấn và gửi demo 2D giúp mình nhé!`
+                );
+                document.getElementById('modalZaloLink').href = `https://zalo.me/0343019097?text=${zaloMsg}`;
+
+                document.getElementById('quoteSuccessModal').style.display = 'flex';
+            } else {
+                showError(data.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btnText.textContent = 'GỬI YÊU CẦU TƯ VẤN & IN ẤN';
+            showError('Không thể kết nối máy chủ. Bạn vui lòng bấm chat Zalo trực tiếp để nhận tư vấn nhanh nhất!');
+        });
+    };
+
+    function showError(msg) {
+        const errBox = document.getElementById('calcAlertErr');
+        if (errBox) {
+            errBox.textContent = msg;
+            errBox.style.display = 'block';
+        }
+    }
+
+    window.closeQuoteModal = function() {
+        const modal = document.getElementById('quoteSuccessModal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fetchPrice);
+    } else {
+        fetchPrice();
+    }
+})();
+</script>

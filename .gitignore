@@ -1,6 +1,34 @@
+# Python & Bytecode
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Environment variables & secrets
 .env
+.env.*
+*.env
+
+# Local Databases (Contains private customer records)
+*.db
+*.sqlite3
+tagluxe.db
+
+# Private Customer Uploads
+static/uploads/requests/*
+frontend/storefront/static/uploads/requests/*
+!static/uploads/requests/.gitkeep
+!frontend/storefront/static/uploads/requests/.gitkeep
+
+# System & IDE
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/
+*.swp
+*.log
+.system_generated/

@@ -69,6 +69,13 @@ class SeoTests(unittest.TestCase):
                 self.assertEqual(self.client.get(path).headers['X-Robots-Tag'], 'noindex, nofollow')
         self.assertEqual(self.client.get('/product/missing').status_code, 404)
 
+    def test_removed_lanyard_routes_redirect_301(self):
+        for old_id in ['lan-2', 'lan-3']:
+            with self.subTest(old_id=old_id):
+                res = self.client.get(f'/product/{old_id}')
+                self.assertEqual(res.status_code, 301)
+                self.assertTrue(res.headers['Location'].endswith('/product/lan-1'))
+
 
 if __name__ == '__main__':
     unittest.main()

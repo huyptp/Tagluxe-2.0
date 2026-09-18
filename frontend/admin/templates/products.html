@@ -1,0 +1,67 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="admin-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Quản lý sản phẩm</h2>
+        <a href="/admin/products/add" class="btn btn-primary"><i data-lucide="plus"></i> Thêm sản phẩm mới</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Danh mục</th>
+                <th>Giá</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>
+                    {% if product.image %}
+                    <img src="{{ url_for('static', filename='uploads/' + product.image) }}" width="60" style="border-radius: 4px;">
+                    {% else %}
+                    <span style="color: #999;">Không có ảnh</span>
+                    {% endif %}
+                </td>
+                <td><strong>{{ product.name }}</strong></td>
+                <td>
+                    {% if product.category == 'lanyard' %} Dây đeo thẻ {% else %} Phụ kiện {% endif %}
+                </td>
+                <td>
+                    {% if product.price_type == 'fixed' and product.price > 0 %}
+                        {{ "{:,.0f}".format(product.price).replace(',', '.') }} đ
+                    {% else %}
+                        Liên hệ
+                    {% endif %}
+                </td>
+                <td>
+                    {% if product.visible %}
+                    <span class="badge" style="background: #28a745;">Đang hiện</span>
+                    {% else %}
+                    <span class="badge" style="background: #dc3545;">Đang ẩn</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="admin-actions">
+                        <a href="/admin/products/edit/{{ product.id }}" class="btn btn-outline" style="padding: 6px 12px;"><i data-lucide="edit"></i> Sửa</a>
+                        <form action="/admin/products/delete/{{ product.id }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+                            <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; background: #dc3545;"><i data-lucide="trash"></i> Xóa</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not products %}
+            <tr>
+                <td colspan="6" class="text-center" style="padding: 40px; color: #666;">Chưa có sản phẩm nào. Hãy thêm sản phẩm đầu tiên!</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

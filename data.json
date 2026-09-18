@@ -2,51 +2,36 @@
   "products": [
     {
       "id": "lan-1",
-      "name": "Dây đeo thẻ Lụa Satin Cao Cấp",
+      "name": "Dây đeo thẻ in chuyển nhiệt cao cấp",
       "category": "lanyard",
-      "description": "Dây đeo thẻ in chuyển nhiệt sắc nét trên nền lụa Satin mịn màng, cao cấp. Chống trầy xước, không bay màu, thích hợp cho doanh nghiệp, fandom và sự kiện VIP.",
+      "material": "Lụa Satin Cao Cấp",
+      "description": "Dây đeo thẻ in chuyển nhiệt cao cấp in ấn sắc nét theo yêu cầu riêng. Chất liệu lụa Satin cao cấp mềm mịn, công nghệ in chuẩn màu, chống bong tróc, bền màu tuyệt đối. Phù hợp cho doanh nghiệp, trường học, sự kiện và fandom.",
       "images": [
+        "media_1789662028575.jpg",
+        "media_1789320576594.jpg",
+        "media_1789662086201.jpg",
+        "media_1789662028590.jpg",
+        "media_1789662086215.jpg",
+        "media_1789662064859.jpg",
+        "media_1789662064871.jpg",
+        "media_1789662064894.jpg",
+        "media_1789662086196.jpg",
+        "media_1789662086207.jpg",
+        "media_1789662028598.jpg",
+        "media_1789662028605.jpg",
+        "media_1789662028584.jpg",
         "media_1786037379657.jpg",
         "media_1789285818722.jpg",
         "media_1789286120138.jpg",
-        "media_1786037379884.jpg"
-      ],
-      "width": "2.0 cm",
-      "min_order": 10,
-      "price_type": "contact",
-      "price": 0,
-      "featured": true,
-      "visible": true
-    },
-    {
-      "id": "lan-2",
-      "name": "Dây đeo thẻ In Chuyển Nhiệt Full Màu",
-      "category": "lanyard",
-      "description": "Dây đeo thẻ Polyester gân in chuyển nhiệt full màu sắc nét, không giới hạn màu. Sự lựa chọn phổ biến cho trường học, câu lạc bộ, sự kiện và fandom.",
-      "images": [
+        "media_1786037379884.jpg",
         "media_1789285818629.jpg",
         "media_1789285818730.jpg",
         "media_1789285818752.jpg",
         "media_1789285818740.jpg",
         "media_1786037379878.jpg"
       ],
-      "width": "1.5 cm / 2.0 cm",
+      "width": "1.5 cm / 2.0 cm / 2.5 cm",
       "min_order": 10,
-      "price_type": "fixed",
-      "price": 25000,
-      "featured": true,
-      "visible": true
-    },
-    {
-      "id": "lan-3",
-      "name": "Dây đeo thẻ tích hợp Yoyo co rút",
-      "category": "lanyard",
-      "description": "Dây đeo thẻ in lụa hoặc chuyển nhiệt kết hợp Yoyo co rút thông minh, tiện lợi khi quẹt thẻ từ/thẻ thang máy. Phù hợp cho nhân viên văn phòng, bệnh viện và toà nhà văn phòng.",
-      "images": [
-        "media_1789286120150.jpg"
-      ],
-      "width": "1.5 cm",
-      "min_order": 20,
       "price_type": "contact",
       "price": 0,
       "featured": true,
@@ -77,7 +62,7 @@
       "id": "acc-2",
       "name": "Vỏ đựng thẻ (Card holder) in theo yêu cầu",
       "category": "accessory",
-      "description": "Vỏ đựng thẻ cứng cáp in full màu theo thiết kế riêng, bảo vệ thẻ khỏi trầy xước, cong vênh. Thiết kế sang trọng, có thể in logo nhận diện thương hiệu.",
+      "description": "Vỏ đựng thẻ cứng cáp in full màu theo thiết kế riêng, bảo vệ thẻ khỏi trầy xước, cong vênh. Thiết kế sang trọng, có thể in logo nhận diện thương hiệu, nhận in từ 20 cái.",
       "images": [
         "media_1789317114085.jpg",
         "media_1789287073763.jpg",
@@ -88,11 +73,13 @@
       ],
       "width": "Vừa thẻ tiêu chuẩn (86x54mm)",
       "material": "Chất liệu nhựa ABS",
-      "min_order": 50,
+      "min_order": 20,
       "price_type": "contact",
       "price": 0,
       "featured": true,
       "visible": true
     }
-  ]
+  ],
+  "demo_requests": [],
+  "quotes": []
 }

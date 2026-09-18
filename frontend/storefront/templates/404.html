@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}404 - Trang không tồn tại | TagLuxe{% endblock %}
+{% block meta_desc %}Trang bạn tìm kiếm không tồn tại. Quay về TagLuxe để xem dây đeo thẻ, thẻ nhựa PVC và vỏ đựng thẻ in theo yêu cầu.{% endblock %}
+
+{% block content %}
+<section style="padding: 120px 0; text-align: center; background: #f9f9f9; min-height: 60vh; display:flex; align-items:center;">
+    <div class="container">
+        <div style="font-size: 8rem; font-weight: 800; color: #e0e0e0; line-height:1;">404</div>
+        <h1 style="font-size: 2rem; margin: 16px 0 12px; color: #111;">Trang không tồn tại</h1>
+        <p style="color: #666; font-size: 1.1rem; margin-bottom: 32px; max-width:480px; margin-left:auto; margin-right:auto;">
+            Trang bạn tìm kiếm đã bị xóa, đổi địa chỉ hoặc không tồn tại. Hãy quay lại trang chủ.
+        </p>
+        <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+            <a href="/" class="btn btn-primary">
+                <i data-lucide="home"></i> Về trang chủ
+            </a>
+            <a href="https://zalo.me/0343019097" target="_blank" class="btn btn-outline">
+                <i data-lucide="message-circle"></i> Tư vấn Zalo
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

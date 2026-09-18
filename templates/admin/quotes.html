@@ -1,0 +1,259 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="admin-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <h2 style="margin: 0; font-size: 1.4rem; color: #0a192f; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="calculator" style="color: #d4af37;"></i> Quản Lý Báo Giá Khách Hàng
+            </h2>
+            <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem;">
+                Theo dõi, xử lý và cập nhật trạng thái các đơn báo giá trực tuyến gửi từ website.
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span style="background: #fef3c7; color: #92400e; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 0.85rem;">
+                Tổng cộng: {{ quotes|length if quotes else 0 }} báo giá
+            </span>
+        </div>
+    </div>
+
+    <!-- Bộ lọc & Tìm kiếm -->
+    <div style="background: #f8fafc; padding: 16px 20px; border-radius: 10px; margin-bottom: 24px; border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+        <!-- Lọc theo trạng thái -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: #64748b; margin-right: 4px;">Trạng thái:</span>
+            <a href="/admin/quotes?status=all{% if search_query %}&q={{ search_query }}{% endif %}" 
+               style="padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 600; {% if current_status == 'all' or not current_status %}background: #0a192f; color: white;{% else %}background: #e2e8f0; color: #475569;{% endif %}">
+                Tất cả
+            </a>
+            <a href="/admin/quotes?status=Mới{% if search_query %}&q={{ search_query }}{% endif %}" 
+               style="padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 600; {% if current_status == 'Mới' %}background: #fef3c7; color: #92400e; border: 1px solid #fde68a;{% else %}background: #e2e8f0; color: #475569;{% endif %}">
+                Mới
+            </a>
+            <a href="/admin/quotes?status=Đang tư vấn{% if search_query %}&q={{ search_query }}{% endif %}" 
+               style="padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 600; {% if current_status == 'Đang tư vấn' %}background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;{% else %}background: #e2e8f0; color: #475569;{% endif %}">
+                Đang tư vấn
+            </a>
+            <a href="/admin/quotes?status=Đã tư vấn{% if search_query %}&q={{ search_query }}{% endif %}" 
+               style="padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 600; {% if current_status == 'Đã tư vấn' %}background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4;{% else %}background: #e2e8f0; color: #475569;{% endif %}">
+                Đã tư vấn
+            </a>
+            <a href="/admin/quotes?status=Đang chốt{% if search_query %}&q={{ search_query }}{% endif %}" 
+               style="padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 600; {% if current_status == 'Đang chốt' %}background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa;{% else %}background: #e2e8f0; color: #475569;{% endif %}">
+                Đang chốt
+            </a>
+            <a href="/admin/quotes?status=Đã chốt{% if search_query %}&q={{ search_query }}{% endif %}" 
+               style="padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 600; {% if current_status == 'Đã chốt' %}background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff;{% else %}background: #e2e8f0; color: #475569;{% endif %}">
+                Đã chốt
+            </a>
+            <a href="/admin/quotes?status=Đã xong{% if search_query %}&q={{ search_query }}{% endif %}" 
+               style="padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 600; {% if current_status == 'Đã xong' %}background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;{% else %}background: #e2e8f0; color: #475569;{% endif %}">
+                Đã xong
+            </a>
+            <a href="/admin/quotes?status=Đã hủy{% if search_query %}&q={{ search_query }}{% endif %}" 
+               style="padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 600; {% if current_status == 'Đã hủy' %}background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;{% else %}background: #e2e8f0; color: #475569;{% endif %}">
+                Đã hủy
+            </a>
+        </div>
+
+        <!-- Ô tìm kiếm -->
+        <form method="GET" action="/admin/quotes" style="display: flex; gap: 8px; margin: 0;">
+            <input type="hidden" name="status" value="{{ current_status or 'all' }}">
+            <input type="text" name="q" value="{{ search_query or '' }}" placeholder="Tìm SĐT, tên, mã đơn..." 
+                   style="padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; width: 200px;">
+            <button type="submit" style="background: #0a192f; color: white; border: none; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                Tìm
+            </button>
+            {% if search_query %}
+            <a href="/admin/quotes?status={{ current_status or 'all' }}" style="padding: 7px 10px; background: #e2e8f0; color: #475569; border-radius: 6px; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center;">
+                Xóa lọc
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if quotes %}
+    <div style="overflow-x: auto;">
+        <table style="min-width: 1000px;">
+            <thead>
+                <tr>
+                    <th style="width: 125px;">Mã / Thời gian</th>
+                    <th style="width: 180px;">Khách hàng & Liên hệ</th>
+                    <th style="width: 190px;">Sản phẩm & Quy cách</th>
+                    <th style="width: 80px; text-align: center;">Số lượng</th>
+                    <th style="width: 140px;">Đơn giá / Tổng tiền</th>
+                    <th style="width: 150px;">Ghi chú</th>
+                    <th style="width: 120px; text-align: center;">Tiến độ</th>
+                    <th style="width: 150px; text-align: center;">Trạng thái xử lý</th>
+                    <th style="width: 60px; text-align: right;">Xóa</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in quotes %}
+                <tr>
+                    <!-- Mã & Thời gian -->
+                    <td>
+                        <strong style="color: #0369a1; font-size: 0.88rem; font-family: monospace;">#{{ q.id }}</strong>
+                        <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px;">
+                            {{ q.created_at }}
+                        </div>
+                    </td>
+
+                    <!-- Khách hàng & Liên hệ -->
+                    <td>
+                        <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">
+                            {{ q.customer_name if q.customer_name else 'Khách hàng' }}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <a href="tel:{{ q.phone }}" style="color: #0284c7; text-decoration: none; font-weight: 600; font-size: 0.88rem;">
+                                {{ q.phone }}
+                            </a>
+                            <a href="https://zalo.me/{{ q.phone }}" target="_blank" rel="noopener"
+                               style="display: inline-flex; align-items: center; gap: 4px; background: #0068ff; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; text-decoration: none; font-weight: 600;">
+                                Nhắn Zalo
+                            </a>
+                        </div>
+                    </td>
+
+                    <!-- Sản phẩm & Quy cách -->
+                    <td>
+                        <div style="font-weight: 700; color: #1e293b; font-size: 0.88rem;">
+                            {{ q.category }}
+                        </div>
+                        <div style="font-size: 0.8rem; color: #475569; margin-top: 2px;">
+                            {{ q.specs or q.width }}
+                        </div>
+                        {% if q.accessories %}
+                        <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px;">
+                            + {{ q.accessories|join(', ') if q.accessories is iterable and q.accessories is not string else q.accessories }}
+                        </div>
+                        {% endif %}
+                    </td>
+
+                    <!-- Số lượng -->
+                    <td style="text-align: center;">
+                        <strong style="font-size: 1.1rem; color: #0f172a;">{{ q.quantity }}</strong>
+                        <div style="font-size: 0.76rem; color: #64748b;">
+                            {% if 'PVC' in q.category or 'the' in q.category|lower %}
+                                thẻ
+                            {% elif 'Vỏ' in q.category or 'holder' in q.category|lower %}
+                                cái
+                            {% elif 'Combo' in q.category %}
+                                bộ
+                            {% else %}
+                                sợi
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- Giá tiền -->
+                    <td>
+                        <div style="font-size: 0.8rem; color: #64748b;">
+                            {{ "{:,.0f}".format(q.unit_price) }} đ/đv
+                        </div>
+                        <div style="font-weight: 800; color: #b45309; font-size: 1.05rem; margin-top: 2px;">
+                            {{ "{:,.0f}".format(q.total_price) }} đ
+                        </div>
+                        {% if q.include_vat %}
+                        <span style="display: inline-block; font-size: 0.68rem; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 1px 6px; border-radius: 9999px; margin-top: 2px;">
+                            Đã gồm VAT 8%
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Ghi chú -->
+                    <td>
+                        {% if q.notes %}
+                        <div style="font-size: 0.8rem; color: #334155; background: #f8fafc; padding: 6px 8px; border-radius: 6px; border-left: 3px solid #cbd5e1; word-break: break-word;">
+                            {{ q.notes }}
+                        </div>
+                        {% else %}
+                        <span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">Không có ghi chú</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Tích Tiến độ xử lý -->
+                    <td style="text-align: center;">
+                        <form method="POST" action="/admin/quotes/status/{{ q.id }}" style="margin: 0; display: inline-block;">
+                            <input type="hidden" name="status" value="{{ 'Đang tư vấn' if q.status == 'Đã xong' else 'Đã xong' }}">
+                            <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; {% if q.status == 'Đã xong' %}background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;{% else %}background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1;{% endif %}" title="Bấm để đánh dấu hoàn thành nhanh">
+                                <input type="checkbox" onchange="this.form.submit()" {% if q.status == 'Đã xong' %}checked{% endif %} style="cursor: pointer; width: 14px; height: 14px; accent-color: #16a34a;">
+                                <span>{{ 'Đã xong' if q.status == 'Đã xong' else 'Chưa xong' }}</span>
+                            </label>
+                        </form>
+                        <!-- Thanh tiến độ trực quan -->
+                        <div style="width: 100%; height: 5px; background: #e2e8f0; border-radius: 3px; margin-top: 6px; overflow: hidden;" title="Tiến độ đơn">
+                            {% if q.status == 'Mới' %}
+                                <div style="width: 15%; height: 100%; background: #eab308;"></div>
+                            {% elif q.status == 'Đang tư vấn' %}
+                                <div style="width: 35%; height: 100%; background: #0284c7;"></div>
+                            {% elif q.status == 'Đã tư vấn' %}
+                                <div style="width: 55%; height: 100%; background: #0d9488;"></div>
+                            {% elif q.status == 'Đang chốt' %}
+                                <div style="width: 75%; height: 100%; background: #ea580c;"></div>
+                            {% elif q.status == 'Đã chốt' %}
+                                <div style="width: 90%; height: 100%; background: #9333ea;"></div>
+                            {% elif q.status == 'Đã xong' %}
+                                <div style="width: 100%; height: 100%; background: #16a34a;"></div>
+                            {% else %}
+                                <div style="width: 100%; height: 100%; background: #dc2626;"></div>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- Cập nhật trạng thái -->
+                    <td style="text-align: center;">
+                        <form method="POST" action="/admin/quotes/status/{{ q.id }}" style="margin: 0;">
+                            <select name="status" onchange="this.form.submit()" 
+                                    style="padding: 6px 10px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+                                    {% if q.status == 'Mới' %}
+                                        background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+                                    {% elif q.status == 'Đang tư vấn' %}
+                                        background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+                                    {% elif q.status == 'Đã tư vấn' %}
+                                        background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4;
+                                    {% elif q.status == 'Đang chốt' %}
+                                        background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa;
+                                    {% elif q.status == 'Đã chốt' %}
+                                        background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff;
+                                    {% elif q.status == 'Đã xong' %}
+                                        background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;
+                                    {% elif q.status == 'Đã hủy' %}
+                                        background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;
+                                    {% else %}
+                                        background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;
+                                    {% endif %}">
+                                <option value="Mới" {% if q.status == 'Mới' %}selected{% endif %}>1. Mới</option>
+                                <option value="Đang tư vấn" {% if q.status == 'Đang tư vấn' %}selected{% endif %}>2. Đang tư vấn</option>
+                                <option value="Đã tư vấn" {% if q.status == 'Đã tư vấn' %}selected{% endif %}>3. Đã tư vấn</option>
+                                <option value="Đang chốt" {% if q.status == 'Đang chốt' %}selected{% endif %}>4. Đang chốt</option>
+                                <option value="Đã chốt" {% if q.status == 'Đã chốt' %}selected{% endif %}>5. Đã chốt</option>
+                                <option value="Đã xong" {% if q.status == 'Đã xong' %}selected{% endif %}>6. Đã xong</option>
+                                <option value="Đã hủy" {% if q.status == 'Đã hủy' %}selected{% endif %}>7. Đã hủy</option>
+                            </select>
+                        </form>
+                    </td>
+
+                    <!-- Xóa -->
+                    <td style="text-align: right;">
+                        <form method="POST" action="/admin/quotes/delete/{{ q.id }}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đơn báo giá này?');" style="display: inline-block;">
+                            <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 6px;" title="Xóa báo giá">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+        <i data-lucide="inbox" style="width: 48px; height: 48px; color: #cbd5e1; margin-bottom: 12px;"></i>
+        <p style="font-size: 1.05rem; font-weight: 500; margin-bottom: 4px;">Không tìm thấy báo giá nào</p>
+        <p style="font-size: 0.85rem;">Khi khách hàng thực hiện tính chi phí trên website, thông tin sẽ được lưu trữ và hiển thị tại đây.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}500 - Hệ thống đang xử lý | TagLuxe{% endblock %}
+{% block meta_desc %}Hệ thống TagLuxe tạm thời gián đoạn xử lý. Vui lòng quay lại sau giây lát hoặc liên hệ Zalo để được hỗ trợ tức thì.{% endblock %}
+
+{% block content %}
+<section style="padding: 120px 0; text-align: center; background: #f9f9f9; min-height: 60vh; display:flex; align-items:center;">
+    <div class="container">
+        <div style="font-size: 7rem; font-weight: 800; color: #cbd5e1; line-height:1;">500</div>
+        <h1 style="font-size: 2rem; margin: 16px 0 12px; color: #0a192f;">Hệ thống đang quá tải hoặc bảo trì</h1>
+        <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 32px; max-width:500px; margin-left:auto; margin-right:auto;">
+            Yêu cầu của bạn tạm thời chưa hoàn tất được do máy chủ đang xử lý nhiều lượt truy cập cùng lúc. Vui lòng thử lại sau ít giây hoặc liên hệ hỗ trợ trực tiếp.
+        </p>
+        <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+            <a href="/" class="btn btn-primary">
+                <i data-lucide="home"></i> Về trang chủ
+            </a>
+            <a href="https://zalo.me/0343019097" target="_blank" class="btn btn-outline" style="background:#0068ff; color:#ffffff; border-color:#0068ff;">
+                <i data-lucide="message-circle"></i> Nhắn Zalo hỗ trợ ngay
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
