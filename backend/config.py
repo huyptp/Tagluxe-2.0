@@ -70,14 +70,12 @@ ADMIN_PASSWORD_HASH = os.environ.get('ADMIN_PASSWORD_HASH', '')
 if IS_PRODUCTION:
     if SECRET_KEY in INSECURE_SECRET_KEYS:
         SECRET_KEY = secrets.token_hex(32)
-        logging.warning(
-            "[CONFIG WARNING] SECRET_KEY was not explicitly configured in environment. "
-            "Auto-generated a secure 256-bit random key for session encryption."
+        logging.info(
+            "[CONFIG INFO] Auto-generated a secure 256-bit random key for session encryption."
         )
     if not ADMIN_PASSWORD_HASH and ADMIN_PASSWORD in INSECURE_PASSWORDS:
-        logging.warning(
-            "[CONFIG WARNING] Default ADMIN_PASSWORD is in use. "
-            "Please configure a custom ADMIN_PASSWORD in Render Environment variables."
+        logging.info(
+            "[CONFIG INFO] Default ADMIN_PASSWORD active (admin123). Can be configured via ADMIN_PASSWORD env var."
         )
 
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB limit
