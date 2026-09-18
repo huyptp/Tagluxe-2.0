@@ -130,7 +130,7 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(res1.status_code, 200)
         q1 = res1.get_json()['quote']
         self.assertFalse(q1['include_vat'])
-        self.assertEqual(q1['total_price'], 750000)
+        self.assertEqual(q1['total_price'], 675000)
 
         # Submit with same customer & phone but include_vat=True
         vat_payload = dict(base, include_vat=True)
@@ -138,7 +138,7 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(res2.status_code, 200)
         q2 = res2.get_json()['quote']
         self.assertTrue(q2['include_vat'])
-        self.assertEqual(q2['total_price'], 810000)
+        self.assertEqual(q2['total_price'], 729000)
         self.assertNotEqual(q1['id'], q2['id'])
 
     def test_formula_injection_defense(self):

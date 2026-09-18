@@ -42,31 +42,31 @@ class QuoteCalculatorTests(unittest.TestCase):
 
     def test_pvc_holder_combo_calculations(self):
         from backend.services.data_service import calculate_pvc_price, calculate_holder_price, calculate_combo_price
-        # PVC Chuẩn thẻ ngân hàng (5.4x8.6cm): 50 cái thuộc bậc 21-50 (15k), đồng giá cho cả Mờ, Nhám, Bóng
+        # PVC Chuẩn thẻ ngân hàng (5.4x8.6cm): 50 cái thuộc bậc 21-50 (13.5k), đồng giá cho cả Mờ, Nhám, Bóng
         pvc_matte = calculate_pvc_price(50, finish='matte')
-        self.assertEqual(pvc_matte['unit_price'], 15000)
-        self.assertEqual(pvc_matte['total_price'], 750000)
+        self.assertEqual(pvc_matte['unit_price'], 13500)
+        self.assertEqual(pvc_matte['total_price'], 675000)
         self.assertEqual(pvc_matte['finish_label'], 'Cán màng mờ')
 
         pvc_textured = calculate_pvc_price(50, finish='textured')
-        self.assertEqual(pvc_textured['unit_price'], 15000)
+        self.assertEqual(pvc_textured['unit_price'], 13500)
         self.assertEqual(pvc_textured['finish_label'], 'Cán màng nhám')
 
         pvc_glossy = calculate_pvc_price(50, finish='glossy')
-        self.assertEqual(pvc_glossy['unit_price'], 15000)
+        self.assertEqual(pvc_glossy['unit_price'], 13500)
         self.assertEqual(pvc_glossy['finish_label'], 'Cán màng bóng')
 
-        # PVC Chuẩn thẻ ngân hàng: 100 cái thuộc bậc 51-100 (12k) = 12.000đ
+        # PVC Chuẩn thẻ ngân hàng: 100 cái thuộc bậc 51-100 (10.5k) = 10.500đ
         pvc_100 = calculate_pvc_price(100, finish='matte')
-        self.assertEqual(pvc_100['unit_price'], 12000)
+        self.assertEqual(pvc_100['unit_price'], 10500)
 
-        # PVC 7x11cm: 50 cái thuộc bậc 21-50 (18k)
+        # PVC 7x11cm: 50 cái thuộc bậc 21-50 (16.5k)
         pvc_7x11 = calculate_pvc_price(50, size='7x11cm')
-        self.assertEqual(pvc_7x11['unit_price'], 18000)
+        self.assertEqual(pvc_7x11['unit_price'], 16500)
 
-        # PVC 9x12cm: 50 cái thuộc bậc 21-50 (22k)
+        # PVC 9x12cm: 50 cái thuộc bậc 21-50 (20.5k)
         pvc_9x12 = calculate_pvc_price(50, size='9x12cm')
-        self.assertEqual(pvc_9x12['unit_price'], 22000)
+        self.assertEqual(pvc_9x12['unit_price'], 20500)
 
         # PVC Ngoại size: Liên hệ Zalo (0đ)
         pvc_custom = calculate_pvc_price(50, size='custom')
@@ -75,16 +75,16 @@ class QuoteCalculatorTests(unittest.TestCase):
 
         # PVC Đục lỗ con nhộng (Lỗ dẹt oval - Miễn phí 0đ)
         pvc_capsule = calculate_pvc_price(50, finish='matte', size='5.4x8.6', punched_hole='capsule')
-        self.assertEqual(pvc_capsule['unit_price'], 15000) # Vẫn 15.000đ, không phụ phí
-        self.assertEqual(pvc_capsule['total_price'], 750000)
+        self.assertEqual(pvc_capsule['unit_price'], 13500) # Vẫn 13.500đ, không phụ phí
+        self.assertEqual(pvc_capsule['total_price'], 675000)
         self.assertTrue(pvc_capsule['punched_hole'])
         self.assertEqual(pvc_capsule['hole_type'], 'capsule')
         self.assertIn('Lỗ con nhộng', pvc_capsule['specs'])
 
         # PVC Đục lỗ tròn (Miễn phí 0đ)
         pvc_round = calculate_pvc_price(50, finish='matte', size='5.4x8.6', punched_hole='round')
-        self.assertEqual(pvc_round['unit_price'], 15000) # Vẫn 15.000đ, không phụ phí
-        self.assertEqual(pvc_round['total_price'], 750000)
+        self.assertEqual(pvc_round['unit_price'], 13500) # Vẫn 13.500đ, không phụ phí
+        self.assertEqual(pvc_round['total_price'], 675000)
         self.assertTrue(pvc_round['punched_hole'])
         self.assertEqual(pvc_round['hole_type'], 'round')
         self.assertIn('Lỗ tròn', pvc_round['specs'])

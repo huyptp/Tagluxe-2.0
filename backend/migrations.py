@@ -130,6 +130,23 @@ def run_migrations(app, db):
                         """
                     )
                 ]
+            ),
+            (
+                "v006_update_pvc_price_tiers_discount_1500",
+                [
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 16500 WHERE category IN ('pvc', 'pvc_5.4x8.6') AND min_qty = 10 AND max_qty = 20"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 13500 WHERE category IN ('pvc', 'pvc_5.4x8.6') AND min_qty = 21 AND max_qty = 50"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 10500 WHERE category IN ('pvc', 'pvc_5.4x8.6') AND min_qty = 51 AND max_qty = 100"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 8500 WHERE category IN ('pvc', 'pvc_5.4x8.6') AND min_qty = 101 AND max_qty = 200"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 21500 WHERE category = 'pvc_7x11' AND min_qty = 10 AND max_qty = 20"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 16500 WHERE category = 'pvc_7x11' AND min_qty = 21 AND max_qty = 50"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 15500 WHERE category = 'pvc_7x11' AND min_qty = 51 AND max_qty = 100"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 14500 WHERE category = 'pvc_7x11' AND min_qty = 101 AND max_qty = 200"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 23500 WHERE category = 'pvc_9x12' AND min_qty = 10 AND max_qty = 20"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 20500 WHERE category = 'pvc_9x12' AND min_qty = 21 AND max_qty = 50"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 18500 WHERE category = 'pvc_9x12' AND min_qty = 51 AND max_qty = 100"),
+                    ("price_tiers", None, "UPDATE price_tiers SET unit_price = 17500 WHERE category = 'pvc_9x12' AND min_qty = 101 AND max_qty = 200"),
+                ]
             )
         ]
 
