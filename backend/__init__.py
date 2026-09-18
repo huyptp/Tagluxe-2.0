@@ -77,7 +77,10 @@ def create_app(test_config=None):
     # Context processors & middleware
     @app.context_processor
     def seo_context():
-        return {'site_url': site_origin()}
+        return {
+            'site_url': site_origin(),
+            'asset_v': '20260918_v2'
+        }
 
     @app.errorhandler(404)
     def page_not_found(e):
@@ -98,7 +101,10 @@ def create_app(test_config=None):
     def add_seo_headers(response):
         if request.path.startswith('/admin') or request.path == '/ping' or response.status_code >= 400:
             response.headers['X-Robots-Tag'] = 'noindex, nofollow'
-        if '/static/' in response.headers.get('Content-Type', '') or request.path.startswith('/static/'):
+        if response.status_code >= 400:
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+        elif '/static/' in response.headers.get('Content-Type', '') or request.path.startswith('/static/'):
             response.headers['Cache-Control'] = 'public, max-age=2592000'
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'

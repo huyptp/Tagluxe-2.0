@@ -206,7 +206,7 @@
                aria-label="{{ photo.product_name }}"
                data-aos="fade-up"
                data-aos-delay="{{ loop.index * 50 }}">
-                <img src="{{ url_for('static', filename='uploads/' + photo.img) }}"
+                <img src="{{ url_for('static', filename='uploads/' + photo.img) }}?v={{ asset_v }}"
                      alt="{{ photo.product_name }} - TagLuxe"
                      loading="lazy">
             </a>
@@ -693,7 +693,7 @@
             <div class="poster-slider-track" id="posterTrack">
                 {% for item in showcase_items %}
                 <div class="poster-card {% if loop.first %}active{% endif %}" data-category="{{ item.category }}">
-                    <img src="{{ url_for('static', filename='uploads/' + item.img) }}" alt="{{ item.title }} - TagLuxe" loading="lazy">
+                    <img src="{{ url_for('static', filename='uploads/' + item.img) }}?v={{ asset_v }}" alt="{{ item.title }} - TagLuxe" loading="lazy">
                     <div class="poster-content">
                         <span class="poster-card-badge">{{ item.cat_label }}</span>
                         <h3>{{ item.title }}</h3>

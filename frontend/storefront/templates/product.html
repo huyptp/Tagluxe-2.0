@@ -290,7 +290,7 @@
                 <div class="gallery-main-inner" id="galleryMain">
                     {% for img in images %}
                     <div class="gallery-slide {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}">
-                        <img src="{{ url_for('static', filename='uploads/' + img) }}"
+                        <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
                              alt="{{ product.name }} - Mẫu {{ loop.index }} | TagLuxe"
                              loading="{% if loop.first %}eager{% else %}lazy{% endif %}"
                              itemprop="image">
@@ -317,7 +317,7 @@
                         data-index="{{ loop.index0 }}"
                         onclick="goToSlide({{ loop.index0 }})"
                         aria-label="Xem ảnh {{ loop.index }}">
-                    <img src="{{ url_for('static', filename='uploads/' + img) }}"
+                    <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
                          alt="{{ product.name }} thumbnail {{ loop.index }}"
                          loading="lazy">
                 </button>
