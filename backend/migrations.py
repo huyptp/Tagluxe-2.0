@@ -147,6 +147,16 @@ def run_migrations(app, db):
                     ("price_tiers", None, "UPDATE price_tiers SET unit_price = 18500 WHERE category = 'pvc_9x12' AND min_qty = 51 AND max_qty = 100"),
                     ("price_tiers", None, "UPDATE price_tiers SET unit_price = 17500 WHERE category = 'pvc_9x12' AND min_qty = 101 AND max_qty = 200"),
                 ]
+            ),
+            (
+                "v007_add_lanyard_photos_to_lan1",
+                [
+                    (
+                        "products",
+                        None,
+                        """UPDATE products SET images_json = '["media_1789714507972.jpg", "media_1789714507975.jpg", "media_1789714507982.jpg", "media_1789662028575.jpg", "media_1789320576594.jpg", "media_1789662086201.jpg", "media_1789662028590.jpg", "media_1789662086215.jpg", "media_1789662064859.jpg", "media_1789662064871.jpg", "media_1789662064894.jpg", "media_1789662086196.jpg", "media_1789662086207.jpg", "media_1789662028598.jpg", "media_1789662028605.jpg", "media_1789662028584.jpg", "media_1786037379657.jpg", "media_1789285818722.jpg", "media_1789286120138.jpg", "media_1786037379884.jpg", "media_1789285818629.jpg", "media_1789285818730.jpg", "media_1789285818752.jpg", "media_1789285818740.jpg", "media_1786037379878.jpg"]' WHERE id = 'lan-1'"""
+                    )
+                ]
             )
         ]
 
