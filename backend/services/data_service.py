@@ -237,11 +237,12 @@ def product_schema(product):
 def get_demo_requests():
     try:
         from backend.models import DemoRequest
-        reqs = DemoRequest.query.all()
-        if reqs:
+        reqs = DemoRequest.query.order_by(DemoRequest.id.desc()).all()
+        if reqs is not None:
             return [r.to_dict() for r in reqs]
-    except Exception:
-        pass
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_DEMO_REQ_GET_ERROR] {ex}")
     data = load_data()
     return data.get('demo_requests', [])
 
@@ -258,9 +259,10 @@ def add_demo_request(phone, customer_name='', product_category='lanyard', quanti
         'notes': notes,
         'file_path': file_path,
         'original_filename': original_filename,
-        'status': 'Chờ gửi demo'
+        'status': 'Chờ gửi demo',
+        'sync_status': 'pending'
     }
-    # Save to Database
+    # 1. Save to Database (Single Source of Truth)
     try:
         from backend.database import db
         from backend.models import DemoRequest
@@ -274,24 +276,19 @@ def add_demo_request(phone, customer_name='', product_category='lanyard', quanti
             notes=notes,
             file_path=file_path,
             original_filename=original_filename,
-            status='Chờ gửi demo'
+            status='Chờ gửi demo',
+            sync_status='pending'
         )
         db.session.add(req_obj)
         db.session.commit()
     except Exception as ex:
-        print(f"[DB_DEMO_REQ_SAVE_ERROR] {ex}")
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_DEMO_REQ_SAVE_ERROR] Failed to save demo request {req_id}: {ex}")
+        return None
 
-    # Save to data.json backup
-    try:
-        data = load_data()
-        if 'demo_requests' not in data:
-            data['demo_requests'] = []
-        data['demo_requests'].insert(0, new_req)
-        save_data(data)
-    except Exception as ex:
-        print(f"[JSON_BACKUP_ERROR] {ex}")
-
-    # 3. Đồng bộ tức thời về Google Sheet
+    # 2. Async sync to Google Sheet
     sheet_payload = {
         'id': req_id,
         'created_at': now_str,
@@ -306,7 +303,12 @@ def add_demo_request(phone, customer_name='', product_category='lanyard', quanti
         'notes': notes or 'Yêu cầu lên mẫu phối cảnh 2D',
         'status': 'Chờ gửi demo'
     }
-    sync_thread = threading.Thread(target=send_quote_to_google_sheet, args=(sheet_payload,), daemon=True)
+    from flask import current_app
+    try:
+        app = current_app._get_current_object()
+    except Exception:
+        app = None
+    sync_thread = threading.Thread(target=send_quote_to_google_sheet, args=(sheet_payload, app), daemon=True)
     sync_thread.start()
 
     return new_req
@@ -919,8 +921,9 @@ def get_quotes(status=None, search=None):
         quotes = query.order_by(Quote.created_at.desc()).all()
         if quotes is not None:
             return [q.to_dict() for q in quotes]
-    except Exception:
-        pass
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_QUOTE_GET_ERROR] {ex}")
     data = load_data()
     quotes = data.get('quotes', [])
     if status and status != 'all':
@@ -939,7 +942,10 @@ def update_quote_status(quote_id, new_status):
             q.status = new_status
             db.session.commit()
     except Exception as ex:
-        print(f"[DB_QUOTE_STATUS_ERROR] {ex}")
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_QUOTE_STATUS_ERROR] {ex}")
 
     data = load_data()
     for q in data.get('quotes', []):
@@ -958,7 +964,10 @@ def delete_quote(quote_id):
             db.session.delete(q)
             db.session.commit()
     except Exception as ex:
-        print(f"[DB_QUOTE_DEL_ERROR] {ex}")
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_QUOTE_DEL_ERROR] {ex}")
 
     data = load_data()
     data['quotes'] = [q for q in data.get('quotes', []) if q.get('id') != quote_id and q.get('quote_id') != quote_id]
@@ -999,10 +1008,11 @@ def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, not
         'vat_amount': vat_amount,
         'total_price': pricing['total_price'],
         'notes': formatted_notes,
-        'status': 'Mới'
+        'status': 'Mới',
+        'sync_status': 'pending'
     }
 
-    # 1. Save to Database (SQLAlchemy)
+    # 1. Save to Database (SQLAlchemy) - Single Source of Truth
     try:
         from backend.database import db
         from backend.models import Quote
@@ -1021,44 +1031,97 @@ def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, not
             notes=quote_record['notes'],
             status=quote_record['status'],
             include_vat=include_vat,
-            vat_amount=vat_amount
+            vat_amount=vat_amount,
+            sync_status='pending'
         )
         db.session.add(quote_obj)
         db.session.commit()
     except Exception as ex:
-        print(f"[DB_QUOTE_SAVE_WARNING] {ex}")
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_QUOTE_SAVE_ERROR] Failed to save quote {quote_id}: {ex}")
+        return None
 
-    # 2. Save to data.json backup
+    # 2. Sync to Google Sheet asynchronously
+    from flask import current_app
     try:
-        data = load_data()
-        if 'quotes' not in data:
-            data['quotes'] = []
-        data['quotes'].insert(0, quote_record)
-        save_data(data)
-    except Exception as ex:
-        print(f"[JSON_BACKUP_WARNING] {ex}")
-
-    # 3. Sync to Google Sheet asynchronously
-    sync_thread = threading.Thread(target=send_quote_to_google_sheet, args=(quote_record,), daemon=True)
+        app = current_app._get_current_object()
+    except Exception:
+        app = None
+    sync_thread = threading.Thread(target=send_quote_to_google_sheet, args=(quote_record, app), daemon=True)
     sync_thread.start()
 
     return quote_record
 
-def send_quote_to_google_sheet(quote_data):
+def sanitize_for_sheet(val):
     """
-    Sends the quote data directly to Google Sheet via Google Apps Script Web App.
+    Sanitizes values before sending to Google Sheet to prevent Formula Injection (CSV injection).
+    Prepends an apostrophe ' if text begins with =, +, -, @, \\t, or \\r.
     """
+    if isinstance(val, str):
+        if val.startswith(('=', '+', '-', '@', '\t', '\r')):
+            return f"'{val}"
+        return val
+    elif isinstance(val, list):
+        return [sanitize_for_sheet(item) for item in val]
+    elif isinstance(val, dict):
+        return {k: sanitize_for_sheet(v) for k, v in val.items()}
+    return val
+
+def _update_record_sync_status(rec_id, status, error_msg=None, app=None):
+    if not rec_id:
+        return
+    def _do_update():
+        try:
+            from backend.database import db
+            from backend.models import Quote, DemoRequest
+            q = Quote.query.filter_by(id=rec_id).first()
+            if q:
+                q.sync_status = status
+                q.sync_error = (error_msg or '')[:500] if error_msg else None
+                db.session.commit()
+                return
+            d = DemoRequest.query.filter_by(id=rec_id).first()
+            if d:
+                d.sync_status = status
+                d.sync_error = (error_msg or '')[:500] if error_msg else None
+                db.session.commit()
+        except Exception as ex:
+            import logging
+            logging.getLogger(__name__).error(f"[SYNC_STATUS_UPDATE_ERROR] {ex}")
+
+    if app:
+        with app.app_context():
+            _do_update()
+    else:
+        _do_update()
+
+def send_quote_to_google_sheet(quote_data, app=None):
+    """
+    Sends the quote or demo request data directly to Google Sheet via Google Apps Script Web App.
+    Sanitizes inputs against Formula Injection and updates sync_status in Database.
+    """
+    quote_id = quote_data.get('id')
     webhook_url = GOOGLE_SHEET_WEBHOOK_URL or os.environ.get('GOOGLE_SHEET_WEBHOOK_URL', '')
     if not webhook_url:
+        _update_record_sync_status(quote_id, 'failed', 'GOOGLE_SHEET_WEBHOOK_URL not configured', app)
         return False, "GOOGLE_SHEET_WEBHOOK_URL not configured"
+
+    sanitized_data = sanitize_for_sheet(quote_data)
 
     try:
         try:
             import requests
-            resp = requests.post(webhook_url, json=quote_data, timeout=12, headers={'User-Agent': 'TagLuxe-Server/1.0'})
-            return True, f"Google Sheet synced: {resp.status_code}"
+            resp = requests.post(webhook_url, json=sanitized_data, timeout=12, headers={'User-Agent': 'TagLuxe-Server/1.0'})
+            if resp.status_code == 200:
+                _update_record_sync_status(quote_id, 'synced', None, app)
+                return True, f"Google Sheet synced: {resp.status_code}"
+            else:
+                _update_record_sync_status(quote_id, 'failed', f"HTTP {resp.status_code}: {resp.text[:200]}", app)
+                return False, f"Google Sheet sync HTTP error: {resp.status_code}"
         except ImportError:
-            payload = json.dumps(quote_data).encode('utf-8')
+            payload = json.dumps(sanitized_data).encode('utf-8')
             req = urllib.request.Request(
                 webhook_url,
                 data=payload,
@@ -1068,10 +1131,18 @@ def send_quote_to_google_sheet(quote_data):
                 }
             )
             with urllib.request.urlopen(req, timeout=12) as resp:
-                return True, f"Google Sheet synced: {resp.getcode()}"
+                code = resp.getcode()
+                if code == 200:
+                    _update_record_sync_status(quote_id, 'synced', None, app)
+                    return True, f"Google Sheet synced: {code}"
+                else:
+                    _update_record_sync_status(quote_id, 'failed', f"HTTP {code}", app)
+                    return False, f"Google Sheet sync HTTP error: {code}"
     except Exception as e:
-        # Silently log error without breaking app flow
-        print(f"[GOOGLE_SHEET_SYNC_ERROR] {e}")
+        import logging
+        logging.getLogger(__name__).error(f"[GOOGLE_SHEET_SYNC_ERROR] {e}")
+        _update_record_sync_status(quote_id, 'failed', str(e), app)
         return False, str(e)
+
 
 

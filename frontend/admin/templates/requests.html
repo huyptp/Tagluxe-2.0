@@ -87,10 +87,10 @@
                     <!-- File Logo -->
                     <td>
                         {% if req.file_path %}
-                        <a href="{{ url_for('static', filename='uploads/requests/' + req.file_path) }}" download target="_blank"
+                        <a href="{{ url_for('admin.admin_download_request_file', id=req.id) }}" download target="_blank"
                            style="display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 6px 10px; border-radius: 6px; font-size: 0.82rem; text-decoration: none; font-weight: 600;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Tải file logo
+                            Tải file logo (Bảo mật)
                         </a>
                         <div style="font-size: 0.75rem; color: #6b7280; margin-top: 4px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                             {{ req.original_filename if req.original_filename else req.file_path }}
@@ -103,6 +103,7 @@
                     <!-- Trạng thái -->
                     <td>
                         <form method="POST" action="/admin/requests/status/{{ req.id }}" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <select name="status" onchange="this.form.submit()"
                                     style="padding: 6px 8px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
                                     {% if req.status == 'Chờ gửi demo' %}
@@ -125,6 +126,7 @@
                     <!-- Thao tác xóa -->
                     <td style="text-align: right;">
                         <form method="POST" action="/admin/requests/delete/{{ req.id }}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa yêu cầu này?');" style="display: inline-block;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 6px;" title="Xóa yêu cầu">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                             </button>

@@ -4,6 +4,7 @@ import threading
 import urllib.request
 import jinja2
 from flask import Flask, render_template, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 from backend.config import (
     BASE_DIR, STOREFRONT_TEMPLATES, ADMIN_TEMPLATES, LEGACY_TEMPLATES,
     STOREFRONT_STATIC, ADMIN_STATIC, LEGACY_STATIC,
@@ -57,6 +58,9 @@ def create_app(test_config=None):
     app.config['SESSION_COOKIE_SAMESITE'] = SESSION_COOKIE_SAMESITE
     app.config['SESSION_COOKIE_SECURE'] = SESSION_COOKIE_SECURE
     app.config['PERMANENT_SESSION_LIFETIME'] = PERMANENT_SESSION_LIFETIME
+
+    # Wrap WSGI app with ProxyFix to safely parse X-Forwarded headers behind reverse proxies (Render, Nginx)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     if test_config:
         app.config.update(test_config)

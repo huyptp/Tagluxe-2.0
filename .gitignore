@@ -19,6 +19,8 @@ ENV/
 tagluxe.db
 
 # Private Customer Uploads
+storage/*
+!storage/.gitkeep
 static/uploads/requests/*
 frontend/storefront/static/uploads/requests/*
 !static/uploads/requests/.gitkeep

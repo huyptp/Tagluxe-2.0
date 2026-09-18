@@ -178,7 +178,11 @@ def init_db(app):
             with db.engine.connect() as conn:
                 for col_sql in [
                     "ALTER TABLE quotes ADD COLUMN include_vat BOOLEAN DEFAULT 0",
-                    "ALTER TABLE quotes ADD COLUMN vat_amount INTEGER DEFAULT 0"
+                    "ALTER TABLE quotes ADD COLUMN vat_amount INTEGER DEFAULT 0",
+                    "ALTER TABLE quotes ADD COLUMN sync_status VARCHAR(20) DEFAULT 'pending'",
+                    "ALTER TABLE quotes ADD COLUMN sync_error TEXT",
+                    "ALTER TABLE demo_requests ADD COLUMN sync_status VARCHAR(20) DEFAULT 'pending'",
+                    "ALTER TABLE demo_requests ADD COLUMN sync_error TEXT"
                 ]:
                     try:
                         conn.execute(text(col_sql))

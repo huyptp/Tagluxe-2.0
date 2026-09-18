@@ -94,11 +94,7 @@ idempotency = IdempotencyManager(ttl_sec=30)
 
 
 def get_client_ip():
-    """Extracts client IP address respecting reverse proxies like Render/Cloudflare"""
-    if request.headers.get('X-Forwarded-For'):
-        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
-    if request.headers.get('X-Real-IP'):
-        return request.headers.get('X-Real-IP').strip()
+    """Extracts client IP address safely set by ProxyFix / WSGI environment"""
     return request.remote_addr or '127.0.0.1'
 
 

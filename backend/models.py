@@ -37,6 +37,8 @@ class Quote(db.Model):
     status = db.Column(db.String(50), nullable=False, default='Mới')
     include_vat = db.Column(db.Boolean, nullable=True, default=False)
     vat_amount = db.Column(db.Integer, nullable=True, default=0)
+    sync_status = db.Column(db.String(20), nullable=False, default='pending') # pending, synced, failed
+    sync_error = db.Column(db.Text, nullable=True)
 
     def to_dict(self):
         accs = []
@@ -84,6 +86,8 @@ class DemoRequest(db.Model):
     file_path = db.Column(db.String(255), nullable=True)
     original_filename = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), nullable=False, default='Chờ gửi demo')
+    sync_status = db.Column(db.String(20), nullable=False, default='pending') # pending, synced, failed
+    sync_error = db.Column(db.Text, nullable=True)
 
     def to_dict(self):
         return {
@@ -96,7 +100,33 @@ class DemoRequest(db.Model):
             'notes': self.notes,
             'file_path': self.file_path,
             'original_filename': self.original_filename,
-            'status': self.status
+            'status': self.status,
+            'sync_status': self.sync_status
+        }
+
+
+class AuditLog(db.Model):
+    __tablename__ = 'audit_logs'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    timestamp = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
+    admin_user = db.Column(db.String(80), nullable=False)
+    action = db.Column(db.String(80), nullable=False) # e.g. update_status, update_price, delete_product, delete_request
+    target_type = db.Column(db.String(50), nullable=False) # quote, product, demo_request
+    target_id = db.Column(db.String(80), nullable=False)
+    details = db.Column(db.Text, nullable=True) # JSON or descriptive string
+    ip_address = db.Column(db.String(50), nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'timestamp': self.timestamp.strftime('%d/%m/%Y %H:%M:%S') if self.timestamp else '',
+            'admin_user': self.admin_user,
+            'action': self.action,
+            'target_type': self.target_type,
+            'target_id': self.target_id,
+            'details': self.details or '',
+            'ip_address': self.ip_address or ''
         }
 
 class Product(db.Model):

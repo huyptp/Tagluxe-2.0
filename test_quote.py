@@ -33,7 +33,7 @@ class QuoteCalculatorTests(unittest.TestCase):
         self.assertEqual(p500['total_price'], 11750000)
 
     def test_pvc_holder_combo_calculations(self):
-        from core.services.data_service import calculate_pvc_price, calculate_holder_price, calculate_combo_price
+        from backend.services.data_service import calculate_pvc_price, calculate_holder_price, calculate_combo_price
         # PVC Chuẩn thẻ ngân hàng (5.4x8.6cm): 50 cái thuộc bậc 21-50 (15k), đồng giá cho cả Mờ, Nhám, Bóng
         pvc_matte = calculate_pvc_price(50, finish='matte')
         self.assertEqual(pvc_matte['unit_price'], 15000)
@@ -178,7 +178,7 @@ class QuoteCalculatorTests(unittest.TestCase):
         self.assertEqual(api_data['total_price'], 1080000)
 
         # 3. Test API submit-quote with VAT (mock add_quote để không ghi rác)
-        with patch('core.routes.api.add_quote') as mock_add:
+        with patch('backend.api.routes.add_quote') as mock_add:
             mock_add.return_value = {
                 'id': 'Q260917-VAT1',
                 'quote_id': 'Q260917-VAT1',
@@ -258,7 +258,7 @@ class QuoteCalculatorTests(unittest.TestCase):
         self.assertIn('20', res.get_json()['message'])
 
         # Holder with qty >= 20 calculation
-        from core.services.data_service import calculate_holder_price
+        from backend.services.data_service import calculate_holder_price
         p20_print = calculate_holder_price(20, 'vertical', True)
         self.assertEqual(p20_print['quantity'], 20)
         self.assertEqual(p20_print['unit_price'], 35000)
@@ -270,7 +270,7 @@ class QuoteCalculatorTests(unittest.TestCase):
         self.assertEqual(p20_plain['total_price'], 140000)
 
     def test_holder_pricing_all_tiers_and_api(self):
-        from core.services.data_service import calculate_holder_price, get_holder_pricing_matrix
+        from backend.services.data_service import calculate_holder_price, get_holder_pricing_matrix
         # 1. Kiểm tra 7 bậc giá Vỏ đựng thẻ in theo thiết kế
         tiers_expected = [
             (20, 35000),    # Bậc 20 - 50: 35k

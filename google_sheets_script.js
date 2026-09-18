@@ -391,6 +391,15 @@ function getFirstEmptyRow(sheet) {
   return values.length + 1;
 }
 
+function sanitizeForSheet(val) {
+  if (val === null || val === undefined) return "";
+  var str = String(val);
+  if (str.startsWith("=") || str.startsWith("+") || str.startsWith("-") || str.startsWith("@") || str.startsWith("\t") || str.startsWith("\r")) {
+    return "'" + str;
+  }
+  return str;
+}
+
 function saveQuoteOrder(ss, data) {
   var sheet = ss.getSheetByName("📋 QUẢN LÝ BÁO GIÁ");
   if (!sheet) return;
@@ -408,16 +417,16 @@ function saveQuoteOrder(ss, data) {
 
   var row = [
     data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
-    data.id || data.quote_id || ("TL-" + Math.floor(1000 + Math.random() * 9000)),
-    data.category || "Dây đeo thẻ",
-    data.customer_name || "Khách hàng",
+    sanitizeForSheet(data.id || data.quote_id || ("TL-" + Math.floor(1000 + Math.random() * 9000))),
+    sanitizeForSheet(data.category || "Dây đeo thẻ"),
+    sanitizeForSheet(data.customer_name || "Khách hàng"),
     "'" + phone,
     zaloFormula,
     data.quantity || 0,
-    data.specs || data.width || "",
-    accText,
+    sanitizeForSheet(data.specs || data.width || ""),
+    sanitizeForSheet(accText),
     data.total_price || 0,
-    data.notes || "",
+    sanitizeForSheet(data.notes || ""),
     false, // Checkbox mặc định chưa xong
     "Mới"
   ];
@@ -446,14 +455,14 @@ function saveDemoRequest(ss, data) {
 
   var row = [
     data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
-    data.id || ("DM-" + Math.floor(1000 + Math.random() * 9000)),
-    data.customer_name || "Khách hàng",
+    sanitizeForSheet(data.id || ("DM-" + Math.floor(1000 + Math.random() * 9000))),
+    sanitizeForSheet(data.customer_name || "Khách hàng"),
     "'" + phone,
     zaloFormula,
-    data.category || "Dây đeo thẻ",
-    data.quantity || "10-20",
-    data.specs || "Không đính kèm",
-    data.notes || "",
+    sanitizeForSheet(data.category || "Dây đeo thẻ"),
+    sanitizeForSheet(data.quantity || "10-20"),
+    sanitizeForSheet(data.specs || "Không đính kèm"),
+    sanitizeForSheet(data.notes || ""),
     false, // Checkbox chưa gửi
     "Chờ gửi demo"
   ];
