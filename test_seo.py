@@ -77,5 +77,14 @@ class SeoTests(unittest.TestCase):
                 self.assertTrue(res.headers['Location'].endswith('/product/lan-1'))
 
 
+    def test_google_tag_manager_rendered(self):
+        res = self.client.get('/')
+        self.assertEqual(res.status_code, 200)
+        html = res.get_data(as_text=True)
+        self.assertIn('https://www.googletagmanager.com/gtm.js?id=', html)
+        self.assertIn('https://www.googletagmanager.com/ns.html?id=', html)
+        self.assertIn('GTM-T22MFFG9', html)
+
+
 if __name__ == '__main__':
     unittest.main()
