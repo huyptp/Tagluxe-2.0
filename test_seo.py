@@ -85,6 +85,14 @@ class SeoTests(unittest.TestCase):
         self.assertIn('https://www.googletagmanager.com/ns.html?id=', html)
         self.assertIn('GTM-T22MFFG9', html)
 
+    def test_google_analytics_rendered(self):
+        res = self.client.get('/')
+        self.assertEqual(res.status_code, 200)
+        html = res.get_data(as_text=True)
+        self.assertIn('https://www.googletagmanager.com/gtag/js?id=G-KY6VE15P5L', html)
+        self.assertIn("gtag('config', 'G-KY6VE15P5L')", html)
+
+
 
 if __name__ == '__main__':
     unittest.main()
