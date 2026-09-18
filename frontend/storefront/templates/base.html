@@ -180,6 +180,17 @@
     <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id={{ config['FACEBOOK_PIXEL_ID'] }}&ev=PageView&noscript=1"/></noscript>
     {% endif %}
+
+    <!-- ===== GOOGLE ANALYTICS (GA4) ===== -->
+    {% if config.get('GOOGLE_ANALYTICS_ID') %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config['GOOGLE_ANALYTICS_ID'] }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ config["GOOGLE_ANALYTICS_ID"] }}');
+    </script>
+    {% endif %}
 </head>
 <body>
 
