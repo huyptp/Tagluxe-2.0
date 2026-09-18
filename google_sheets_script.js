@@ -51,6 +51,7 @@ function onOpen() {
   ui.createMenu("🚀 TagLuxe Admin")
     .addItem("📊 Khởi tạo / Làm mới Giao diện Dashboard", "setupFullSystem")
     .addItem("🎨 Dọn dẹp Hộp kiểm & Cài đặt Menu Trạng thái", "setupStatusDropdownsAndColors")
+    .addItem("💬 Sửa lỗi toàn bộ Link Nhắn Zalo", "fixAllZaloLinks")
     .addItem("➕ Thêm Thử 1 Đơn Mẫu Trực Tiếp Vào Bảng", "addSampleQuoteRow")
     .addItem("✉️ Gửi Thử 1 Email Thông Báo Test", "sendTestNotification")
     .addToUi();
@@ -240,10 +241,13 @@ function ensureSheetsExist(ss) {
 
 function getFormulaSep(ss) {
   var locale = (ss.getSpreadsheetLocale() || "").toLowerCase();
-  // Ở Việt Nam và các nước dùng dấu phẩy cho thập phân thì hàm ngăn cách bằng dấu chấm phẩy ;
-  if (locale.indexOf("en_us") !== -1 || locale === "en") {
-    return ",";
+  // Các locale phổ biến dùng dấu phẩy (,) ngăn cách tham số hàm:
+  var commaLocales = ["en_us", "en_gb", "en_au", "en_ca", "en_in", "ja_jp", "zh_cn", "zh_tw", "ko_kr"];
+  for (var i = 0; i < commaLocales.length; i++) {
+    if (locale.indexOf(commaLocales[i]) !== -1) return ",";
   }
+  if (locale.startsWith("en")) return ",";
+  // Mặc định ở Việt Nam (vi_VN) và các nước dùng dấu phẩy cho số thập phân: ngăn cách bằng dấu chấm phẩy (;)
   return ";";
 }
 
@@ -428,7 +432,8 @@ function saveQuoteOrder(ss, data) {
 
   var phone = String(data.phone || "").trim();
   var rawDigits = phone.replace(/[^0-9]/g, "");
-  var zaloFormula = rawDigits ? '=HYPERLINK("https://zalo.me/' + rawDigits + '", "💬 Nhắn Zalo")' : "Không có";
+  var sep = getFormulaSep(ss);
+  var zaloFormula = rawDigits ? '=HYPERLINK("https://zalo.me/' + rawDigits + '"' + sep + ' "💬 Nhắn Zalo")' : "Không có";
 
   var specsText = String(data.specs || data.width || "");
   if (data.punched_hole && data.punched_hole !== "none") {
@@ -474,7 +479,8 @@ function saveDemoRequest(ss, data) {
 
   var phone = String(data.phone || "").trim();
   var rawDigits = phone.replace(/[^0-9]/g, "");
-  var zaloFormula = rawDigits ? '=HYPERLINK("https://zalo.me/' + rawDigits + '", "💬 Nhắn Zalo")' : "Không có";
+  var sep = getFormulaSep(ss);
+  var zaloFormula = rawDigits ? '=HYPERLINK("https://zalo.me/' + rawDigits + '"' + sep + ' "💬 Nhắn Zalo")' : "Không có";
 
   var row = [
     data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
@@ -573,4 +579,55 @@ function addSampleQuoteRow() {
   saveQuoteOrder(ss, mockData);
   SpreadsheetApp.getUi().alert("✅ Đã thêm thành công 1 đơn hàng mẫu vào tab 'QUẢN LÝ BÁO GIÁ'! Mời bạn kiểm tra bảng tính và Dashboard.");
 }
+
+/**
+ * Hàm tiện ích: Tự động quét và sửa toàn bộ lỗi #ERROR! ở cột Nhắn Zalo
+ * Khắc phục triệt để lỗi dấu phẩy (,) và chấm phẩy (;) theo Locale bảng tính
+ */
+function fixAllZaloLinks() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sep = getFormulaSep(ss);
+  var fixedCount = 0;
+
+  // 1. Quét và sửa trên tab "📋 QUẢN LÝ BÁO GIÁ" (Cột E: Số điện thoại, Cột F: Nhắn Zalo)
+  var quotesSheet = ss.getSheetByName("📋 QUẢN LÝ BÁO GIÁ");
+  if (quotesSheet) {
+    var lastRow = quotesSheet.getLastRow();
+    if (lastRow >= 2) {
+      var phoneValues = quotesSheet.getRange(2, 5, lastRow - 1, 1).getValues();
+      for (var i = 0; i < phoneValues.length; i++) {
+        var rawPhone = String(phoneValues[i][0] || "").replace(/[^0-9]/g, "");
+        var targetCell = quotesSheet.getRange(i + 2, 6);
+        if (rawPhone) {
+          targetCell.setFormula('=HYPERLINK("https://zalo.me/' + rawPhone + '"' + sep + ' "💬 Nhắn Zalo")');
+          fixedCount++;
+        } else {
+          targetCell.setValue("Không có");
+        }
+      }
+    }
+  }
+
+  // 2. Quét và sửa trên tab "🎨 YÊU CẦU DEMO 2D" (Cột D: Số điện thoại, Cột E: Nhắn Zalo)
+  var demoSheet = ss.getSheetByName("🎨 YÊU CẦU DEMO 2D");
+  if (demoSheet) {
+    var lastRowDemo = demoSheet.getLastRow();
+    if (lastRowDemo >= 2) {
+      var phoneDemoValues = demoSheet.getRange(2, 4, lastRowDemo - 1, 1).getValues();
+      for (var j = 0; j < phoneDemoValues.length; j++) {
+        var rawPhoneDemo = String(phoneDemoValues[j][0] || "").replace(/[^0-9]/g, "");
+        var targetDemoCell = demoSheet.getRange(j + 2, 5);
+        if (rawPhoneDemo) {
+          targetDemoCell.setFormula('=HYPERLINK("https://zalo.me/' + rawPhoneDemo + '"' + sep + ' "💬 Nhắn Zalo")');
+          fixedCount++;
+        } else {
+          targetDemoCell.setValue("Không có");
+        }
+      }
+    }
+  }
+
+  SpreadsheetApp.getUi().alert("✅ Đã sửa thành công toàn bộ link Zalo cho " + fixedCount + " dòng dữ liệu! Các ô #ERROR! đã được khắc phục hoàn toàn.");
+}
+
 
