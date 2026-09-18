@@ -37,8 +37,10 @@ class Quote(db.Model):
     status = db.Column(db.String(50), nullable=False, default='Mới')
     include_vat = db.Column(db.Boolean, nullable=True, default=False)
     vat_amount = db.Column(db.Integer, nullable=True, default=0)
+    punched_hole = db.Column(db.String(20), nullable=True, default='none') # none, round, capsule
     sync_status = db.Column(db.String(20), nullable=False, default='pending') # pending, synced, failed
     sync_error = db.Column(db.Text, nullable=True)
+    retry_count = db.Column(db.Integer, nullable=False, default=0)
 
     def to_dict(self):
         accs = []
@@ -70,7 +72,11 @@ class Quote(db.Model):
             'vat_amount': vat_amt,
             'total_price': self.total_price,
             'notes': self.notes or '',
-            'status': self.status
+            'punched_hole': self.punched_hole or 'none',
+            'status': self.status,
+            'sync_status': self.sync_status,
+            'sync_error': self.sync_error,
+            'retry_count': self.retry_count
         }
 
 class DemoRequest(db.Model):
@@ -88,6 +94,7 @@ class DemoRequest(db.Model):
     status = db.Column(db.String(50), nullable=False, default='Chờ gửi demo')
     sync_status = db.Column(db.String(20), nullable=False, default='pending') # pending, synced, failed
     sync_error = db.Column(db.Text, nullable=True)
+    retry_count = db.Column(db.Integer, nullable=False, default=0)
 
     def to_dict(self):
         return {
@@ -101,8 +108,28 @@ class DemoRequest(db.Model):
             'file_path': self.file_path,
             'original_filename': self.original_filename,
             'status': self.status,
-            'sync_status': self.sync_status
+            'sync_status': self.sync_status,
+            'sync_error': self.sync_error,
+            'retry_count': self.retry_count
         }
+
+
+class IdempotencyRecord(db.Model):
+    __tablename__ = 'idempotency_records'
+
+    key = db.Column(db.String(64), primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    response_json = db.Column(db.Text, nullable=False)
+
+    def to_dict(self):
+        return json.loads(self.response_json)
+
+
+class SchemaMigration(db.Model):
+    __tablename__ = 'schema_migrations'
+
+    version = db.Column(db.String(50), primary_key=True)
+    applied_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class AuditLog(db.Model):

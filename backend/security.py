@@ -1,6 +1,8 @@
 import time
+import json
 import hashlib
 import threading
+from datetime import datetime
 from functools import wraps
 from flask import request, jsonify, flash, redirect, url_for
 
@@ -54,22 +56,35 @@ class SlidingWindowRateLimiter:
 
 class IdempotencyManager:
     """
-    Thread-safe Idempotency Manager.
-    Prevents duplicate submissions if a customer double-clicks or spams the submit button within 30 seconds.
+    Atomic Idempotency Manager with Database Persistence.
+    Prevents duplicate submissions across multiple worker processes (Gunicorn)
+    and handles double-clicks within a 30-second window.
     """
     def __init__(self, ttl_sec=30):
         self._lock = threading.Lock()
-        self._cache = {}  # {hash: {'time': ts, 'result': data}}
+        self._cache = {}  # In-memory fallback
         self._ttl = ttl_sec
 
     def generate_key(self, *args):
-        """Creates a deterministic hash key from order attributes"""
-        raw_str = "|".join(str(a or '').strip().lower() for a in args)
+        """Creates a deterministic hash key from canonical order attributes"""
+        raw_str = "|".join(str(a if a is not None else '').strip().lower() for a in args)
         return hashlib.sha256(raw_str.encode('utf-8')).hexdigest()
 
     def get_existing(self, key):
-        """Checks if a valid recent request exists for this key"""
+        """Checks if a valid recent request exists for this key in DB or memory"""
         now = time.time()
+        # 1. Check database persistence
+        try:
+            from backend.models import IdempotencyRecord
+            rec = IdempotencyRecord.query.filter_by(key=key).first()
+            if rec and rec.created_at:
+                age = (datetime.now() - rec.created_at).total_seconds()
+                if age < self._ttl:
+                    return json.loads(rec.response_json)
+        except Exception:
+            pass
+
+        # 2. In-memory fallback
         with self._lock:
             entry = self._cache.get(key)
             if entry and (now - entry['time'] < self._ttl):
@@ -77,10 +92,28 @@ class IdempotencyManager:
             return None
 
     def store(self, key, result):
-        """Stores the result for the given idempotency key"""
+        """Stores the result atomically into DB and memory"""
         now = time.time()
+        # 1. Save to Database
+        try:
+            from backend.database import db
+            from backend.models import IdempotencyRecord
+            rec = IdempotencyRecord(
+                key=key,
+                created_at=datetime.now(),
+                response_json=json.dumps(result, ensure_ascii=False)
+            )
+            db.session.merge(rec)
+            db.session.commit()
+        except Exception:
+            try:
+                from backend.database import db
+                db.session.rollback()
+            except Exception:
+                pass
+
+        # 2. Save to in-memory cache
         with self._lock:
-            # Periodic cleanup of old entries
             if len(self._cache) > 200:
                 expired = [k for k, v in self._cache.items() if now - v['time'] > self._ttl]
                 for k in expired:

@@ -57,10 +57,25 @@ function onOpen() {
 }
 
 
+// CẤU HÌNH BẢO MẬT WEBHOOK SECRET (Khớp với GOOGLE_SHEET_SECRET trên server)
+var WEBHOOK_SECRET = ""; 
+
 function doPost(e) {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
     var data = JSON.parse(e.postData.contents);
+
+    // Kiểm tra Secret key bảo mật nếu được cấu hình
+    var scriptSecret = WEBHOOK_SECRET || PropertiesService.getScriptProperties().getProperty("WEBHOOK_SECRET");
+    if (scriptSecret) {
+      var incomingSecret = data.secret || (e.parameter && e.parameter.secret);
+      if (incomingSecret !== scriptSecret) {
+        return ContentService
+          .createTextOutput(JSON.stringify({ status: "error", message: "Unauthorized: Invalid or missing webhook secret key" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
     ensureSheetsExist(ss);
 
     var isDemo = data.category && data.category.indexOf("Demo") !== -1;
@@ -415,6 +430,14 @@ function saveQuoteOrder(ss, data) {
   var rawDigits = phone.replace(/[^0-9]/g, "");
   var zaloFormula = rawDigits ? '=HYPERLINK("https://zalo.me/' + rawDigits + '", "💬 Nhắn Zalo")' : "Không có";
 
+  var specsText = String(data.specs || data.width || "");
+  if (data.punched_hole && data.punched_hole !== "none") {
+    var holeLabel = (data.punched_hole === "round") ? "Lỗ tròn" : "Lỗ con nhộng";
+    if (specsText.indexOf("Lỗ") === -1) {
+      specsText += " (Đục " + holeLabel + ")";
+    }
+  }
+
   var row = [
     data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
     sanitizeForSheet(data.id || data.quote_id || ("TL-" + Math.floor(1000 + Math.random() * 9000))),
@@ -423,7 +446,7 @@ function saveQuoteOrder(ss, data) {
     "'" + phone,
     zaloFormula,
     data.quantity || 0,
-    sanitizeForSheet(data.specs || data.width || ""),
+    sanitizeForSheet(specsText),
     sanitizeForSheet(accText),
     data.total_price || 0,
     sanitizeForSheet(data.notes || ""),

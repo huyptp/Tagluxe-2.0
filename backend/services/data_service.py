@@ -69,7 +69,6 @@ def get_product_by_id(product_id, visible_only=True):
     return None
 
 def add_product(product_data):
-    # 1. Lưu vào SQLAlchemy Database
     try:
         from backend.database import db
         from backend.models import Product
@@ -89,68 +88,52 @@ def add_product(product_data):
         )
         db.session.add(prod)
         db.session.commit()
+        return prod.to_dict()
     except Exception as ex:
-        print(f"[DB_PRODUCT_ADD_ERROR] {ex}")
-
-    # 2. Sao lưu vào data.json
-    data = load_data()
-    if 'products' not in data:
-        data['products'] = []
-    data['products'].append(product_data)
-    save_data(data)
-    return product_data
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_PRODUCT_ADD_ERROR] {ex}")
+        return None
 
 def update_product(product_id, updated_fields):
-    # 1. Cập nhật SQLAlchemy Database
     try:
         from backend.database import db
         from backend.models import Product
         prod = Product.query.filter_by(id=product_id).first()
-        if prod:
-            for key, val in updated_fields.items():
-                if key == 'images':
-                    prod.images = val
-                elif hasattr(prod, key):
-                    setattr(prod, key, val)
-            db.session.commit()
+        if not prod:
+            return None
+        for key, val in updated_fields.items():
+            if key == 'images':
+                prod.images = val
+            elif hasattr(prod, key):
+                setattr(prod, key, val)
+        db.session.commit()
+        return prod.to_dict()
     except Exception as ex:
-        print(f"[DB_PRODUCT_UPDATE_ERROR] {ex}")
-
-    # 2. Cập nhật data.json
-    data = load_data()
-    for p in data.get('products', []):
-        if p.get('id') == product_id:
-            p.update(updated_fields)
-            save_data(data)
-            return p
-    return None
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_PRODUCT_UPDATE_ERROR] {ex}")
+        return None
 
 def delete_product(product_id):
-    deleted_item = None
-    # 1. Xóa trong SQLAlchemy Database
     try:
         from backend.database import db
         from backend.models import Product
         prod = Product.query.filter_by(id=product_id).first()
-        if prod:
-            deleted_item = prod.to_dict()
-            db.session.delete(prod)
-            db.session.commit()
+        if not prod:
+            return None
+        deleted_item = prod.to_dict()
+        db.session.delete(prod)
+        db.session.commit()
+        return deleted_item
     except Exception as ex:
-        print(f"[DB_PRODUCT_DELETE_ERROR] {ex}")
-
-    # 2. Xóa trong data.json
-    data = load_data()
-    remaining = []
-    for p in data.get('products', []):
-        if p.get('id') == product_id:
-            if not deleted_item:
-                deleted_item = p
-        else:
-            remaining.append(p)
-    data['products'] = remaining
-    save_data(data)
-    return deleted_item
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_PRODUCT_DELETE_ERROR] {ex}")
+        return None
 
 def get_lanyard_photos(lanyards):
     seen = set()
@@ -314,7 +297,6 @@ def add_demo_request(phone, customer_name='', product_category='lanyard', quanti
     return new_req
 
 def update_demo_request_status(req_id, status):
-    # 1. Cập nhật SQLAlchemy Database
     try:
         from backend.database import db
         from backend.models import DemoRequest
@@ -322,44 +304,32 @@ def update_demo_request_status(req_id, status):
         if req:
             req.status = status
             db.session.commit()
-    except Exception as ex:
-        print(f"[DB_DEMO_REQ_STATUS_ERROR] {ex}")
-
-    # 2. Cập nhật data.json
-    data = load_data()
-    for r in data.get('demo_requests', []):
-        if r.get('id') == req_id:
-            r['status'] = status
-            save_data(data)
             return True
-    return True
+        return False
+    except Exception as ex:
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_DEMO_REQ_STATUS_ERROR] {ex}")
+        return False
 
 def delete_demo_request(req_id):
-    deleted_item = None
-    # 1. Xóa trong SQLAlchemy Database
     try:
         from backend.database import db
         from backend.models import DemoRequest
         req = DemoRequest.query.filter_by(id=req_id).first()
-        if req:
-            deleted_item = req.to_dict()
-            db.session.delete(req)
-            db.session.commit()
+        if not req:
+            return None
+        deleted_item = req.to_dict()
+        db.session.delete(req)
+        db.session.commit()
+        return deleted_item
     except Exception as ex:
-        print(f"[DB_DEMO_REQ_DEL_ERROR] {ex}")
-
-    # 2. Xóa trong data.json
-    data = load_data()
-    remaining = []
-    for r in data.get('demo_requests', []):
-        if r.get('id') == req_id:
-            if not deleted_item:
-                deleted_item = r
-        else:
-            remaining.append(r)
-    data['demo_requests'] = remaining
-    save_data(data)
-    return deleted_item
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_DEMO_REQ_DEL_ERROR] {ex}")
+        return None
 
 
 # --- QUOTATION & PRICING CALCULATOR ---
@@ -649,7 +619,8 @@ def calculate_pvc_price(quantity, finish='matte', effects=None, size='5.4x8.6', 
         'size_label': size_label,
         'finish': finish_code,
         'finish_label': finish_label,
-        'punched_hole': has_hole,
+        'punched_hole': hole_code,
+        'has_hole': has_hole,
         'hole_type': hole_code,
         'hole_label': hole_label,
         'effects': [],
@@ -875,7 +846,7 @@ def calculate_product_price(category='lanyard', quantity=10, **kwargs):
             finish=kwargs.get('finish', 'matte'),
             effects=kwargs.get('effects', []),
             size=kwargs.get('size') or kwargs.get('width'),
-            punched_hole=kwargs.get('punched_hole', False)
+            punched_hole=kwargs.get('punched_hole', 'none')
         )
     elif 'holder' in cat or 'vo' in cat:
         h_type = kwargs.get('holder_type') or kwargs.get('material')
@@ -941,19 +912,14 @@ def update_quote_status(quote_id, new_status):
         if q:
             q.status = new_status
             db.session.commit()
+            return True
+        return False
     except Exception as ex:
         from backend.database import db
         db.session.rollback()
         import logging
         logging.getLogger(__name__).error(f"[DB_QUOTE_STATUS_ERROR] {ex}")
-
-    data = load_data()
-    for q in data.get('quotes', []):
-        if q.get('id') == quote_id or q.get('quote_id') == quote_id:
-            q['status'] = new_status
-            save_data(data)
-            return True
-    return True
+        return False
 
 def delete_quote(quote_id):
     try:
@@ -963,16 +929,14 @@ def delete_quote(quote_id):
         if q:
             db.session.delete(q)
             db.session.commit()
+            return True
+        return False
     except Exception as ex:
         from backend.database import db
         db.session.rollback()
         import logging
         logging.getLogger(__name__).error(f"[DB_QUOTE_DEL_ERROR] {ex}")
-
-    data = load_data()
-    data['quotes'] = [q for q in data.get('quotes', []) if q.get('id') != quote_id and q.get('quote_id') != quote_id]
-    save_data(data)
-    return True
+        return False
 
 def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, notes='', category='lanyard', **kwargs):
     pricing = calculate_product_price(category=category, quantity=quantity, width=width, accessories=accessories, **kwargs)
@@ -990,6 +954,8 @@ def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, not
         vat_tag = f"[VAT 8%: +{vat_amount:,} đ]".replace(',', '.')
         formatted_notes = f"{raw_notes} {vat_tag}".strip() if raw_notes else vat_tag
 
+    punched_hole_val = pricing.get('punched_hole', kwargs.get('punched_hole', 'none'))
+
     quote_record = {
         'id': quote_id,
         'quote_id': quote_id,
@@ -1001,6 +967,7 @@ def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, not
         'width': pricing.get('width', pricing.get('specs', '')),
         'specs': pricing.get('specs', pricing.get('width', '')),
         'accessories': pricing.get('accessories', []),
+        'punched_hole': punched_hole_val,
         'unit_price': pricing['unit_price'],
         'subtotal': subtotal,
         'include_vat': include_vat,
@@ -1009,7 +976,8 @@ def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, not
         'total_price': pricing['total_price'],
         'notes': formatted_notes,
         'status': 'Mới',
-        'sync_status': 'pending'
+        'sync_status': 'pending',
+        'retry_count': 0
     }
 
     # 1. Save to Database (SQLAlchemy) - Single Source of Truth
@@ -1026,13 +994,15 @@ def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, not
             quantity=quote_record['quantity'],
             specs=quote_record['specs'],
             accessories=acc_str,
+            punched_hole=punched_hole_val,
             unit_price=quote_record['unit_price'],
             total_price=quote_record['total_price'],
             notes=quote_record['notes'],
             status=quote_record['status'],
             include_vat=include_vat,
             vat_amount=vat_amount,
-            sync_status='pending'
+            sync_status='pending',
+            retry_count=0
         )
         db.session.add(quote_obj)
         db.session.commit()
@@ -1069,7 +1039,7 @@ def sanitize_for_sheet(val):
         return {k: sanitize_for_sheet(v) for k, v in val.items()}
     return val
 
-def _update_record_sync_status(rec_id, status, error_msg=None, app=None):
+def _update_record_sync_status(rec_id, status, error_msg=None, app=None, increment_retry=False):
     if not rec_id:
         return
     def _do_update():
@@ -1080,12 +1050,16 @@ def _update_record_sync_status(rec_id, status, error_msg=None, app=None):
             if q:
                 q.sync_status = status
                 q.sync_error = (error_msg or '')[:500] if error_msg else None
+                if increment_retry:
+                    q.retry_count = (q.retry_count or 0) + 1
                 db.session.commit()
                 return
             d = DemoRequest.query.filter_by(id=rec_id).first()
             if d:
                 d.sync_status = status
                 d.sync_error = (error_msg or '')[:500] if error_msg else None
+                if increment_retry:
+                    d.retry_count = (d.retry_count or 0) + 1
                 db.session.commit()
         except Exception as ex:
             import logging
@@ -1101,6 +1075,7 @@ def send_quote_to_google_sheet(quote_data, app=None):
     """
     Sends the quote or demo request data directly to Google Sheet via Google Apps Script Web App.
     Sanitizes inputs against Formula Injection and updates sync_status in Database.
+    Validates secret and verifies HTTP 200 AND JSON status == 'success'.
     """
     quote_id = quote_data.get('id')
     webhook_url = GOOGLE_SHEET_WEBHOOK_URL or os.environ.get('GOOGLE_SHEET_WEBHOOK_URL', '')
@@ -1108,41 +1083,94 @@ def send_quote_to_google_sheet(quote_data, app=None):
         _update_record_sync_status(quote_id, 'failed', 'GOOGLE_SHEET_WEBHOOK_URL not configured', app)
         return False, "GOOGLE_SHEET_WEBHOOK_URL not configured"
 
-    sanitized_data = sanitize_for_sheet(quote_data)
+    sanitized_data = sanitize_for_sheet(dict(quote_data))
+    webhook_secret = os.environ.get('GOOGLE_SHEET_SECRET', '')
+    if webhook_secret:
+        sanitized_data['secret'] = webhook_secret
+
+    headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'TagLuxe-Server/1.0'
+    }
+    if webhook_secret:
+        headers['X-Webhook-Secret'] = webhook_secret
 
     try:
+        payload = json.dumps(sanitized_data, ensure_ascii=False).encode('utf-8')
+        resp_code = None
+        resp_text = ""
+        resp_json = {}
         try:
             import requests
-            resp = requests.post(webhook_url, json=sanitized_data, timeout=12, headers={'User-Agent': 'TagLuxe-Server/1.0'})
-            if resp.status_code == 200:
-                _update_record_sync_status(quote_id, 'synced', None, app)
-                return True, f"Google Sheet synced: {resp.status_code}"
-            else:
-                _update_record_sync_status(quote_id, 'failed', f"HTTP {resp.status_code}: {resp.text[:200]}", app)
-                return False, f"Google Sheet sync HTTP error: {resp.status_code}"
+            resp = requests.post(webhook_url, json=sanitized_data, headers=headers, timeout=12)
+            resp_code = resp.status_code
+            resp_text = resp.text
+            try:
+                resp_json = resp.json()
+            except Exception:
+                resp_json = {}
         except ImportError:
-            payload = json.dumps(sanitized_data).encode('utf-8')
-            req = urllib.request.Request(
-                webhook_url,
-                data=payload,
-                headers={
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'TagLuxe-Server/1.0'
-                }
-            )
+            req = urllib.request.Request(webhook_url, data=payload, headers=headers)
             with urllib.request.urlopen(req, timeout=12) as resp:
-                code = resp.getcode()
-                if code == 200:
-                    _update_record_sync_status(quote_id, 'synced', None, app)
-                    return True, f"Google Sheet synced: {code}"
-                else:
-                    _update_record_sync_status(quote_id, 'failed', f"HTTP {code}", app)
-                    return False, f"Google Sheet sync HTTP error: {code}"
+                resp_code = resp.getcode()
+                resp_text = resp.read().decode('utf-8')
+                try:
+                    resp_json = json.loads(resp_text)
+                except Exception:
+                    resp_json = {}
+
+        if resp_code == 200:
+            if resp_json.get('status') == 'success' or (not resp_json and 'success' in resp_text.lower()):
+                _update_record_sync_status(quote_id, 'synced', None, app)
+                return True, "Google Sheet synced successfully"
+            else:
+                err_msg = resp_json.get('message') or resp_json.get('error') or f"Status: {resp_json.get('status') or 'unknown'}"
+                _update_record_sync_status(quote_id, 'failed', str(err_msg)[:500], app)
+                return False, f"Google Sheet sync error: {err_msg}"
+        else:
+            _update_record_sync_status(quote_id, 'failed', f"HTTP {resp_code}: {resp_text[:200]}", app)
+            return False, f"Google Sheet sync HTTP error: {resp_code}"
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"[GOOGLE_SHEET_SYNC_ERROR] {e}")
-        _update_record_sync_status(quote_id, 'failed', str(e), app)
+        _update_record_sync_status(quote_id, 'failed', str(e)[:500], app)
         return False, str(e)
+
+def retry_quote_sync(quote_id, app=None):
+    from backend.database import db
+    from backend.models import Quote
+    q = Quote.query.filter_by(id=quote_id).first()
+    if not q:
+        return False, "Quote not found"
+    q.retry_count = (q.retry_count or 0) + 1
+    q.sync_status = 'pending'
+    db.session.commit()
+    return send_quote_to_google_sheet(q.to_dict(), app)
+
+def retry_demo_request_sync(req_id, app=None):
+    from backend.database import db
+    from backend.models import DemoRequest
+    d = DemoRequest.query.filter_by(id=req_id).first()
+    if not d:
+        return False, "Demo request not found"
+    d.retry_count = (d.retry_count or 0) + 1
+    d.sync_status = 'pending'
+    db.session.commit()
+    sheet_payload = {
+        'id': d.id,
+        'created_at': d.created_at,
+        'category': f"Yêu cầu Demo 2D ({d.product_category})",
+        'customer_name': d.customer_name or 'Khách hàng',
+        'phone': d.phone,
+        'quantity': d.quantity_range,
+        'specs': f"File logo: {d.original_filename or 'Không đính kèm'}",
+        'accessories': [],
+        'unit_price': 0,
+        'total_price': 0,
+        'notes': d.notes or 'Yêu cầu lên mẫu phối cảnh 2D',
+        'status': d.status
+    }
+    return send_quote_to_google_sheet(sheet_payload, app)
 
 
 

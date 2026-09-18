@@ -98,6 +98,25 @@
                         <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px;">
                             {{ q.created_at }}
                         </div>
+                        <div style="margin-top: 6px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                            {% if q.sync_status == 'synced' %}
+                                <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 0.7rem; color: #15803d; background: #dcfce7; padding: 2px 6px; border-radius: 4px; font-weight: 600;" title="Đã đồng bộ lên Google Sheets">
+                                    ✓ Sheets
+                                </span>
+                            {% elif q.sync_status == 'failed' %}
+                                <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 0.7rem; color: #b91c1c; background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-weight: 600;" title="{{ q.sync_error or 'Lỗi đồng bộ' }}">
+                                    ✕ Sheets Lỗi ({{ q.retry_count or 0 }})
+                                </span>
+                                <form method="POST" action="/admin/quotes/retry-sync/{{ q.id }}" style="margin: 0; display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <button type="submit" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 5px; font-size: 0.68rem; cursor: pointer; color: #0284c7; font-weight: 600;" title="Thử đồng bộ lại">↻ Thử lại</button>
+                                </form>
+                            {% else %}
+                                <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 0.7rem; color: #92400e; background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                                    ⧗ Chờ sync
+                                </span>
+                            {% endif %}
+                        </div>
                     </td>
 
                     <!-- Khách hàng & Liên hệ -->
@@ -124,6 +143,11 @@
                         <div style="font-size: 0.8rem; color: #475569; margin-top: 2px;">
                             {{ q.specs or q.width }}
                         </div>
+                        {% if q.punched_hole and q.punched_hole != 'none' %}
+                        <div style="font-size: 0.76rem; color: #0369a1; font-weight: 600; margin-top: 2px;">
+                            Đục lỗ: {{ 'Lỗ tròn' if q.punched_hole == 'round' else 'Lỗ con nhộng' }}
+                        </div>
+                        {% endif %}
                         {% if q.accessories %}
                         <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px;">
                             + {{ q.accessories|join(', ') if q.accessories is iterable and q.accessories is not string else q.accessories }}
@@ -176,6 +200,7 @@
                     <!-- Tích Tiến độ xử lý -->
                     <td style="text-align: center;">
                         <form method="POST" action="/admin/quotes/status/{{ q.id }}" style="margin: 0; display: inline-block;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="status" value="{{ 'Đang tư vấn' if q.status == 'Đã xong' else 'Đã xong' }}">
                             <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; {% if q.status == 'Đã xong' %}background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;{% else %}background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1;{% endif %}" title="Bấm để đánh dấu hoàn thành nhanh">
                                 <input type="checkbox" onchange="this.form.submit()" {% if q.status == 'Đã xong' %}checked{% endif %} style="cursor: pointer; width: 14px; height: 14px; accent-color: #16a34a;">
@@ -250,6 +275,21 @@
             </tbody>
         </table>
     </div>
+
+    {% if total_pages and total_pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 12px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+        <span style="color: #64748b; font-weight: 500;">Trang {{ page }} / {{ total_pages }} (Tổng {{ total_items }} báo giá)</span>
+        <div style="display: flex; gap: 8px;">
+            {% if has_prev %}
+            <a href="/admin/quotes?page={{ page - 1 }}&status={{ current_status or 'all' }}{% if search_query %}&q={{ search_query }}{% endif %}" style="padding: 6px 14px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; color: #0a192f; text-decoration: none; font-weight: 600;">&laquo; Trang trước</a>
+            {% endif %}
+            {% if has_next %}
+            <a href="/admin/quotes?page={{ page + 1 }}&status={{ current_status or 'all' }}{% if search_query %}&q={{ search_query }}{% endif %}" style="padding: 6px 14px; background: #0a192f; border: 1px solid #0a192f; border-radius: 6px; color: white; text-decoration: none; font-weight: 600;">Trang sau &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     {% else %}
     <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
         <i data-lucide="inbox" style="width: 48px; height: 48px; color: #cbd5e1; margin-bottom: 12px;"></i>

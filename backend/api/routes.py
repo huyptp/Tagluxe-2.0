@@ -1,29 +1,35 @@
 import os
-import re
 import time
-import uuid
 from flask import Blueprint, request, jsonify
-from werkzeug.utils import secure_filename
-from backend.config import UPLOAD_REQUESTS_FOLDER, allowed_request_file
 from backend.services.data_service import (
-    add_demo_request, add_quote, calculate_lanyard_price, 
+    add_demo_request, add_quote,
     calculate_product_price, get_pvc_pricing_matrix, get_holder_pricing_matrix
 )
 from backend.security import rate_limit, idempotency
+from backend.validators import validate_quote_input, validate_demo_input, ALLOWED_CATEGORIES, parse_bool
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-ALLOWED_CATEGORIES = {'lanyard', 'pvc', 'pvc_5.4x8.6', 'pvc_7x11', 'pvc_9x12', 'holder', 'vo', 'combo'}
-
-def parse_bool(val):
-    """Safely parse boolean values avoiding Python's bool('false') == True trap"""
-    if isinstance(val, bool):
-        return val
-    if isinstance(val, (int, float)):
-        return val == 1
-    if isinstance(val, str):
-        return val.strip().lower() in ('true', '1', 'yes', 'y', 'on')
-    return False
+def _extract_request_data(req):
+    """
+    Safely extracts dict payload from request, handling JSON or Form data.
+    Returns (data: dict | None, is_valid_structure: bool)
+    """
+    if req.is_json:
+        parsed = req.get_json(silent=True)
+        if parsed is None or not isinstance(parsed, dict):
+            return None, False
+        return parsed, True
+    elif req.form:
+        return req.form.to_dict(), True
+    else:
+        # Check if there is an empty body or json attempt
+        raw = req.get_json(silent=True)
+        if raw is not None:
+            if not isinstance(raw, dict):
+                return None, False
+            return raw, True
+        return {}, True
 
 @api_bp.route('/pricing/pvc', methods=['GET'])
 def api_get_pvc_pricing():
@@ -44,59 +50,35 @@ def api_get_holder_pricing():
 @api_bp.route('/request-demo', methods=['POST'])
 @rate_limit(limit=5, window_sec=60, error_message='Bạn gửi yêu cầu quá thường xuyên. Vui lòng đợi 1 phút trước khi gửi tiếp.')
 def api_request_demo():
-    raw_phone = (request.form.get('phone') or '').strip()
-    if not raw_phone:
-        return jsonify({'success': False, 'message': 'Vui lòng cung cấp số điện thoại hoặc Zalo.'}), 400
+    has_files = bool(request.files and len(request.files) > 0)
+    data, is_valid_structure = _extract_request_data(request)
+    if not is_valid_structure:
+        return jsonify({
+            'success': False,
+            'message': 'Dữ liệu gửi lên phải là một đối tượng JSON hợp lệ (Object).'
+        }), 400
 
-    customer_name = (request.form.get('customer_name') or '').strip()
-    if len(customer_name) > 120:
-        return jsonify({'success': False, 'message': 'Họ và tên không được vượt quá 120 ký tự.'}), 400
+    is_valid, err_msg, status_code, clean_data = validate_demo_input(data, has_files=has_files)
+    if not is_valid:
+        return jsonify({'success': False, 'message': err_msg}), status_code
 
-    # Validate Vietnamese phone number
-    clean_phone = re.sub(r'[\s\.\-\(\)]', '', raw_phone)
-    if clean_phone.startswith('+84'):
-        clean_phone = '0' + clean_phone[3:]
-    elif clean_phone.startswith('84') and len(clean_phone) == 11:
-        clean_phone = '0' + clean_phone[2:]
-
-    if not re.match(r'^0[1-9]\d{8}$', clean_phone):
-        return jsonify({'success': False, 'message': 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại gồm 10 chữ số (VD: 0912345678).'}), 400
-
-    product_category = request.form.get('product_category') or 'lanyard'
-    quantity_range = request.form.get('quantity_range') or '10-20'
-    notes = (request.form.get('notes') or '').strip()
-    if len(notes) > 1000:
-        return jsonify({'success': False, 'message': 'Ghi chú không được vượt quá 1000 ký tự.'}), 400
-
-    # Idempotency check: detect identical duplicate requests within 30s
-    idemp_key = idempotency.generate_key('demo', clean_phone, customer_name, product_category, quantity_range, notes)
+    # Idempotency check: detect duplicate requests within 30s
+    idemp_key = idempotency.generate_key(
+        'demo', clean_data['phone'], clean_data['customer_name'],
+        clean_data['product_category'], clean_data['quantity_range'], clean_data['notes']
+    )
     cached_result = idempotency.get_existing(idemp_key)
     if cached_result:
         return jsonify(cached_result), 200
 
-    file_path = None
-    original_filename = None
-    if 'logo_file' in request.files:
-        file = request.files['logo_file']
-        if file and file.filename != '':
-            if allowed_request_file(file.filename):
-                clean_name = secure_filename(file.filename)
-                unique_name = f"req_{int(time.time())}_{uuid.uuid4().hex[:6]}_{clean_name}"
-                save_dest = os.path.join(UPLOAD_REQUESTS_FOLDER, unique_name)
-                file.save(save_dest)
-                file_path = unique_name
-                original_filename = file.filename
-            else:
-                return jsonify({'success': False, 'message': 'Định dạng file không hỗ trợ. Vui lòng tải file ảnh, PDF, AI, PSD hoặc ZIP.'}), 400
-
     new_req = add_demo_request(
-        phone=clean_phone,
-        customer_name=customer_name,
-        product_category=product_category,
-        quantity_range=quantity_range,
-        notes=notes,
-        file_path=file_path,
-        original_filename=original_filename
+        phone=clean_data['phone'],
+        customer_name=clean_data['customer_name'],
+        product_category=clean_data['product_category'],
+        quantity_range=clean_data['quantity_range'],
+        notes=clean_data['notes'],
+        file_path=None,
+        original_filename=None
     )
 
     if not new_req:
@@ -105,131 +87,82 @@ def api_request_demo():
             'message': 'Không thể lưu yêu cầu thiết kế vào hệ thống lúc này. Vui lòng thử lại sau giây lát.'
         }), 500
 
-    result = {'success': True, 'request_id': new_req['id'], 'phone': clean_phone}
+    result = {'success': True, 'request_id': new_req['id'], 'phone': clean_data['phone']}
     idempotency.store(idemp_key, result)
     return jsonify(result)
 
-
 @api_bp.route('/calculate-price', methods=['POST'])
 def api_calculate_price():
-    data = request.get_json(silent=True) or request.form
-    category = data.get('category', 'lanyard')
-    try:
-        quantity = int(data.get('quantity', 10))
-    except (ValueError, TypeError):
-        quantity = 10
-    width = data.get('width', '2.0')
-    accessories = data.get('accessories', [])
-    if isinstance(accessories, str) and accessories:
-        accessories = [a.strip() for a in accessories.split(',') if a.strip()]
+    data, is_valid_structure = _extract_request_data(request)
+    if not is_valid_structure:
+        return jsonify({
+            'success': False,
+            'message': 'Dữ liệu gửi lên phải là một đối tượng JSON hợp lệ (Object).'
+        }), 400
 
-    include_vat = parse_bool(data.get('include_vat') or data.get('vat'))
-    punched_hole = parse_bool(data.get('punched_hole', False))
+    is_valid, err_msg, status_code, clean_data = validate_quote_input(data, is_submission=False)
+    if not is_valid:
+        return jsonify({'success': False, 'message': err_msg}), status_code
 
     result = calculate_product_price(
-        category=category,
-        quantity=quantity,
-        width=width,
-        accessories=accessories,
-        finish=data.get('finish', 'matte'),
-        effects=data.get('effects', []),
-        orientation=data.get('orientation', 'vertical'),
-        printed_logo=data.get('printed_logo'),
-        holder_type=data.get('holder_type') or data.get('material'),
-        include_vat=include_vat,
-        size=data.get('size') or width,
-        punched_hole=punched_hole
+        category=clean_data['category'],
+        quantity=clean_data['quantity'],
+        width=clean_data['width'],
+        accessories=clean_data['accessories'],
+        finish=clean_data['finish'],
+        effects=clean_data['effects'],
+        orientation=clean_data['orientation'],
+        printed_logo=clean_data['printed_logo'],
+        holder_type=clean_data['holder_type'],
+        include_vat=clean_data['include_vat'],
+        size=clean_data['size'],
+        punched_hole=clean_data['punched_hole']
     )
     return jsonify({'success': True, 'data': result})
-
 
 @api_bp.route('/submit-quote', methods=['POST'])
 @rate_limit(limit=10, window_sec=60, error_message='Bạn thao tác quá nhanh. Vui lòng chờ giây lát trước khi gửi báo giá tiếp theo.')
 def api_submit_quote():
-    data = request.get_json(silent=True) or request.form
-    customer_name = (data.get('customer_name') or '').strip()
-    raw_phone = (data.get('phone') or '').strip()
-    raw_quantity = data.get('quantity')
-    category = data.get('category', 'lanyard')
-    width = data.get('width', '2.0')
-    accessories = data.get('accessories', [])
-    notes = (data.get('notes') or '').strip()
-    include_vat = parse_bool(data.get('include_vat') or data.get('vat'))
-    punched_hole = parse_bool(data.get('punched_hole', False))
+    data, is_valid_structure = _extract_request_data(request)
+    if not is_valid_structure:
+        return jsonify({
+            'success': False,
+            'message': 'Dữ liệu gửi lên phải là một đối tượng JSON hợp lệ (Object).'
+        }), 400
 
-    # 1. Validate customer name
-    if not customer_name:
-        return jsonify({'success': False, 'message': 'Vui lòng nhập họ và tên của bạn.'}), 400
-    if len(customer_name) > 120:
-        return jsonify({'success': False, 'message': 'Họ và tên không được vượt quá 120 ký tự.'}), 400
+    is_valid, err_msg, status_code, clean_data = validate_quote_input(data, is_submission=True)
+    if not is_valid:
+        return jsonify({'success': False, 'message': err_msg}), status_code
 
-    # 2. Validate category
-    if category not in ALLOWED_CATEGORIES:
-        category = 'lanyard'
-
-    # 3. Validate notes length
-    if len(notes) > 1000:
-        return jsonify({'success': False, 'message': 'Ghi chú không được vượt quá 1000 ký tự.'}), 400
-
-    # 4. Validate Vietnamese phone number
-    clean_phone = re.sub(r'[\s\.\-\(\)]', '', raw_phone)
-    if clean_phone.startswith('+84'):
-        clean_phone = '0' + clean_phone[3:]
-    elif clean_phone.startswith('84') and len(clean_phone) == 11:
-        clean_phone = '0' + clean_phone[2:]
-
-    if not re.match(r'^0[1-9]\d{8}$', clean_phone):
-        return jsonify({'success': False, 'message': 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại gồm 10 chữ số (VD: 0912345678).'}), 400
-
-    # 5. Validate quantity
-    min_qty = 20 if category in ['holder', 'vo'] else 10
-    try:
-        quantity = int(raw_quantity)
-        if quantity < min_qty:
-            item_name = "vỏ đựng thẻ " if min_qty == 20 else ""
-            return jsonify({'success': False, 'message': f'Số lượng đặt in {item_name}tối thiểu là {min_qty} cái.'}), 400
-        if quantity > 1000000:
-            return jsonify({'success': False, 'message': 'Số lượng đặt in vượt quá giới hạn hệ thống (tối đa 1.000.000 cái). Vui lòng liên hệ hotline để nhận báo giá dự án lớn.'}), 400
-    except (ValueError, TypeError):
-        return jsonify({'success': False, 'message': f'Số lượng phải là một số nguyên hợp lệ (tối thiểu {min_qty}).'}), 400
-
-    if isinstance(accessories, str) and accessories:
-        accessories = [a.strip() for a in accessories.split(',') if a.strip()]
-
-    # 6. Pricing and design attributes
-    finish = data.get('finish', 'matte')
-    effects = data.get('effects', [])
-    orientation = data.get('orientation', 'vertical')
-    printed_logo = data.get('printed_logo')
-    holder_type = data.get('holder_type') or data.get('material')
-    size = data.get('size') or width
-
-    # 7. Idempotency check: include all pricing parameters in hash key
+    # Idempotency check: include all pricing parameters in hash key
     idemp_key = idempotency.generate_key(
-        'quote', clean_phone, category, quantity, width, str(accessories),
-        str(include_vat), str(finish), str(effects), str(size),
-        str(holder_type), str(punched_hole), notes
+        'quote', clean_data['phone'], clean_data['category'], clean_data['quantity'],
+        clean_data['width'], str(clean_data['accessories']),
+        str(clean_data['include_vat']), str(clean_data['finish']),
+        str(clean_data['effects']), str(clean_data['size']),
+        str(clean_data['holder_type']), str(clean_data['punched_hole']),
+        clean_data['notes']
     )
     cached_resp = idempotency.get_existing(idemp_key)
     if cached_resp:
         return jsonify(cached_resp), 200
 
     quote_record = add_quote(
-        customer_name=customer_name,
-        phone=clean_phone,
-        quantity=quantity,
-        category=category,
-        width=width,
-        accessories=accessories,
-        notes=notes,
-        finish=finish,
-        effects=effects,
-        orientation=orientation,
-        printed_logo=printed_logo,
-        holder_type=holder_type,
-        include_vat=include_vat,
-        size=size,
-        punched_hole=punched_hole
+        customer_name=clean_data['customer_name'],
+        phone=clean_data['phone'],
+        quantity=clean_data['quantity'],
+        category=clean_data['category'],
+        width=clean_data['width'],
+        accessories=clean_data['accessories'],
+        notes=clean_data['notes'],
+        finish=clean_data['finish'],
+        effects=clean_data['effects'],
+        orientation=clean_data['orientation'],
+        printed_logo=clean_data['printed_logo'],
+        holder_type=clean_data['holder_type'],
+        include_vat=clean_data['include_vat'],
+        size=clean_data['size'],
+        punched_hole=clean_data['punched_hole']
     )
 
     if not quote_record:

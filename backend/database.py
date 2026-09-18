@@ -167,30 +167,15 @@ def seed_initial_data():
 def init_db(app):
     app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['BASE_DIR'] = BASE_DIR
     db.init_app(app)
     with app.app_context():
         from backend import models  # noqa
         db.create_all()
 
-        # Tự động bổ sung các cột mới nếu đã có bảng trước đó (Safe migration)
-        try:
-            from sqlalchemy import text
-            with db.engine.connect() as conn:
-                for col_sql in [
-                    "ALTER TABLE quotes ADD COLUMN include_vat BOOLEAN DEFAULT 0",
-                    "ALTER TABLE quotes ADD COLUMN vat_amount INTEGER DEFAULT 0",
-                    "ALTER TABLE quotes ADD COLUMN sync_status VARCHAR(20) DEFAULT 'pending'",
-                    "ALTER TABLE quotes ADD COLUMN sync_error TEXT",
-                    "ALTER TABLE demo_requests ADD COLUMN sync_status VARCHAR(20) DEFAULT 'pending'",
-                    "ALTER TABLE demo_requests ADD COLUMN sync_error TEXT"
-                ]:
-                    try:
-                        conn.execute(text(col_sql))
-                        conn.commit()
-                    except Exception:
-                        pass
-        except Exception:
-            pass
+        # Nâng cấp cấu trúc dữ liệu có phiên bản an toàn (Versioned Migrations)
+        from backend.migrations import run_migrations
+        run_migrations(app, db)
 
         seed_initial_data()
 

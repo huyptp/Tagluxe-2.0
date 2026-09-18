@@ -17,6 +17,8 @@ ENV/
 *.db
 *.sqlite3
 tagluxe.db
+*.bak
+*.db.bak
 
 # Private Customer Uploads
 storage/*

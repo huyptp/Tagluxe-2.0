@@ -1217,6 +1217,16 @@
         return new Intl.NumberFormat('vi-VN').format(n) + ' đ';
     }
 
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     window.toggleVatOption = function() {
         state.includeVat = !state.includeVat;
         const card = document.getElementById('vatToggleCard');
@@ -1601,12 +1611,21 @@
                 const quoteId = q.id || 'TAGLUXE';
                 document.getElementById('modalQuoteId').textContent = '#' + quoteId;
 
+                const safeCategory = escapeHtml(q.category);
+                const safeName = escapeHtml(q.customer_name);
+                const safePhone = escapeHtml(q.phone);
+                const safeQty = escapeHtml(q.quantity);
+                const safeSpecs = escapeHtml(q.specs || q.width);
+                const safeAccs = q.accessories && q.accessories.length
+                    ? escapeHtml(Array.isArray(q.accessories) ? q.accessories.join(', ') : q.accessories)
+                    : '';
+
                 const vatLine = q.include_vat ? `<div style="color:#0369a1;"><strong>Thuế GTGT:</strong> Đã gồm 8% VAT (+${formatVND(q.vat_amount)})</div>` : '';
                 const summaryHtml = `
-                    <div><strong>Danh mục:</strong> ${q.category}</div>
-                    <div><strong>Khách hàng:</strong> ${q.customer_name} - ${q.phone}</div>
-                    <div><strong>Số lượng:</strong> ${q.quantity} (${q.specs || q.width})</div>
-                    ${q.accessories && q.accessories.length ? `<div><strong>Tùy chọn:</strong> ${Array.isArray(q.accessories) ? q.accessories.join(', ') : q.accessories}</div>` : ''}
+                    <div><strong>Danh mục:</strong> ${safeCategory}</div>
+                    <div><strong>Khách hàng:</strong> ${safeName} - ${safePhone}</div>
+                    <div><strong>Số lượng:</strong> ${safeQty} (${safeSpecs})</div>
+                    ${safeAccs ? `<div><strong>Tùy chọn:</strong> ${safeAccs}</div>` : ''}
                     ${vatLine}
                     <div style="margin-top:6px; padding-top:6px; border-top:1px dashed #cbd5e1; font-weight:800; color:#b45309; font-size:1.05rem;">
                         ${q.include_vat ? 'Tổng thanh toán (gồm VAT)' : 'Tổng ước tính'}: ${formatVND(q.total_price)}

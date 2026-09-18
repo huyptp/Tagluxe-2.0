@@ -1,6 +1,6 @@
 import unittest
 import json
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from backend import create_app
 from backend.database import db
 from backend.security import limiter, idempotency
@@ -13,6 +13,10 @@ class SecurityTestCase(unittest.TestCase):
         # Reset limiter and idempotency cache between tests
         limiter._records.clear()
         idempotency._cache.clear()
+        with self.app.app_context():
+            from backend.models import IdempotencyRecord
+            IdempotencyRecord.query.delete()
+            db.session.commit()
 
     def test_session_cookie_security_flags(self):
         """Verify session cookie flags: HttpOnly, SameSite=Lax"""
@@ -152,10 +156,10 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(sanitized['accessories'], ["'-danger", "'@eval(1)"])
 
     def test_db_error_returns_500_and_no_crash(self):
-        """Verify that if database commit fails, API returns HTTP 500 cleanly"""
-        with patch('backend.api.routes.add_quote', return_value=None):
+        """Verify that if real database commit fails, API returns HTTP 500 cleanly"""
+        with patch.object(db.session, 'commit', side_effect=Exception('DB Error simulation')):
             res = self.client.post('/api/submit-quote', json={
-                'customer_name': 'Nguyen Error',
+                'customer_name': 'Nguyen Real DB Error',
                 'phone': '0988999888',
                 'quantity': 50,
                 'category': 'lanyard'
@@ -171,13 +175,110 @@ class SecurityTestCase(unittest.TestCase):
         self.assertIn('/admin/login', res.headers.get('Location', ''))
 
     def test_admin_csrf_protection(self):
-        """Verify admin actions without CSRF token are rejected"""
+        """Verify admin actions without CSRF token are rejected when authenticated"""
         with self.client.session_transaction() as sess:
-            sess['admin_logged_in'] = True
+            sess['logged_in'] = True
+            sess['admin_username'] = 'admin'
 
-        # POST without csrf_token should fail CSRF check and redirect
+        # POST without csrf_token should fail CSRF check and redirect to admin quotes, NOT login
         res = self.client.post('/admin/quotes/status/Q-123', data={'status': 'Đã tư vấn'})
         self.assertEqual(res.status_code, 302)
+        self.assertIn('/admin/quotes', res.headers.get('Location', ''))
+        self.assertNotIn('/admin/login', res.headers.get('Location', ''))
+
+    def test_submit_quote_invalid_json_structure(self):
+        """Verify submitting non-dict JSON (e.g. list) returns HTTP 400"""
+        res = self.client.post('/api/submit-quote', json=[{'customer_name': 'Test'}])
+        self.assertEqual(res.status_code, 400)
+        data = res.get_json()
+        self.assertFalse(data['success'])
+        self.assertIn('đối tượng JSON hợp lệ', data['message'])
+
+    def test_submit_quote_invalid_category_returns_400(self):
+        """Verify submitting invalid product category returns HTTP 400 (not silently converted)"""
+        res = self.client.post('/api/submit-quote', json={
+            'customer_name': 'Valid Name',
+            'phone': '0912345678',
+            'quantity': 50,
+            'category': 'non_existent_category_xyz'
+        })
+        self.assertEqual(res.status_code, 400)
+        data = res.get_json()
+        self.assertFalse(data['success'])
+        self.assertIn('không hợp lệ', data['message'])
+
+    def test_submit_quote_numeric_name_rejected(self):
+        """Verify customer name consisting only of digits is rejected with 400"""
+        res = self.client.post('/api/submit-quote', json={
+            'customer_name': '12345678',
+            'phone': '0912345678',
+            'quantity': 50,
+            'category': 'lanyard'
+        })
+        self.assertEqual(res.status_code, 400)
+        data = res.get_json()
+        self.assertFalse(data['success'])
+        self.assertIn('ít nhất một chữ cái', data['message'])
+
+    def test_request_demo_rejects_file_upload(self):
+        """Verify customer file uploads on /api/request-demo are strictly rejected with HTTP 400"""
+        from io import BytesIO
+        data = {
+            'phone': '0912345678',
+            'customer_name': 'Khách Hàng',
+            'logo_file': (BytesIO(b'dummy content'), 'test.png')
+        }
+        res = self.client.post('/api/request-demo', data=data, content_type='multipart/form-data')
+        self.assertEqual(res.status_code, 400)
+        resp_data = res.get_json()
+        self.assertFalse(resp_data['success'])
+        self.assertIn('không nhận file tải lên', resp_data['message'])
+
+    def test_google_sheets_error_response_marks_failed(self):
+        """Verify that when Google Sheets responds with status: error, database record is marked as failed"""
+        from backend.services.data_service import send_quote_to_google_sheet
+        from backend.models import Quote
+        import requests
+        import uuid
+
+        test_quote_id = f'Q-SHEET-ERR-{uuid.uuid4().hex[:6]}'
+        with self.app.app_context():
+            Quote.query.filter(Quote.id.like('Q-SHEET-ERR%')).delete()
+            db.session.commit()
+
+            q = Quote(
+                id=test_quote_id,
+                customer_name='Sheet Err Client',
+                phone='0988111222',
+                category='Dây đeo thẻ',
+                quantity=50,
+                unit_price=20000,
+                total_price=1000000,
+                status='Mới',
+                sync_status='pending'
+            )
+            db.session.add(q)
+            db.session.commit()
+
+            try:
+                # Mock requests.post returning HTTP 200 with JSON error body
+                mock_resp = MagicMock()
+                mock_resp.status_code = 200
+                mock_resp.text = '{"status": "error", "message": "Spreadsheet quota exceeded"}'
+                mock_resp.json.return_value = {"status": "error", "message": "Spreadsheet quota exceeded"}
+
+                with patch('os.environ.get', side_effect=lambda k, d=None: 'https://script.google.com/macros/s/test/exec' if k == 'GOOGLE_SHEET_WEBHOOK_URL' else d):
+                    with patch('requests.post', return_value=mock_resp):
+                        success, msg = send_quote_to_google_sheet({'id': test_quote_id, 'customer_name': 'Sheet Err Client'}, app=self.app)
+                        self.assertFalse(success)
+                        self.assertIn('quota exceeded', msg)
+
+                updated = Quote.query.filter_by(id=test_quote_id).first()
+                self.assertEqual(updated.sync_status, 'failed')
+                self.assertIn('quota exceeded', updated.sync_error)
+            finally:
+                Quote.query.filter(Quote.id.like('Q-SHEET-ERR%')).delete()
+                db.session.commit()
 
 if __name__ == '__main__':
     unittest.main()

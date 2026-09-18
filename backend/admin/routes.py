@@ -7,16 +7,55 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.config import (
     UPLOAD_FOLDER, PRIVATE_STORAGE_FOLDER, UPLOAD_REQUESTS_FOLDER,
-    ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_PASSWORD_HASH
+    ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_PASSWORD_HASH, ALLOWED_IMAGE_EXTENSIONS
 )
 from backend.services.data_service import (
     get_all_products, get_product_by_id, add_product, update_product, delete_product,
     get_demo_requests, update_demo_request_status, delete_demo_request,
-    get_quotes, update_quote_status, delete_quote
+    get_quotes, update_quote_status, delete_quote,
+    retry_quote_sync, retry_demo_request_sync
 )
 from backend.security import rate_limit, limiter, get_client_ip
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+def is_valid_image_file(file_storage):
+    """
+    Validates file extension and inspects magic header bytes
+    to ensure the file is an authentic image (png, jpg, jpeg, webp, gif).
+    """
+    if not file_storage or not file_storage.filename:
+        return False
+    ext = file_storage.filename.rsplit('.', 1)[-1].lower() if '.' in file_storage.filename else ''
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return False
+    header = file_storage.read(512)
+    file_storage.seek(0)
+    if not header:
+        return False
+    is_png = header.startswith(b'\x89PNG\r\n\x1a\n')
+    is_jpeg = header.startswith(b'\xff\xd8\xff')
+    is_gif = header.startswith(b'GIF87a') or header.startswith(b'GIF89a')
+    is_webp = header.startswith(b'RIFF') and b'WEBP' in header[:16]
+    return is_png or is_jpeg or is_gif or is_webp
+
+def paginate_items(items, page=1, per_page=20):
+    page = max(1, page)
+    total_items = len(items) if items else 0
+    total_pages = max(1, (total_items + per_page - 1) // per_page)
+    if page > total_pages:
+        page = total_pages
+    start = (page - 1) * per_page
+    end = start + per_page
+    return {
+        'items': items[start:end] if items else [],
+        'page': page,
+        'per_page': per_page,
+        'total_pages': total_pages,
+        'total_items': total_items,
+        'has_prev': page > 1,
+        'has_next': page < total_pages
+    }
 
 def get_csrf_token():
     if '_admin_csrf_token' not in session:
@@ -132,6 +171,9 @@ def admin_add_product():
             files = request.files.getlist('images')
             for file in files:
                 if file and file.filename != '':
+                    if not is_valid_image_file(file):
+                        flash(f'File "{file.filename}" không hợp lệ. Chỉ chấp nhận định dạng ảnh (PNG, JPG, JPEG, WEBP, GIF).', 'error')
+                        return render_template('admin/product_form.html', product=None)
                     filename = secure_filename(file.filename)
                     unique_filename = f"{uuid.uuid4().hex}_{filename}"
                     file.save(os.path.join(UPLOAD_FOLDER, unique_filename))
@@ -151,7 +193,11 @@ def admin_add_product():
             "visible": visible
         }
 
-        add_product(new_product)
+        saved = add_product(new_product)
+        if not saved:
+            flash('Lỗi cơ sở dữ liệu: Không thể lưu sản phẩm mới.', 'error')
+            return redirect(url_for('admin.admin_products'))
+
         record_audit('create_product', 'product', new_product['id'], f"Added product {name}")
         flash('Thêm sản phẩm thành công', 'success')
         return redirect(url_for('admin.admin_products'))
@@ -187,6 +233,9 @@ def admin_edit_product(id):
             new_images = []
             for file in files:
                 if file and file.filename != '':
+                    if not is_valid_image_file(file):
+                        flash(f'File "{file.filename}" không hợp lệ. Chỉ chấp nhận định dạng ảnh (PNG, JPG, JPEG, WEBP, GIF).', 'error')
+                        return render_template('admin/product_form.html', product=product)
                     filename = secure_filename(file.filename)
                     unique_filename = f"{uuid.uuid4().hex}_{filename}"
                     file.save(os.path.join(UPLOAD_FOLDER, unique_filename))
@@ -194,7 +243,11 @@ def admin_edit_product(id):
             if new_images:
                 updated_data['images'] = new_images
 
-        update_product(id, updated_data)
+        saved = update_product(id, updated_data)
+        if not saved:
+            flash('Lỗi cơ sở dữ liệu: Không thể cập nhật thông tin sản phẩm.', 'error')
+            return redirect(url_for('admin.admin_products'))
+
         record_audit('update_product', 'product', id, f"Updated product {updated_data.get('name')}")
         flash('Cập nhật sản phẩm thành công', 'success')
         return redirect(url_for('admin.admin_products'))
@@ -209,7 +262,11 @@ def admin_delete_product(id):
         return redirect(url_for('admin.admin_products'))
 
     deleted_prod = delete_product(id)
-    if deleted_prod and deleted_prod.get('images'):
+    if not deleted_prod:
+        flash('Lỗi cơ sở dữ liệu: Không thể xóa sản phẩm.', 'error')
+        return redirect(url_for('admin.admin_products'))
+
+    if deleted_prod.get('images'):
         for img in deleted_prod['images']:
             img_path = os.path.join(UPLOAD_FOLDER, img)
             if os.path.exists(img_path):
@@ -225,8 +282,18 @@ def admin_delete_product(id):
 @admin_bp.route('/requests')
 @login_required
 def admin_requests():
+    page = request.args.get('page', 1, type=int)
     requests_list = get_demo_requests()
-    return render_template('admin/requests.html', requests=requests_list)
+    pagination = paginate_items(requests_list, page=page, per_page=20)
+    return render_template(
+        'admin/requests.html',
+        requests=pagination['items'],
+        page=pagination['page'],
+        total_pages=pagination['total_pages'],
+        total_items=pagination['total_items'],
+        has_prev=pagination['has_prev'],
+        has_next=pagination['has_next']
+    )
 
 @admin_bp.route('/requests/status/<id>', methods=['POST'])
 @login_required
@@ -237,9 +304,12 @@ def admin_update_request_status(id):
 
     status = request.form.get('status')
     if status:
-        update_demo_request_status(id, status)
-        record_audit('update_request_status', 'demo_request', id, f"Changed status to {status}")
-        flash('Cập nhật trạng thái yêu cầu thành công', 'success')
+        ok = update_demo_request_status(id, status)
+        if ok:
+            record_audit('update_request_status', 'demo_request', id, f"Changed status to {status}")
+            flash('Cập nhật trạng thái yêu cầu thành công', 'success')
+        else:
+            flash('Lỗi cơ sở dữ liệu: Không thể cập nhật trạng thái yêu cầu.', 'error')
     return redirect(url_for('admin.admin_requests'))
 
 @admin_bp.route('/requests/delete/<id>', methods=['POST'])
@@ -250,7 +320,11 @@ def admin_delete_request(id):
         return redirect(url_for('admin.admin_requests'))
 
     deleted_req = delete_demo_request(id)
-    if deleted_req and deleted_req.get('file_path'):
+    if not deleted_req:
+        flash('Lỗi cơ sở dữ liệu: Không thể xóa yêu cầu demo.', 'error')
+        return redirect(url_for('admin.admin_requests'))
+
+    if deleted_req.get('file_path'):
         fpath = os.path.join(PRIVATE_STORAGE_FOLDER, deleted_req['file_path'])
         if os.path.exists(fpath):
             try:
@@ -259,6 +333,24 @@ def admin_delete_request(id):
                 pass
     record_audit('delete_request', 'demo_request', id, f"Deleted request {id}")
     flash('Đã xóa yêu cầu demo thành công', 'success')
+    return redirect(url_for('admin.admin_requests'))
+
+@admin_bp.route('/requests/retry-sync/<id>', methods=['POST'])
+@login_required
+def admin_retry_request_sync(id):
+    if not validate_csrf():
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_requests'))
+
+    from flask import current_app
+    app = current_app._get_current_object()
+    success, msg = retry_demo_request_sync(id, app)
+    if success:
+        record_audit('retry_request_sync', 'demo_request', id, 'Đồng bộ Google Sheets thành công')
+        flash('Đã đồng bộ lại yêu cầu demo lên Google Sheets thành công!', 'success')
+    else:
+        record_audit('retry_request_sync_failed', 'demo_request', id, f"Thất bại: {msg}")
+        flash(f'Đồng bộ thất bại: {msg}', 'error')
     return redirect(url_for('admin.admin_requests'))
 
 @admin_bp.route('/requests/file/<id>')
@@ -293,10 +385,17 @@ def admin_download_request_file(id):
 def admin_quotes():
     status_filter = request.args.get('status', 'all')
     search_query = request.args.get('q', '').strip()
+    page = request.args.get('page', 1, type=int)
     quotes_list = get_quotes(status=status_filter, search=search_query)
+    pagination = paginate_items(quotes_list, page=page, per_page=20)
     return render_template(
         'admin/quotes.html',
-        quotes=quotes_list,
+        quotes=pagination['items'],
+        page=pagination['page'],
+        total_pages=pagination['total_pages'],
+        total_items=pagination['total_items'],
+        has_prev=pagination['has_prev'],
+        has_next=pagination['has_next'],
         current_status=status_filter,
         search_query=search_query
     )
@@ -310,9 +409,12 @@ def admin_update_quote_status(id):
 
     status = request.form.get('status')
     if status:
-        update_quote_status(id, status)
-        record_audit('update_quote_status', 'quote', id, f"Changed status to {status}")
-        flash('Cập nhật trạng thái báo giá thành công', 'success')
+        ok = update_quote_status(id, status)
+        if ok:
+            record_audit('update_quote_status', 'quote', id, f"Changed status to {status}")
+            flash('Cập nhật trạng thái báo giá thành công', 'success')
+        else:
+            flash('Lỗi cơ sở dữ liệu: Không thể cập nhật trạng thái báo giá.', 'error')
     return redirect(url_for('admin.admin_quotes'))
 
 @admin_bp.route('/quotes/delete/<id>', methods=['POST'])
@@ -322,7 +424,28 @@ def admin_delete_quote(id):
         flash('Yêu cầu không hợp lệ hoặc phiên làm việc đã hết hạn (CSRF error).', 'error')
         return redirect(url_for('admin.admin_quotes'))
 
-    delete_quote(id)
-    record_audit('delete_quote', 'quote', id, f"Deleted quote {id}")
-    flash('Đã xóa báo giá thành công', 'success')
+    ok = delete_quote(id)
+    if ok:
+        record_audit('delete_quote', 'quote', id, f"Deleted quote {id}")
+        flash('Đã xóa báo giá thành công', 'success')
+    else:
+        flash('Lỗi cơ sở dữ liệu: Không thể xóa báo giá.', 'error')
+    return redirect(url_for('admin.admin_quotes'))
+
+@admin_bp.route('/quotes/retry-sync/<id>', methods=['POST'])
+@login_required
+def admin_retry_quote_sync(id):
+    if not validate_csrf():
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_quotes'))
+
+    from flask import current_app
+    app = current_app._get_current_object()
+    success, msg = retry_quote_sync(id, app)
+    if success:
+        record_audit('retry_quote_sync', 'quote', id, 'Đồng bộ Google Sheets thành công')
+        flash('Đã đồng bộ lại báo giá lên Google Sheets thành công!', 'success')
+    else:
+        record_audit('retry_quote_sync_failed', 'quote', id, f"Thất bại: {msg}")
+        flash(f'Đồng bộ thất bại: {msg}', 'error')
     return redirect(url_for('admin.admin_quotes'))

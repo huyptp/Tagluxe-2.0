@@ -8,6 +8,14 @@ from backend.services.data_service import calculate_lanyard_price, add_quote, ge
 class QuoteCalculatorTests(unittest.TestCase):
     def setUp(self):
         self.client = website.app.test_client()
+        from backend.security import limiter, idempotency
+        from backend.database import db
+        limiter._records.clear()
+        idempotency._cache.clear()
+        with website.app.app_context():
+            from backend.models import IdempotencyRecord
+            IdempotencyRecord.query.delete()
+            db.session.commit()
 
     def test_pricing_math_tiers_and_addons(self):
         # 1. Base 20 qty (tier 10-21: 28k)
@@ -338,6 +346,61 @@ class QuoteCalculatorTests(unittest.TestCase):
         self.assertTrue(calc_data['success'])
         self.assertEqual(calc_data['data']['unit_price'], 3000)
         self.assertEqual(calc_data['data']['total_price'], 150000)
+
+    def test_punched_hole_three_cases_end_to_end(self):
+        """Verify punched_hole three cases (none, round, capsule) throughout API and Database"""
+        from backend.models import Quote
+        from backend.database import db
+
+        cases = [
+            ('none', 'none', False),
+            ('round', 'round', True),
+            ('capsule', 'capsule', True)
+        ]
+
+        for input_val, expected_code, expected_has_hole in cases:
+            res = self.client.post('/api/calculate-price', json={
+                'category': 'pvc',
+                'quantity': 50,
+                'punched_hole': input_val
+            })
+            self.assertEqual(res.status_code, 200)
+            cdata = res.get_json()['data']
+            self.assertEqual(cdata['punched_hole'], expected_code)
+            self.assertEqual(cdata['has_hole'], expected_has_hole)
+
+            sub_res = self.client.post('/api/submit-quote', json={
+                'customer_name': f'Tester {expected_code}',
+                'phone': f'0912345{len(expected_code)}00',
+                'category': 'pvc',
+                'quantity': 50,
+                'punched_hole': input_val
+            })
+            self.assertEqual(sub_res.status_code, 200)
+            quote_data = sub_res.get_json()['quote']
+            self.assertEqual(quote_data['punched_hole'], expected_code)
+
+            # Verify in Database
+            with website.app.app_context():
+                saved_quote = Quote.query.filter_by(id=quote_data['id']).first()
+                self.assertIsNotNone(saved_quote)
+                self.assertEqual(saved_quote.punched_hole, expected_code)
+                db.session.delete(saved_quote)
+                db.session.commit()
+
+    def test_migrations_runner_idempotent(self):
+        """Verify versioned migrations runner executes safely and idempotently"""
+        from backend.migrations import run_migrations
+        from backend.models import SchemaMigration
+        from backend.database import db
+
+        with website.app.app_context():
+            success = run_migrations(website.app, db)
+            self.assertTrue(success)
+
+            # Check schema_migrations table exists and has entries
+            records = SchemaMigration.query.all()
+            self.assertGreaterEqual(len(records), 1)
 
 if __name__ == '__main__':
     unittest.main()
