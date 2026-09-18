@@ -7,13 +7,16 @@ from sqlalchemy import inspect, text
 logger = logging.getLogger(__name__)
 
 def backup_sqlite_db(db_uri, base_dir):
-    """Safely backup SQLite database before applying migrations"""
+    """Safely backup SQLite database before applying migrations with timestamped versioning"""
     if 'sqlite:///' in db_uri:
         sqlite_path = db_uri.replace('sqlite:///', '')
         if os.path.isabs(sqlite_path) and os.path.isfile(sqlite_path):
-            backup_path = f"{sqlite_path}.bak"
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_path = f"{sqlite_path}.{timestamp}.bak"
+            standard_bak = f"{sqlite_path}.bak"
             try:
                 shutil.copy2(sqlite_path, backup_path)
+                shutil.copy2(sqlite_path, standard_bak)
                 logger.info(f"[MIGRATION_BACKUP] SQLite database backed up to {backup_path}")
                 return backup_path
             except Exception as e:
@@ -35,6 +38,8 @@ def run_migrations(app, db):
 
         is_postgres = 'postgres' in engine.url.drivername.lower()
         bool_default = "FALSE" if is_postgres else "0"
+        sync_task_pk = "SERIAL PRIMARY KEY" if is_postgres else "INTEGER PRIMARY KEY AUTOINCREMENT"
+        dt_type = "TIMESTAMP"
 
         # 2. Ensure schema_migrations table exists
         with engine.begin() as conn:
@@ -89,6 +94,38 @@ def run_migrations(app, db):
                             key VARCHAR(64) PRIMARY KEY,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             response_json TEXT NOT NULL
+                        )
+                        """
+                    )
+                ]
+            ),
+            (
+                "v005_sync_tasks_and_idempotency_upgrade",
+                [
+                    ("idempotency_records", "request_id", "ALTER TABLE idempotency_records ADD COLUMN request_id VARCHAR(64)"),
+                    ("idempotency_records", "content_hash", "ALTER TABLE idempotency_records ADD COLUMN content_hash VARCHAR(64)"),
+                    ("idempotency_records", "status", "ALTER TABLE idempotency_records ADD COLUMN status VARCHAR(20) DEFAULT 'COMPLETED'"),
+                    ("quotes", "idempotency_key", "ALTER TABLE quotes ADD COLUMN idempotency_key VARCHAR(64)"),
+                    ("demo_requests", "idempotency_key", "ALTER TABLE demo_requests ADD COLUMN idempotency_key VARCHAR(64)"),
+                    ("demo_requests", "created_at_dt", f"ALTER TABLE demo_requests ADD COLUMN created_at_dt {dt_type}"),
+                    (
+                        "sync_tasks",
+                        None,
+                        f"""
+                        CREATE TABLE IF NOT EXISTS sync_tasks (
+                            id {sync_task_pk},
+                            event_key VARCHAR(64) UNIQUE NOT NULL,
+                            record_type VARCHAR(20) NOT NULL,
+                            record_id VARCHAR(50) NOT NULL,
+                            payload TEXT NOT NULL,
+                            status VARCHAR(20) DEFAULT 'pending' NOT NULL,
+                            attempt_count INTEGER DEFAULT 0 NOT NULL,
+                            next_retry_at {dt_type},
+                            last_error TEXT,
+                            lease_until {dt_type},
+                            worker_id VARCHAR(64),
+                            created_at {dt_type} DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                            updated_at {dt_type} DEFAULT CURRENT_TIMESTAMP NOT NULL
                         )
                         """
                     )

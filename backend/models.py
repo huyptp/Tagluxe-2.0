@@ -41,6 +41,7 @@ class Quote(db.Model):
     sync_status = db.Column(db.String(20), nullable=False, default='pending') # pending, synced, failed
     sync_error = db.Column(db.Text, nullable=True)
     retry_count = db.Column(db.Integer, nullable=False, default=0)
+    idempotency_key = db.Column(db.String(64), nullable=True, unique=True, index=True)
 
     def to_dict(self):
         accs = []
@@ -76,7 +77,8 @@ class Quote(db.Model):
             'status': self.status,
             'sync_status': self.sync_status,
             'sync_error': self.sync_error,
-            'retry_count': self.retry_count
+            'retry_count': self.retry_count,
+            'idempotency_key': self.idempotency_key
         }
 
 class DemoRequest(db.Model):
@@ -84,6 +86,7 @@ class DemoRequest(db.Model):
 
     id = db.Column(db.String(32), primary_key=True)
     created_at = db.Column(db.String(50), nullable=False)
+    created_at_dt = db.Column(db.DateTime, default=datetime.utcnow, nullable=True, index=True)
     phone = db.Column(db.String(20), nullable=False)
     customer_name = db.Column(db.String(120), nullable=True)
     product_category = db.Column(db.String(50), nullable=False, default='lanyard')
@@ -95,11 +98,13 @@ class DemoRequest(db.Model):
     sync_status = db.Column(db.String(20), nullable=False, default='pending') # pending, synced, failed
     sync_error = db.Column(db.Text, nullable=True)
     retry_count = db.Column(db.Integer, nullable=False, default=0)
+    idempotency_key = db.Column(db.String(64), nullable=True, unique=True, index=True)
 
     def to_dict(self):
+        dt_str = self.created_at_dt.strftime('%d/%m/%Y %H:%M:%S') if self.created_at_dt else (self.created_at or '')
         return {
             'id': self.id,
-            'created_at': self.created_at,
+            'created_at': dt_str,
             'phone': self.phone,
             'customer_name': self.customer_name,
             'product_category': self.product_category,
@@ -110,7 +115,8 @@ class DemoRequest(db.Model):
             'status': self.status,
             'sync_status': self.sync_status,
             'sync_error': self.sync_error,
-            'retry_count': self.retry_count
+            'retry_count': self.retry_count,
+            'idempotency_key': self.idempotency_key
         }
 
 
@@ -118,11 +124,49 @@ class IdempotencyRecord(db.Model):
     __tablename__ = 'idempotency_records'
 
     key = db.Column(db.String(64), primary_key=True)
+    request_id = db.Column(db.String(64), nullable=True, index=True)
+    content_hash = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    response_json = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='COMPLETED', nullable=False) # 'PROCESSING', 'COMPLETED', 'FAILED'
+    response_json = db.Column(db.Text, nullable=True)
 
     def to_dict(self):
-        return json.loads(self.response_json)
+        return json.loads(self.response_json) if self.response_json else {}
+
+
+class SyncTask(db.Model):
+    __tablename__ = 'sync_tasks'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    event_key = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    record_type = db.Column(db.String(20), nullable=False) # 'quote', 'demo'
+    record_id = db.Column(db.String(50), nullable=False, index=True)
+    payload = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending', nullable=False, index=True) # pending, processing, retry, succeeded, failed
+    attempt_count = db.Column(db.Integer, default=0, nullable=False)
+    next_retry_at = db.Column(db.DateTime, nullable=True, index=True)
+    last_error = db.Column(db.Text, nullable=True)
+    lease_until = db.Column(db.DateTime, nullable=True, index=True)
+    worker_id = db.Column(db.String(64), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'event_key': self.event_key,
+            'record_type': self.record_type,
+            'record_id': self.record_id,
+            'payload': json.loads(self.payload) if self.payload else {},
+            'status': self.status,
+            'attempt_count': self.attempt_count,
+            'next_retry_at': self.next_retry_at.strftime('%d/%m/%Y %H:%M:%S') if self.next_retry_at else None,
+            'last_error': self.last_error,
+            'lease_until': self.lease_until.strftime('%d/%m/%Y %H:%M:%S') if self.lease_until else None,
+            'worker_id': self.worker_id,
+            'created_at': self.created_at.strftime('%d/%m/%Y %H:%M:%S') if self.created_at else None,
+            'updated_at': self.updated_at.strftime('%d/%m/%Y %H:%M:%S') if self.updated_at else None
+        }
 
 
 class SchemaMigration(db.Model):
@@ -190,7 +234,7 @@ class Product(db.Model):
             'id': self.id,
             'name': self.name,
             'category': self.category,
-            'description': self.description,
+            'description': self.description or '',
             'images': self.images,
             'image': self.images[0] if self.images else '',
             'width': self.width,

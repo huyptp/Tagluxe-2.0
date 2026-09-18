@@ -62,14 +62,33 @@ function onOpen() {
 var WEBHOOK_SECRET = ""; 
 
 function doPost(e) {
+  var lock = LockService.getScriptLock();
+  var hasLock = false;
   try {
+    // 1. Script Lock bảo vệ chống race condition ghi đồng thời (chờ tối đa 15s)
+    hasLock = lock.tryLock(15000);
+    if (!hasLock) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: "error",
+          message: "Server busy: Could not acquire script lock within 15 seconds"
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (!e || !e.postData || !e.postData.contents) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: "error", message: "Empty request payload" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     var data = JSON.parse(e.postData.contents);
 
-    // Kiểm tra Secret key bảo mật nếu được cấu hình
+    // 2. Kiểm tra Secret key bảo mật bắt buộc
     var scriptSecret = WEBHOOK_SECRET || PropertiesService.getScriptProperties().getProperty("WEBHOOK_SECRET");
     if (scriptSecret) {
       var incomingSecret = data.secret || (e.parameter && e.parameter.secret);
-      if (incomingSecret !== scriptSecret) {
+      if (!incomingSecret || incomingSecret !== scriptSecret) {
         return ContentService
           .createTextOutput(JSON.stringify({ status: "error", message: "Unauthorized: Invalid or missing webhook secret key" }))
           .setMimeType(ContentService.MimeType.JSON);
@@ -79,24 +98,39 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     ensureSheetsExist(ss);
 
-    var isDemo = data.category && data.category.indexOf("Demo") !== -1;
+    var isDemo = (data.category && data.category.indexOf("Demo") !== -1) || data.record_type === "demo";
+    var result;
     if (isDemo) {
-      saveDemoRequest(ss, data);
+      result = saveDemoRequest(ss, data);
     } else {
-      saveQuoteOrder(ss, data);
+      result = saveQuoteOrder(ss, data);
     }
 
-    // Gửi Email thông báo tức thời
-    sendEmailNotification(data, isDemo, ss.getUrl());
+    // 3. Gửi Email thông báo tức thời (chỉ gửi khi đơn hàng mới được tạo để tránh spam khi retry)
+    if (result && result.action === "created") {
+      sendEmailNotification(data, isDemo, ss.getUrl());
+    }
+
+    var recId = result ? result.record_id : (data.id || data.record_id);
+    var act = result ? result.action : "processed";
 
     return ContentService
-      .createTextOutput(JSON.stringify({ status: "success", message: "Đã ghi nhận và gửi email thành công!" }))
+      .createTextOutput(JSON.stringify({
+        status: "success",
+        record_id: recId,
+        action: act,
+        message: "Đã ghi nhận thành công vào Google Sheets!"
+      }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
     return ContentService
       .createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    if (hasLock) {
+      lock.releaseLock();
+    }
   }
 }
 
@@ -419,9 +453,27 @@ function sanitizeForSheet(val) {
   return str;
 }
 
+function findRowByRecordId(sheet, recordId, colIndex) {
+  if (!sheet || !recordId) return -1;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return -1;
+  var values = sheet.getRange(2, colIndex, lastRow - 1, 1).getValues();
+  var searchKey = String(recordId).trim().toUpperCase();
+  for (var i = 0; i < values.length; i++) {
+    var cellVal = String(values[i][0] || "").trim().toUpperCase();
+    if (cellVal.startsWith("'")) {
+      cellVal = cellVal.substring(1).trim();
+    }
+    if (cellVal === searchKey) {
+      return i + 2; // 1-indexed sheet row
+    }
+  }
+  return -1;
+}
+
 function saveQuoteOrder(ss, data) {
   var sheet = ss.getSheetByName("📋 QUẢN LÝ BÁO GIÁ");
-  if (!sheet) return;
+  if (!sheet) return null;
 
   var accText = "Không";
   if (Array.isArray(data.accessories) && data.accessories.length > 0) {
@@ -443,69 +495,118 @@ function saveQuoteOrder(ss, data) {
     }
   }
 
-  var row = [
-    data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
-    sanitizeForSheet(data.id || data.quote_id || ("TL-" + Math.floor(1000 + Math.random() * 9000))),
-    sanitizeForSheet(data.category || "Dây đeo thẻ"),
-    sanitizeForSheet(data.customer_name || "Khách hàng"),
-    "'" + phone,
-    zaloFormula,
-    data.quantity || 0,
-    sanitizeForSheet(specsText),
-    sanitizeForSheet(accText),
-    data.total_price || 0,
-    sanitizeForSheet(data.notes || ""),
-    false, // Checkbox mặc định chưa xong
-    "Mới"
-  ];
+  var recordId = String(data.id || data.quote_id || data.record_id || ("TL-" + Math.floor(1000 + Math.random() * 9000)));
 
-  var targetRow = getFirstEmptyRow(sheet);
-  sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
-  sheet.setRowHeight(targetRow, 30);
-  sheet.getRange(targetRow, 1, 1, 2).setHorizontalAlignment("center");
-  sheet.getRange(targetRow, 5, 1, 3).setHorizontalAlignment("center");
-  sheet.getRange(targetRow, 10).setNumberFormat("#,##0 \"đ\"").setFontWeight("bold").setFontColor("#b45309");
+  // Chống ghi trùng: Tìm xem Mã báo giá đã có trong Cột B (col 2) chưa
+  var existingRow = findRowByRecordId(sheet, recordId, 2);
 
-  // Gắn Checkbox vào cột L của dòng này
-  sheet.getRange(targetRow, 12).insertCheckboxes();
+  if (existingRow > 0) {
+    // Cập nhật thông tin khách hàng & quy cách (Cột 1 đến 11 / A-K), GIỮ NGUYÊN cột L (☑️ Đã Xong) và cột M (Trạng thái)
+    var updateCols = [
+      data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
+      sanitizeForSheet(recordId),
+      sanitizeForSheet(data.category || "Dây đeo thẻ"),
+      sanitizeForSheet(data.customer_name || "Khách hàng"),
+      "'" + phone,
+      zaloFormula,
+      data.quantity || 0,
+      sanitizeForSheet(specsText),
+      sanitizeForSheet(accText),
+      data.total_price || 0,
+      sanitizeForSheet(data.notes || "")
+    ];
+    sheet.getRange(existingRow, 1, 1, updateCols.length).setValues([updateCols]);
+    sheet.getRange(existingRow, 10).setNumberFormat("#,##0 \"đ\"").setFontWeight("bold").setFontColor("#b45309");
+    return { record_id: recordId, action: "updated" };
+  } else {
+    var row = [
+      data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
+      sanitizeForSheet(recordId),
+      sanitizeForSheet(data.category || "Dây đeo thẻ"),
+      sanitizeForSheet(data.customer_name || "Khách hàng"),
+      "'" + phone,
+      zaloFormula,
+      data.quantity || 0,
+      sanitizeForSheet(specsText),
+      sanitizeForSheet(accText),
+      data.total_price || 0,
+      sanitizeForSheet(data.notes || ""),
+      false, // Checkbox mặc định chưa xong
+      "Mới"
+    ];
 
-  // Gắn Menu Dropdown vào cột M của dòng này
-  applyDropdownToCell(sheet.getRange(targetRow, 13), ORDER_STATUSES);
+    var targetRow = getFirstEmptyRow(sheet);
+    sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
+    sheet.setRowHeight(targetRow, 30);
+    sheet.getRange(targetRow, 1, 1, 2).setHorizontalAlignment("center");
+    sheet.getRange(targetRow, 5, 1, 3).setHorizontalAlignment("center");
+    sheet.getRange(targetRow, 10).setNumberFormat("#,##0 \"đ\"").setFontWeight("bold").setFontColor("#b45309");
+
+    // Gắn Checkbox vào cột L của dòng này
+    sheet.getRange(targetRow, 12).insertCheckboxes();
+
+    // Gắn Menu Dropdown vào cột M của dòng này
+    applyDropdownToCell(sheet.getRange(targetRow, 13), ORDER_STATUSES);
+    return { record_id: recordId, action: "created" };
+  }
 }
 
 function saveDemoRequest(ss, data) {
   var sheet = ss.getSheetByName("🎨 YÊU CẦU DEMO 2D");
-  if (!sheet) return;
+  if (!sheet) return null;
 
   var phone = String(data.phone || "").trim();
   var rawDigits = phone.replace(/[^0-9]/g, "");
   var sep = getFormulaSep(ss);
   var zaloFormula = rawDigits ? '=HYPERLINK("https://zalo.me/' + rawDigits + '"' + sep + ' "💬 Nhắn Zalo")' : "Không có";
 
-  var row = [
-    data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
-    sanitizeForSheet(data.id || ("DM-" + Math.floor(1000 + Math.random() * 9000))),
-    sanitizeForSheet(data.customer_name || "Khách hàng"),
-    "'" + phone,
-    zaloFormula,
-    sanitizeForSheet(data.category || "Dây đeo thẻ"),
-    sanitizeForSheet(data.quantity || "10-20"),
-    sanitizeForSheet(data.specs || "Không đính kèm"),
-    sanitizeForSheet(data.notes || ""),
-    false, // Checkbox chưa gửi
-    "Chờ gửi demo"
-  ];
+  var recordId = String(data.id || data.request_id || data.record_id || ("DM-" + Math.floor(1000 + Math.random() * 9000)));
 
-  var targetRow = getFirstEmptyRow(sheet);
-  sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
-  sheet.setRowHeight(targetRow, 30);
-  sheet.getRange(targetRow, 1, 1, 2).setHorizontalAlignment("center");
-  sheet.getRange(targetRow, 4, 1, 4).setHorizontalAlignment("center");
+  // Chống ghi trùng: Tìm xem Mã yêu cầu đã có trong Cột B (col 2) chưa
+  var existingRow = findRowByRecordId(sheet, recordId, 2);
 
-  sheet.getRange(targetRow, 10).insertCheckboxes();
-  applyDropdownToCell(sheet.getRange(targetRow, 11), [
-    "Chờ gửi demo", "Đã gửi demo", "Đang tư vấn", "Đã chốt", "Đã xong", "Đã hủy"
-  ]);
+  if (existingRow > 0) {
+    // Cập nhật thông tin khách hàng & ghi chú (Cột 1 đến 9 / A-I), GIỮ NGUYÊN cột J (☑️ Đã Gửi) và cột K (Trạng thái)
+    var updateDemoCols = [
+      data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
+      sanitizeForSheet(recordId),
+      sanitizeForSheet(data.customer_name || "Khách hàng"),
+      "'" + phone,
+      zaloFormula,
+      sanitizeForSheet(data.category || "Dây đeo thẻ"),
+      sanitizeForSheet(data.quantity || "10-20"),
+      sanitizeForSheet(data.specs || "Không đính kèm"),
+      sanitizeForSheet(data.notes || "")
+    ];
+    sheet.getRange(existingRow, 1, 1, updateDemoCols.length).setValues([updateDemoCols]);
+    return { record_id: recordId, action: "updated" };
+  } else {
+    var row = [
+      data.created_at || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
+      sanitizeForSheet(recordId),
+      sanitizeForSheet(data.customer_name || "Khách hàng"),
+      "'" + phone,
+      zaloFormula,
+      sanitizeForSheet(data.category || "Dây đeo thẻ"),
+      sanitizeForSheet(data.quantity || "10-20"),
+      sanitizeForSheet(data.specs || "Không đính kèm"),
+      sanitizeForSheet(data.notes || ""),
+      false, // Checkbox chưa gửi
+      "Chờ gửi demo"
+    ];
+
+    var targetRow = getFirstEmptyRow(sheet);
+    sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
+    sheet.setRowHeight(targetRow, 30);
+    sheet.getRange(targetRow, 1, 1, 2).setHorizontalAlignment("center");
+    sheet.getRange(targetRow, 4, 1, 4).setHorizontalAlignment("center");
+
+    sheet.getRange(targetRow, 10).insertCheckboxes();
+    applyDropdownToCell(sheet.getRange(targetRow, 11), [
+      "Chờ gửi demo", "Đã gửi demo", "Đang tư vấn", "Đã chốt", "Đã xong", "Đã hủy"
+    ]);
+    return { record_id: recordId, action: "created" };
+  }
 }
 
 function applyDropdownToCell(cellRange, options) {

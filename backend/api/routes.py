@@ -3,9 +3,10 @@ import time
 from flask import Blueprint, request, jsonify
 from backend.services.data_service import (
     add_demo_request, add_quote,
-    calculate_product_price, get_pvc_pricing_matrix, get_holder_pricing_matrix
+    calculate_product_price, get_pvc_pricing_matrix, get_holder_pricing_matrix,
+    create_quote_with_idempotency, create_demo_with_idempotency
 )
-from backend.security import rate_limit, idempotency
+from backend.security import rate_limit, idempotency, generate_canonical_hash
 from backend.validators import validate_quote_input, validate_demo_input, ALLOWED_CATEGORIES, parse_bool
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -62,34 +63,12 @@ def api_request_demo():
     if not is_valid:
         return jsonify({'success': False, 'message': err_msg}), status_code
 
-    # Idempotency check: detect duplicate requests within 30s
-    idemp_key = idempotency.generate_key(
-        'demo', clean_data['phone'], clean_data['customer_name'],
-        clean_data['product_category'], clean_data['quantity_range'], clean_data['notes']
-    )
-    cached_result = idempotency.get_existing(idemp_key)
-    if cached_result:
-        return jsonify(cached_result), 200
+    request_id = request.headers.get('X-Request-ID') or data.get('request_id')
+    content_hash = generate_canonical_hash(clean_data)
+    idemp_key = idempotency.generate_key('demo', request_id=request_id, content_hash=content_hash)
 
-    new_req = add_demo_request(
-        phone=clean_data['phone'],
-        customer_name=clean_data['customer_name'],
-        product_category=clean_data['product_category'],
-        quantity_range=clean_data['quantity_range'],
-        notes=clean_data['notes'],
-        file_path=None,
-        original_filename=None
-    )
-
-    if not new_req:
-        return jsonify({
-            'success': False,
-            'message': 'Không thể lưu yêu cầu thiết kế vào hệ thống lúc này. Vui lòng thử lại sau giây lát.'
-        }), 500
-
-    result = {'success': True, 'request_id': new_req['id'], 'phone': clean_data['phone']}
-    idempotency.store(idemp_key, result)
-    return jsonify(result)
+    status_code, resp = create_demo_with_idempotency(clean_data, idemp_key, request_id, content_hash)
+    return jsonify(resp), status_code
 
 @api_bp.route('/calculate-price', methods=['POST'])
 def api_calculate_price():
@@ -134,51 +113,12 @@ def api_submit_quote():
     if not is_valid:
         return jsonify({'success': False, 'message': err_msg}), status_code
 
-    # Idempotency check: include all pricing parameters in hash key
-    idemp_key = idempotency.generate_key(
-        'quote', clean_data['phone'], clean_data['category'], clean_data['quantity'],
-        clean_data['width'], str(clean_data['accessories']),
-        str(clean_data['include_vat']), str(clean_data['finish']),
-        str(clean_data['effects']), str(clean_data['size']),
-        str(clean_data['holder_type']), str(clean_data['punched_hole']),
-        clean_data['notes']
-    )
-    cached_resp = idempotency.get_existing(idemp_key)
-    if cached_resp:
-        return jsonify(cached_resp), 200
+    request_id = request.headers.get('X-Request-ID') or data.get('request_id')
+    content_hash = generate_canonical_hash(clean_data)
+    idemp_key = idempotency.generate_key('quote', request_id=request_id, content_hash=content_hash)
 
-    quote_record = add_quote(
-        customer_name=clean_data['customer_name'],
-        phone=clean_data['phone'],
-        quantity=clean_data['quantity'],
-        category=clean_data['category'],
-        width=clean_data['width'],
-        accessories=clean_data['accessories'],
-        notes=clean_data['notes'],
-        finish=clean_data['finish'],
-        effects=clean_data['effects'],
-        orientation=clean_data['orientation'],
-        printed_logo=clean_data['printed_logo'],
-        holder_type=clean_data['holder_type'],
-        include_vat=clean_data['include_vat'],
-        size=clean_data['size'],
-        punched_hole=clean_data['punched_hole']
-    )
-
-    if not quote_record:
-        return jsonify({
-            'success': False,
-            'message': 'Không thể lưu yêu cầu báo giá vào hệ thống lúc này. Vui lòng thử lại sau giây lát.'
-        }), 500
-
-    response_data = {
-        'success': True,
-        'message': 'Gửi yêu cầu tư vấn & in ấn thành công! TagLuxe sẽ liên hệ hỗ trợ bạn sớm nhất.',
-        'quote': quote_record
-    }
-    idempotency.store(idemp_key, response_data)
-
-    return jsonify(response_data)
+    status_code, resp = create_quote_with_idempotency(clean_data, idemp_key, request_id, content_hash)
+    return jsonify(resp), status_code
 
 
 

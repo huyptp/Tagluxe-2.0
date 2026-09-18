@@ -127,19 +127,8 @@ class QuoteCalculatorTests(unittest.TestCase):
         self.assertEqual(res.status_code, 400)
         self.assertFalse(res.get_json()['success'])
 
-    @patch('backend.api.routes.add_quote')
-    def test_submit_quote_success_and_phone_normalization(self, mock_add_quote):
-        mock_add_quote.return_value = {
-            'id': 'Q260917-TEST',
-            'quote_id': 'Q260917-TEST',
-            'customer_name': 'Trần Thị Thu',
-            'phone': '0987654321',
-            'quantity': 30,
-            'category': 'Dây đeo thẻ',
-            'unit_price': 28500,
-            'total_price': 855000,
-            'status': 'Mới'
-        }
+    def test_submit_quote_success_and_phone_normalization(self):
+        from backend.models import Quote
         res = self.client.post('/api/submit-quote', json={
             'customer_name': 'Trần Thị Thu',
             'phone': '+84 987 654 321',
@@ -157,10 +146,12 @@ class QuoteCalculatorTests(unittest.TestCase):
         self.assertEqual(quote['phone'], '0987654321')
         self.assertEqual(quote['quantity'], 30)
 
-        # Đảm bảo hàm add_quote được gọi với đúng SĐT đã chuẩn hóa
-        _, kwargs = mock_add_quote.call_args
-        self.assertEqual(kwargs['phone'], '0987654321')
-        self.assertEqual(kwargs['customer_name'], 'Trần Thị Thu')
+        # Verify in Database
+        with website.app.app_context():
+            saved = Quote.query.filter_by(id=quote['id']).first()
+            self.assertIsNotNone(saved)
+            self.assertEqual(saved.phone, '0987654321')
+            self.assertEqual(saved.customer_name, 'Trần Thị Thu')
 
     def test_vat_8_percent_calculation_and_submission(self):
         from backend.services.data_service import calculate_product_price
@@ -185,33 +176,21 @@ class QuoteCalculatorTests(unittest.TestCase):
         self.assertTrue(api_data['include_vat'])
         self.assertEqual(api_data['total_price'], 1080000)
 
-        # 3. Test API submit-quote with VAT (mock add_quote để không ghi rác)
-        with patch('backend.api.routes.add_quote') as mock_add:
-            mock_add.return_value = {
-                'id': 'Q260917-VAT1',
-                'quote_id': 'Q260917-VAT1',
-                'customer_name': 'Công ty ABC',
-                'phone': '0901234567',
-                'quantity': 50,
-                'include_vat': True,
-                'vat_amount': 80000,
-                'total_price': 1080000,
-                'notes': 'Cần xuất hóa đơn VAT [VAT 8%: +80.000 đ]'
-            }
-            sub_res = self.client.post('/api/submit-quote', json={
-                'customer_name': 'Công ty ABC',
-                'phone': '0901234567',
-                'quantity': 50,
-                'width': '2.0',
-                'include_vat': True,
-                'notes': 'Cần xuất hóa đơn VAT'
-            })
-            self.assertEqual(sub_res.status_code, 200)
-            quote = sub_res.get_json()['quote']
-            self.assertTrue(quote['include_vat'])
-            self.assertEqual(quote['vat_amount'], 80000)
-            self.assertEqual(quote['total_price'], 1080000)
-            self.assertIn('VAT 8%', quote['notes'])
+        # 3. Test API submit-quote with VAT
+        sub_res = self.client.post('/api/submit-quote', json={
+            'customer_name': 'Công ty ABC',
+            'phone': '0901234567',
+            'quantity': 50,
+            'width': '2.0',
+            'include_vat': True,
+            'notes': 'Cần xuất hóa đơn VAT'
+        })
+        self.assertEqual(sub_res.status_code, 200)
+        quote = sub_res.get_json()['quote']
+        self.assertTrue(quote['include_vat'])
+        self.assertEqual(quote['vat_amount'], 80000)
+        self.assertEqual(quote['total_price'], 1080000)
+        self.assertIn('VAT 8%', quote['notes'])
 
     def test_homepage_contains_calculator_section(self):
         res = self.client.get('/')
@@ -401,6 +380,180 @@ class QuoteCalculatorTests(unittest.TestCase):
             # Check schema_migrations table exists and has entries
             records = SchemaMigration.query.all()
             self.assertGreaterEqual(len(records), 1)
+
+    def test_hidden_and_deleted_product_returns_404_no_json_fallback(self):
+        """Group A: Hidden and deleted products return 404 and are excluded from visible catalog"""
+        from backend.models import Product
+        from backend.database import db
+        from backend.services.data_service import get_visible_products, get_product_by_id
+
+        test_prod_id = "test-prod-hidden-404"
+        with website.app.app_context():
+            # Clean up if existed
+            Product.query.filter_by(id=test_prod_id).delete()
+            db.session.commit()
+
+            # 1. Create a visible product
+            p = Product(
+                id=test_prod_id,
+                name="Sản phẩm Test Ẩn",
+                category="lanyard",
+                description="Mô tả sản phẩm test ẩn",
+                price=20000,
+                visible=True
+            )
+            db.session.add(p)
+            db.session.commit()
+
+            # Verify visible
+            vis = get_visible_products()
+            self.assertTrue(any(item['id'] == test_prod_id for item in vis))
+            prod = get_product_by_id(test_prod_id, visible_only=True)
+            self.assertIsNotNone(prod)
+
+            res = self.client.get(f"/product/{test_prod_id}")
+            self.assertEqual(res.status_code, 200)
+
+            # 2. Hide the product
+            p.visible = False
+            db.session.commit()
+
+            # Verify hidden: not in get_visible_products, get_product_by_id returns None, route returns 404
+            vis_after = get_visible_products()
+            self.assertFalse(any(item['id'] == test_prod_id for item in vis_after))
+            prod_hidden = get_product_by_id(test_prod_id, visible_only=True)
+            self.assertIsNone(prod_hidden)
+
+            res_hidden = self.client.get(f"/product/{test_prod_id}")
+            self.assertEqual(res_hidden.status_code, 404)
+
+            # 3. Delete the product
+            db.session.delete(p)
+            db.session.commit()
+
+            # Verify deleted returns 404
+            res_deleted = self.client.get(f"/product/{test_prod_id}")
+            self.assertEqual(res_deleted.status_code, 404)
+            self.assertIsNone(get_product_by_id(test_prod_id))
+
+    def test_seed_guard_prevents_reseeding_deleted_catalog(self):
+        """Group A: Empty products DB does NOT re-seed when seed_initial_data_v1 migration is present"""
+        from backend.models import Product, SchemaMigration
+        from backend.database import db, seed_initial_data
+
+        with website.app.app_context():
+            # Check migration flag exists
+            has_flag = SchemaMigration.query.filter_by(version='seed_initial_data_v1').first()
+            self.assertIsNotNone(has_flag)
+
+            # Intentionally delete all products
+            all_prods = Product.query.all()
+            backup_dicts = [p.to_dict() for p in all_prods]
+            try:
+                Product.query.delete()
+                db.session.commit()
+                self.assertEqual(Product.query.count(), 0)
+
+                # Re-run seed_initial_data
+                seed_initial_data()
+
+                # Verify products table is STILL EMPTY (seed guard protected it)
+                self.assertEqual(Product.query.count(), 0)
+            finally:
+                # Restore products
+                for bd in backup_dicts:
+                    bp = Product(
+                        id=bd['id'],
+                        name=bd['name'],
+                        category=bd['category'],
+                        description=bd.get('description', ''),
+                        images_json=json.dumps(bd.get('images', []), ensure_ascii=False),
+                        width=bd.get('width', ''),
+                        material=bd.get('material', ''),
+                        min_order=bd.get('min_order', 10),
+                        price_type=bd.get('price_type', 'contact'),
+                        price=bd.get('price', 0),
+                        featured=bd.get('featured', True),
+                        visible=bd.get('visible', True)
+                    )
+                    db.session.add(bp)
+                db.session.commit()
+
+    def test_database_level_pagination(self):
+        """Group D: Verify get_quotes_paginated and get_demo_requests_paginated with LIMIT/OFFSET"""
+        from backend.models import Quote, DemoRequest
+        from backend.database import db
+        from backend.services.data_service import get_quotes_paginated, get_demo_requests_paginated
+        from datetime import datetime, timedelta
+
+        with website.app.app_context():
+            # Clean up existing test pagination items
+            Quote.query.filter(Quote.id.like("Q-PAGE%")).delete()
+            DemoRequest.query.filter(DemoRequest.id.like("DM-PAGE%")).delete()
+            db.session.commit()
+
+            base_time = datetime(2026, 9, 18, 12, 0, 0)
+            # Create 25 test quotes
+            for i in range(25):
+                t_str = (base_time + timedelta(minutes=i)).strftime('%d/%m/%Y %H:%M:%S')
+                q = Quote(
+                    id=f"Q-PAGE-{i:02d}",
+                    customer_name=f"Khách Page {i}",
+                    phone=f"09110000{i:02d}",
+                    category="Dây đeo thẻ",
+                    quantity=50,
+                    unit_price=20000,
+                    total_price=1000000,
+                    status="Mới",
+                    created_at=base_time + timedelta(minutes=i)
+                )
+                db.session.add(q)
+
+                d = DemoRequest(
+                    id=f"DM-PAGE-{i:02d}",
+                    customer_name=f"Khách Demo {i}",
+                    phone=f"09220000{i:02d}",
+                    created_at=t_str,
+                    created_at_dt=base_time + timedelta(minutes=i)
+                )
+                db.session.add(d)
+            db.session.commit()
+
+            try:
+                # Test quotes pagination: per_page=10
+                p1 = get_quotes_paginated(search="Khách Page", page=1, per_page=10)
+                self.assertEqual(p1['total_items'], 25)
+                self.assertEqual(p1['total_pages'], 3)
+                self.assertEqual(len(p1['items']), 10)
+                self.assertTrue(p1['has_next'])
+                self.assertFalse(p1['has_prev'])
+                # Stable sort created_at desc: first item should be Q-PAGE-24
+                self.assertEqual(p1['items'][0]['id'], "Q-PAGE-24")
+
+                p2 = get_quotes_paginated(search="Khách Page", page=2, per_page=10)
+                self.assertEqual(len(p2['items']), 10)
+                self.assertTrue(p2['has_prev'])
+                self.assertTrue(p2['has_next'])
+                self.assertEqual(p2['items'][0]['id'], "Q-PAGE-14")
+
+                p3 = get_quotes_paginated(search="Khách Page", page=3, per_page=10)
+                self.assertEqual(len(p3['items']), 5)
+                self.assertTrue(p3['has_prev'])
+                self.assertFalse(p3['has_next'])
+                self.assertEqual(p3['items'][-1]['id'], "Q-PAGE-00")
+
+                # Test demo requests pagination
+                dp1 = get_demo_requests_paginated(search="Khách Demo", page=1, per_page=10)
+                self.assertEqual(dp1['total_items'], 25)
+                self.assertEqual(dp1['total_pages'], 3)
+                self.assertEqual(len(dp1['items']), 10)
+
+                dp3 = get_demo_requests_paginated(search="Khách Demo", page=3, per_page=10)
+                self.assertEqual(len(dp3['items']), 5)
+            finally:
+                Quote.query.filter(Quote.id.like("Q-PAGE%")).delete()
+                DemoRequest.query.filter(DemoRequest.id.like("DM-PAGE%")).delete()
+                db.session.commit()
 
 if __name__ == '__main__':
     unittest.main()

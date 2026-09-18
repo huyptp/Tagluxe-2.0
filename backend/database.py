@@ -103,8 +103,34 @@ def seed_initial_data():
             db.session.add(PriceTier(category=cat, min_qty=q_min, max_qty=q_max, unit_price=price))
         db.session.commit()
 
-    # 2. Seed Products & Quotes from data.json if products empty
-    if os.path.exists(DATA_FILE) and Product.query.count() == 0:
+    # 2. Seed Products & Quotes from data.json ONLY ONCE on brand new DB
+    from backend.models import SchemaMigration
+    from datetime import datetime
+
+    seed_flag = SchemaMigration.query.filter_by(version='seed_initial_data_v1').first()
+    if seed_flag:
+        return  # Database was already seeded or marked. NEVER re-seed even if products were deleted!
+
+    has_existing_products = Product.query.count() > 0
+    if has_existing_products:
+        try:
+            db.session.add(SchemaMigration(version='seed_initial_data_v1', applied_at=datetime.utcnow()))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return
+
+    total_migrations = SchemaMigration.query.count()
+    if total_migrations > 1:
+        # Existing upgraded database where products were intentionally deleted
+        try:
+            db.session.add(SchemaMigration(version='seed_initial_data_v1', applied_at=datetime.utcnow()))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return
+
+    if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, 'r', encoding='utf-8') as f:
                 d = json.load(f)
@@ -159,6 +185,7 @@ def seed_initial_data():
                 )
                 db.session.merge(req_obj)
 
+            db.session.add(SchemaMigration(version='seed_initial_data_v1', applied_at=datetime.utcnow()))
             db.session.commit()
         except Exception as ex:
             db.session.rollback()

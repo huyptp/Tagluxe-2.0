@@ -13,7 +13,8 @@ from backend.services.data_service import (
     get_all_products, get_product_by_id, add_product, update_product, delete_product,
     get_demo_requests, update_demo_request_status, delete_demo_request,
     get_quotes, update_quote_status, delete_quote,
-    retry_quote_sync, retry_demo_request_sync
+    retry_quote_sync, retry_demo_request_sync,
+    get_quotes_paginated, get_demo_requests_paginated
 )
 from backend.security import rate_limit, limiter, get_client_ip
 
@@ -283,8 +284,9 @@ def admin_delete_product(id):
 @login_required
 def admin_requests():
     page = request.args.get('page', 1, type=int)
-    requests_list = get_demo_requests()
-    pagination = paginate_items(requests_list, page=page, per_page=20)
+    search_query = request.args.get('q', '').strip()
+    status_filter = request.args.get('status', 'all')
+    pagination = get_demo_requests_paginated(status=status_filter, search=search_query, page=page, per_page=20)
     return render_template(
         'admin/requests.html',
         requests=pagination['items'],
@@ -292,7 +294,9 @@ def admin_requests():
         total_pages=pagination['total_pages'],
         total_items=pagination['total_items'],
         has_prev=pagination['has_prev'],
-        has_next=pagination['has_next']
+        has_next=pagination['has_next'],
+        current_status=status_filter,
+        search_query=search_query
     )
 
 @admin_bp.route('/requests/status/<id>', methods=['POST'])
@@ -386,8 +390,7 @@ def admin_quotes():
     status_filter = request.args.get('status', 'all')
     search_query = request.args.get('q', '').strip()
     page = request.args.get('page', 1, type=int)
-    quotes_list = get_quotes(status=status_filter, search=search_query)
-    pagination = paginate_items(quotes_list, page=page, per_page=20)
+    pagination = get_quotes_paginated(status=status_filter, search=search_query, page=page, per_page=20)
     return render_template(
         'admin/quotes.html',
         quotes=pagination['items'],

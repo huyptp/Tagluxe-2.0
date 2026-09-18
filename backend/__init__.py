@@ -109,4 +109,11 @@ def create_app(test_config=None):
         _t = threading.Thread(target=_keep_alive_worker, daemon=True)
         _t.start()
 
+    if not (test_config and test_config.get('TESTING')):
+        try:
+            from backend.services.sync_worker import start_background_sync_worker
+            start_background_sync_worker(app)
+        except Exception as e:
+            app.logger.warning(f"Could not start sync worker: {e}")
+
     return app

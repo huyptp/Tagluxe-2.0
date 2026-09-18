@@ -26,47 +26,50 @@ def _is_load_data_mocked():
     return 'app' in sys.modules and hasattr(sys.modules['app'], 'load_data') and sys.modules['app'].load_data != load_data
 
 def get_visible_products():
-    if not _is_load_data_mocked():
-        try:
-            from backend.models import Product
-            prods = Product.query.filter_by(visible=True).all()
-            if prods:
-                return [p.to_dict() for p in prods]
-        except Exception:
-            pass
-    data = load_data()
-    return [p for p in data.get('products', []) if p.get('visible', True)]
+    if _is_load_data_mocked():
+        data = sys.modules['app'].load_data()
+        return [p for p in data.get('products', []) if p.get('visible', True)]
+    try:
+        from backend.models import Product
+        prods = Product.query.filter_by(visible=True).all()
+        return [p.to_dict() for p in prods]
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_GET_VISIBLE_PRODUCTS_ERROR] {ex}")
+        raise
 
 def get_all_products():
-    if not _is_load_data_mocked():
-        try:
-            from backend.models import Product
-            prods = Product.query.all()
-            if prods:
-                return [p.to_dict() for p in prods]
-        except Exception:
-            pass
-    data = load_data()
-    return data.get('products', [])
+    if _is_load_data_mocked():
+        data = sys.modules['app'].load_data()
+        return data.get('products', [])
+    try:
+        from backend.models import Product
+        prods = Product.query.all()
+        return [p.to_dict() for p in prods]
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_GET_ALL_PRODUCTS_ERROR] {ex}")
+        raise
 
 def get_product_by_id(product_id, visible_only=True):
-    if not _is_load_data_mocked():
-        try:
-            from backend.models import Product
-            query = Product.query.filter_by(id=product_id)
-            if visible_only:
-                query = query.filter_by(visible=True)
-            prod = query.first()
-            if prod:
-                return prod.to_dict()
-        except Exception:
-            pass
-    data = load_data()
-    for p in data.get('products', []):
-        if p.get('id') == product_id:
-            if not visible_only or p.get('visible', True):
-                return p
-    return None
+    if _is_load_data_mocked():
+        data = sys.modules['app'].load_data()
+        for p in data.get('products', []):
+            if p.get('id') == product_id:
+                if not visible_only or p.get('visible', True):
+                    return p
+        return None
+    try:
+        from backend.models import Product
+        query = Product.query.filter_by(id=product_id)
+        if visible_only:
+            query = query.filter_by(visible=True)
+        prod = query.first()
+        return prod.to_dict() if prod else None
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_GET_PRODUCT_BY_ID_ERROR] {ex}")
+        raise
 
 def add_product(product_data):
     try:
@@ -220,14 +223,58 @@ def product_schema(product):
 def get_demo_requests():
     try:
         from backend.models import DemoRequest
-        reqs = DemoRequest.query.order_by(DemoRequest.id.desc()).all()
-        if reqs is not None:
-            return [r.to_dict() for r in reqs]
+        order_col = getattr(DemoRequest, 'created_at_dt', None)
+        query = DemoRequest.query
+        if order_col is not None:
+            query = query.order_by(order_col.desc(), DemoRequest.id.desc())
+        else:
+            query = query.order_by(DemoRequest.id.desc())
+        reqs = query.all()
+        return [r.to_dict() for r in reqs]
     except Exception as ex:
         import logging
         logging.getLogger(__name__).error(f"[DB_DEMO_REQ_GET_ERROR] {ex}")
-    data = load_data()
-    return data.get('demo_requests', [])
+        raise
+
+def get_demo_requests_paginated(status=None, search=None, page=1, per_page=20):
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
+    try:
+        from backend.models import DemoRequest
+        query = DemoRequest.query
+        if status and status != 'all':
+            query = query.filter(DemoRequest.status == status)
+        if search:
+            s = f"%{search.strip()}%"
+            query = query.filter(
+                (DemoRequest.customer_name.ilike(s)) |
+                (DemoRequest.phone.ilike(s)) |
+                (DemoRequest.id.ilike(s))
+            )
+        total_items = query.count()
+        total_pages = max(1, (total_items + per_page - 1) // per_page)
+        if page > total_pages:
+            page = total_pages
+        offset = (page - 1) * per_page
+        order_col = getattr(DemoRequest, 'created_at_dt', None)
+        if order_col is not None:
+            query = query.order_by(order_col.desc(), DemoRequest.id.desc())
+        else:
+            query = query.order_by(DemoRequest.id.desc())
+        reqs = query.offset(offset).limit(per_page).all()
+        return {
+            'items': [r.to_dict() for r in reqs],
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages,
+            'total_items': total_items,
+            'has_prev': page > 1,
+            'has_next': page < total_pages
+        }
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_DEMO_REQ_GET_PAGINATED_ERROR] {ex}")
+        raise
 
 def add_demo_request(phone, customer_name='', product_category='lanyard', quantity_range='10-20', notes='', file_path=None, original_filename=None):
     req_id = uuid.uuid4().hex[:6].upper()
@@ -889,20 +936,47 @@ def get_quotes(status=None, search=None):
                 (Quote.phone.ilike(s)) |
                 (Quote.id.ilike(s))
             )
-        quotes = query.order_by(Quote.created_at.desc()).all()
-        if quotes is not None:
-            return [q.to_dict() for q in quotes]
+        quotes = query.order_by(Quote.created_at.desc(), Quote.id.desc()).all()
+        return [q.to_dict() for q in quotes]
     except Exception as ex:
         import logging
         logging.getLogger(__name__).error(f"[DB_QUOTE_GET_ERROR] {ex}")
-    data = load_data()
-    quotes = data.get('quotes', [])
-    if status and status != 'all':
-        quotes = [q for q in quotes if q.get('status') == status]
-    if search:
-        s = search.strip().lower()
-        quotes = [q for q in quotes if s in q.get('customer_name', '').lower() or s in q.get('phone', '') or s in q.get('id', '').lower()]
-    return quotes
+        raise
+
+def get_quotes_paginated(status=None, search=None, page=1, per_page=20):
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
+    try:
+        from backend.models import Quote
+        query = Quote.query
+        if status and status != 'all':
+            query = query.filter(Quote.status == status)
+        if search:
+            s = f"%{search.strip()}%"
+            query = query.filter(
+                (Quote.customer_name.ilike(s)) |
+                (Quote.phone.ilike(s)) |
+                (Quote.id.ilike(s))
+            )
+        total_items = query.count()
+        total_pages = max(1, (total_items + per_page - 1) // per_page)
+        if page > total_pages:
+            page = total_pages
+        offset = (page - 1) * per_page
+        quotes = query.order_by(Quote.created_at.desc(), Quote.id.desc()).offset(offset).limit(per_page).all()
+        return {
+            'items': [q.to_dict() for q in quotes],
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages,
+            'total_items': total_items,
+            'has_prev': page > 1,
+            'has_next': page < total_pages
+        }
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_QUOTE_GET_PAGINATED_ERROR] {ex}")
+        raise
 
 def update_quote_status(quote_id, new_status):
     try:
@@ -1024,6 +1098,275 @@ def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, not
 
     return quote_record
 
+def create_quote_with_idempotency(clean_data, idemp_key, request_id, content_hash):
+    from backend.database import db
+    from backend.models import IdempotencyRecord, Quote, SyncTask
+    from sqlalchemy.exc import IntegrityError
+    import time
+
+    # Check if this idempotency key already exists
+    existing = IdempotencyRecord.query.filter_by(key=idemp_key).first()
+    if existing:
+        if existing.content_hash and existing.content_hash != content_hash:
+            return 409, {
+                'success': False,
+                'error': 'conflict',
+                'message': 'Mã yêu cầu đã tồn tại với nội dung cấu hình khác (409 Conflict).'
+            }
+        if existing.status == 'COMPLETED' and existing.response_json:
+            return 200, json.loads(existing.response_json)
+
+    # 1. Single atomic transaction:
+    try:
+        idemp_rec = IdempotencyRecord(
+            key=idemp_key,
+            request_id=request_id,
+            content_hash=content_hash,
+            created_at=datetime.utcnow(),
+            status='PROCESSING',
+            response_json=''
+        )
+        db.session.add(idemp_rec)
+        db.session.flush()
+
+        # Pricing math
+        pricing = calculate_product_price(
+            category=clean_data['category'],
+            quantity=clean_data['quantity'],
+            width=clean_data.get('width', '2.0'),
+            accessories=clean_data.get('accessories'),
+            finish=clean_data.get('finish'),
+            effects=clean_data.get('effects'),
+            orientation=clean_data.get('orientation'),
+            printed_logo=clean_data.get('printed_logo'),
+            holder_type=clean_data.get('holder_type'),
+            include_vat=clean_data.get('include_vat'),
+            size=clean_data.get('size'),
+            punched_hole=clean_data.get('punched_hole')
+        )
+
+        quote_id = f"Q{datetime.now().strftime('%y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
+        now = datetime.utcnow()
+        now_str = now.strftime('%d/%m/%Y %H:%M:%S')
+        include_vat = pricing.get('include_vat', False)
+        vat_amount = pricing.get('vat_amount', 0)
+        subtotal = pricing.get('subtotal', pricing['total_price'])
+
+        raw_notes = (clean_data.get('notes') or '').strip()
+        formatted_notes = raw_notes
+        if include_vat:
+            vat_tag = f"[VAT 8%: +{vat_amount:,} đ]".replace(',', '.')
+            formatted_notes = f"{raw_notes} {vat_tag}".strip() if raw_notes else vat_tag
+
+        punched_hole_val = pricing.get('punched_hole', clean_data.get('punched_hole', 'none'))
+        acc_str = json.dumps(pricing.get('accessories', []), ensure_ascii=False)
+
+        quote_obj = Quote(
+            id=quote_id,
+            created_at=now,
+            customer_name=clean_data['customer_name'].strip(),
+            phone=clean_data['phone'].strip(),
+            category=pricing.get('category', 'Dây đeo thẻ'),
+            quantity=pricing['quantity'],
+            specs=pricing.get('specs', pricing.get('width', '')),
+            accessories=acc_str,
+            punched_hole=punched_hole_val,
+            unit_price=pricing['unit_price'],
+            total_price=pricing['total_price'],
+            notes=formatted_notes,
+            status='Mới',
+            include_vat=include_vat,
+            vat_amount=vat_amount,
+            sync_status='pending',
+            retry_count=0,
+            idempotency_key=idemp_key
+        )
+        db.session.add(quote_obj)
+        db.session.flush()
+
+        quote_dict = quote_obj.to_dict()
+
+        # Add sync task to persistent queue
+        sync_task = SyncTask(
+            event_key=f"quote_sync_{quote_id}",
+            record_type='quote',
+            record_id=quote_id,
+            payload=json.dumps(quote_dict, ensure_ascii=False),
+            status='pending',
+            attempt_count=0,
+            created_at=now,
+            updated_at=now
+        )
+        db.session.add(sync_task)
+        db.session.flush()
+
+        response_data = {
+            'success': True,
+            'message': 'Gửi yêu cầu tư vấn & in ấn thành công! TagLuxe sẽ liên hệ hỗ trợ bạn sớm nhất.',
+            'quote': quote_dict
+        }
+        idemp_rec.response_json = json.dumps(response_data, ensure_ascii=False)
+        idemp_rec.status = 'COMPLETED'
+
+        db.session.commit()
+        return 200, response_data
+
+    except IntegrityError:
+        db.session.rollback()
+        existing = IdempotencyRecord.query.filter_by(key=idemp_key).first()
+        if existing:
+            if existing.content_hash and existing.content_hash != content_hash:
+                return 409, {
+                    'success': False,
+                    'error': 'conflict',
+                    'message': 'Mã yêu cầu đã tồn tại với nội dung cấu hình khác (409 Conflict).'
+                }
+            if existing.status == 'COMPLETED' and existing.response_json:
+                return 200, json.loads(existing.response_json)
+
+            for _ in range(30):
+                time.sleep(0.1)
+                db.session.expire_all()
+                r = IdempotencyRecord.query.filter_by(key=idemp_key).first()
+                if r and r.status == 'COMPLETED' and r.response_json:
+                    return 200, json.loads(r.response_json)
+
+            return 202, {
+                'success': True,
+                'status': 'processing',
+                'message': 'Yêu cầu đang được xử lý, vui lòng thử lại sau giây lát.'
+            }
+        return 500, {
+            'success': False,
+            'message': 'Lỗi xung đột cơ sở dữ liệu. Vui lòng thử lại.'
+        }
+    except Exception as ex:
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[QUOTE_TRANSACTION_ERROR] {ex}")
+        return 500, {
+            'success': False,
+            'message': 'Không thể lưu yêu cầu báo giá vào hệ thống lúc này. Vui lòng thử lại sau giây lát.'
+        }
+
+
+def create_demo_with_idempotency(clean_data, idemp_key, request_id, content_hash):
+    from backend.database import db
+    from backend.models import IdempotencyRecord, DemoRequest, SyncTask
+    from sqlalchemy.exc import IntegrityError
+    import time
+
+    existing = IdempotencyRecord.query.filter_by(key=idemp_key).first()
+    if existing:
+        if existing.content_hash and existing.content_hash != content_hash:
+            return 409, {
+                'success': False,
+                'error': 'conflict',
+                'message': 'Mã yêu cầu đã tồn tại với nội dung cấu hình khác (409 Conflict).'
+            }
+        if existing.status == 'COMPLETED' and existing.response_json:
+            return 200, json.loads(existing.response_json)
+
+    try:
+        idemp_rec = IdempotencyRecord(
+            key=idemp_key,
+            request_id=request_id,
+            content_hash=content_hash,
+            created_at=datetime.utcnow(),
+            status='PROCESSING',
+            response_json=''
+        )
+        db.session.add(idemp_rec)
+        db.session.flush()
+
+        req_id = uuid.uuid4().hex[:6].upper()
+        now = datetime.utcnow()
+        now_str = now.strftime('%d/%m/%Y %H:%M:%S')
+
+        demo_obj = DemoRequest(
+            id=req_id,
+            created_at=now_str,
+            created_at_dt=now,
+            phone=clean_data['phone'].strip(),
+            customer_name=(clean_data.get('customer_name') or '').strip(),
+            product_category=clean_data.get('product_category', 'lanyard'),
+            quantity_range=clean_data.get('quantity_range', '10-20'),
+            notes=(clean_data.get('notes') or '').strip(),
+            file_path=None,
+            original_filename=None,
+            status='Chờ gửi demo',
+            sync_status='pending',
+            retry_count=0,
+            idempotency_key=idemp_key
+        )
+        db.session.add(demo_obj)
+        db.session.flush()
+
+        demo_dict = demo_obj.to_dict()
+
+        sync_task = SyncTask(
+            event_key=f"demo_sync_{req_id}",
+            record_type='demo',
+            record_id=req_id,
+            payload=json.dumps(demo_dict, ensure_ascii=False),
+            status='pending',
+            attempt_count=0,
+            created_at=now,
+            updated_at=now
+        )
+        db.session.add(sync_task)
+        db.session.flush()
+
+        response_data = {
+            'success': True,
+            'request_id': req_id,
+            'phone': clean_data['phone'].strip()
+        }
+        idemp_rec.response_json = json.dumps(response_data, ensure_ascii=False)
+        idemp_rec.status = 'COMPLETED'
+
+        db.session.commit()
+        return 200, response_data
+
+    except IntegrityError:
+        db.session.rollback()
+        existing = IdempotencyRecord.query.filter_by(key=idemp_key).first()
+        if existing:
+            if existing.content_hash and existing.content_hash != content_hash:
+                return 409, {
+                    'success': False,
+                    'error': 'conflict',
+                    'message': 'Mã yêu cầu đã tồn tại với nội dung cấu hình khác (409 Conflict).'
+                }
+            if existing.status == 'COMPLETED' and existing.response_json:
+                return 200, json.loads(existing.response_json)
+
+            for _ in range(30):
+                time.sleep(0.1)
+                db.session.expire_all()
+                r = IdempotencyRecord.query.filter_by(key=idemp_key).first()
+                if r and r.status == 'COMPLETED' and r.response_json:
+                    return 200, json.loads(r.response_json)
+
+            return 202, {
+                'success': True,
+                'status': 'processing',
+                'message': 'Yêu cầu đang được xử lý, vui lòng thử lại sau giây lát.'
+            }
+        return 500, {
+            'success': False,
+            'message': 'Lỗi xung đột cơ sở dữ liệu. Vui lòng thử lại.'
+        }
+    except Exception as ex:
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DEMO_TRANSACTION_ERROR] {ex}")
+        return 500, {
+            'success': False,
+            'message': 'Không thể lưu yêu cầu thiết kế vào hệ thống lúc này. Vui lòng thử lại sau giây lát.'
+        }
+
+
 def sanitize_for_sheet(val):
     """
     Sanitizes values before sending to Google Sheet to prevent Formula Injection (CSV injection).
@@ -1120,11 +1463,11 @@ def send_quote_to_google_sheet(quote_data, app=None):
                     resp_json = {}
 
         if resp_code == 200:
-            if resp_json.get('status') == 'success' or (not resp_json and 'success' in resp_text.lower()):
+            if isinstance(resp_json, dict) and resp_json.get('status') == 'success':
                 _update_record_sync_status(quote_id, 'synced', None, app)
                 return True, "Google Sheet synced successfully"
             else:
-                err_msg = resp_json.get('message') or resp_json.get('error') or f"Status: {resp_json.get('status') or 'unknown'}"
+                err_msg = resp_json.get('message') or resp_json.get('error') or f"Status: {resp_json.get('status') or 'unknown'}" if isinstance(resp_json, dict) else f"Invalid JSON response: {resp_text[:120]}"
                 _update_record_sync_status(quote_id, 'failed', str(err_msg)[:500], app)
                 return False, f"Google Sheet sync error: {err_msg}"
         else:

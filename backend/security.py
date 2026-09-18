@@ -54,71 +54,117 @@ class SlidingWindowRateLimiter:
             self._records.pop(key, None)
 
 
+def generate_canonical_hash(data):
+    """
+    Creates a deterministic, stable SHA256 hash from canonical normalized dictionary.
+    Keys are sorted, accessories list is sorted, customer_name and notes preserve case.
+    """
+    canonical_dict = {}
+    for k in [
+        'customer_name', 'phone', 'category', 'quantity', 'width', 'size',
+        'accessories', 'include_vat', 'finish', 'effects', 'orientation',
+        'printed_logo', 'holder_type', 'punched_hole', 'notes'
+    ]:
+        val = data.get(k)
+        if k == 'accessories':
+            if isinstance(val, list):
+                val = sorted([str(x).strip() for x in val if str(x).strip()])
+            elif isinstance(val, str) and val.strip():
+                try:
+                    parsed = json.loads(val)
+                    if isinstance(parsed, list):
+                        val = sorted([str(x).strip() for x in parsed if str(x).strip()])
+                    else:
+                        val = [val.strip()]
+                except Exception:
+                    val = [val.strip()]
+            else:
+                val = []
+        elif k in ('include_vat', 'printed_logo'):
+            val = bool(val)
+        elif k == 'quantity':
+            try:
+                val = int(val)
+            except Exception:
+                val = 0
+        elif k == 'phone':
+            val = str(val or '').strip()
+        else:
+            val = str(val or '').strip()
+        canonical_dict[k] = val
+
+    canonical_json = json.dumps(canonical_dict, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()
+
+
 class IdempotencyManager:
     """
     Atomic Idempotency Manager with Database Persistence.
     Prevents duplicate submissions across multiple worker processes (Gunicorn)
-    and handles double-clicks within a 30-second window.
+    and handles double-clicks within a 60-second window.
     """
-    def __init__(self, ttl_sec=30):
+    def __init__(self, ttl_sec=60):
         self._lock = threading.Lock()
-        self._cache = {}  # In-memory fallback
+        self._cache = {}
         self._ttl = ttl_sec
 
-    def generate_key(self, *args):
-        """Creates a deterministic hash key from canonical order attributes"""
+    def generate_key(self, *args, **kwargs):
+        """Creates a deterministic hash key from canonical attributes or request_id"""
+        scope = kwargs.get('scope')
+        request_id = kwargs.get('request_id')
+        content_hash = kwargs.get('content_hash')
+
+        if not scope and args and args[0] in ('quote', 'demo'):
+            scope = args[0]
+            if len(args) == 2 and isinstance(args[1], str) and len(args[1]) > 30:
+                content_hash = args[1]
+            elif len(args) == 3:
+                request_id = args[1]
+                content_hash = args[2]
+
+        if scope and request_id:
+            return f"{scope}:{request_id.strip()}"
+        if scope and content_hash:
+            time_bucket = int(time.time() // 60)
+            return f"{scope}:hash:{content_hash}:{time_bucket}"
+
         raw_str = "|".join(str(a if a is not None else '').strip().lower() for a in args)
         return hashlib.sha256(raw_str.encode('utf-8')).hexdigest()
 
     def get_existing(self, key):
         """Checks if a valid recent request exists for this key in DB or memory"""
-        now = time.time()
-        # 1. Check database persistence
-        try:
-            from backend.models import IdempotencyRecord
-            rec = IdempotencyRecord.query.filter_by(key=key).first()
-            if rec and rec.created_at:
-                age = (datetime.now() - rec.created_at).total_seconds()
-                if age < self._ttl:
+        from backend.models import IdempotencyRecord
+        rec = IdempotencyRecord.query.filter_by(key=key).first()
+        if rec and rec.created_at:
+            age = (datetime.utcnow() - rec.created_at).total_seconds()
+            if age < self._ttl:
+                if rec.status == 'COMPLETED' and rec.response_json:
                     return json.loads(rec.response_json)
-        except Exception:
-            pass
+        return None
 
-        # 2. In-memory fallback
-        with self._lock:
-            entry = self._cache.get(key)
-            if entry and (now - entry['time'] < self._ttl):
-                return entry.get('result')
-            return None
-
-    def store(self, key, result):
-        """Stores the result atomically into DB and memory"""
-        now = time.time()
-        # 1. Save to Database
-        try:
-            from backend.database import db
-            from backend.models import IdempotencyRecord
+    def store(self, key, result, request_id=None, content_hash=None):
+        """Stores the result into DB"""
+        from backend.database import db
+        from backend.models import IdempotencyRecord
+        rec = IdempotencyRecord.query.filter_by(key=key).first()
+        if not rec:
             rec = IdempotencyRecord(
                 key=key,
-                created_at=datetime.now(),
+                request_id=request_id,
+                content_hash=content_hash,
+                created_at=datetime.utcnow(),
+                status='COMPLETED',
                 response_json=json.dumps(result, ensure_ascii=False)
             )
-            db.session.merge(rec)
-            db.session.commit()
-        except Exception:
-            try:
-                from backend.database import db
-                db.session.rollback()
-            except Exception:
-                pass
-
-        # 2. Save to in-memory cache
-        with self._lock:
-            if len(self._cache) > 200:
-                expired = [k for k, v in self._cache.items() if now - v['time'] > self._ttl]
-                for k in expired:
-                    self._cache.pop(k, None)
-            self._cache[key] = {'time': now, 'result': result}
+            db.session.add(rec)
+        else:
+            rec.status = 'COMPLETED'
+            rec.response_json = json.dumps(result, ensure_ascii=False)
+            if request_id:
+                rec.request_id = request_id
+            if content_hash:
+                rec.content_hash = content_hash
+        db.session.commit()
 
 
 # Singleton instances
