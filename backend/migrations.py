@@ -157,6 +157,41 @@ def run_migrations(app, db):
                         """UPDATE products SET images_json = '["media_1789714507972.jpg", "media_1789714507975.jpg", "media_1789714507982.jpg", "media_1789662028575.jpg", "media_1789320576594.jpg", "media_1789662086201.jpg", "media_1789662028590.jpg", "media_1789662086215.jpg", "media_1789662064859.jpg", "media_1789662064871.jpg", "media_1789662064894.jpg", "media_1789662086196.jpg", "media_1789662086207.jpg", "media_1789662028598.jpg", "media_1789662028605.jpg", "media_1789662028584.jpg", "media_1786037379657.jpg", "media_1789285818722.jpg", "media_1789286120138.jpg", "media_1786037379884.jpg", "media_1789285818629.jpg", "media_1789285818730.jpg", "media_1789285818752.jpg", "media_1789285818740.jpg", "media_1786037379878.jpg"]' WHERE id = 'lan-1'"""
                     )
                 ]
+            ),
+            (
+                "v008_seed_catalog_products_if_empty",
+                [
+                    (
+                        "products",
+                        None,
+                        """INSERT INTO products (id, name, category, description, images_json, width, material, min_order, price_type, price, featured, visible)
+                        SELECT 'lan-1', 'Dây đeo thẻ in chuyển nhiệt cao cấp', 'lanyard',
+                               'Dây đeo thẻ in chuyển nhiệt cao cấp in ấn sắc nét theo yêu cầu riêng. Chất liệu lụa Satin cao cấp mềm mịn, công nghệ in chuẩn màu, chống bong tróc, bền màu tuyệt đối. Phù hợp cho doanh nghiệp, trường học, sự kiện và fandom.',
+                               '["media_1789714507972.jpg", "media_1789714507975.jpg", "media_1789714507982.jpg", "media_1789662028575.jpg", "media_1789320576594.jpg", "media_1789662086201.jpg", "media_1789662028590.jpg", "media_1789662086215.jpg", "media_1789662064859.jpg", "media_1789662064871.jpg", "media_1789662064894.jpg", "media_1789662086196.jpg", "media_1789662086207.jpg", "media_1789662028598.jpg", "media_1789662028605.jpg", "media_1789662028584.jpg", "media_1786037379657.jpg", "media_1789285818722.jpg", "media_1789286120138.jpg", "media_1786037379884.jpg", "media_1789285818629.jpg", "media_1789285818730.jpg", "media_1789285818752.jpg", "media_1789285818740.jpg", "media_1786037379878.jpg"]',
+                               '1.5 cm / 2.0 cm / 2.5 cm', 'Lụa Satin Cao Cấp', 10, 'contact', 0, 1, 1
+                        WHERE NOT EXISTS (SELECT 1 FROM products WHERE id = 'lan-1')"""
+                    ),
+                    (
+                        "products",
+                        None,
+                        """INSERT INTO products (id, name, category, description, images_json, width, material, min_order, price_type, price, featured, visible)
+                        SELECT 'acc-1', 'Thẻ nhựa PVC in theo yêu cầu', 'accessory',
+                               'Thẻ nhựa PVC in 2 mặt full màu sắc nét theo thiết kế riêng. Phù hợp cho thẻ nhân viên, thẻ sinh viên, thẻ sự kiện, fandom và câu lạc bộ. Nhận từ 10 thẻ.',
+                               '["media_1789319927667.jpg", "media_1789287481499.jpg", "media_1789286065178.jpg", "media_1789286065185.jpg", "media_1789287481503.jpg", "media_1789319983784.jpg"]',
+                               'Chuẩn thẻ ATM (86x54mm)', 'Chất liệu PVC', 10, 'contact', 0, 1, 1
+                        WHERE NOT EXISTS (SELECT 1 FROM products WHERE id = 'acc-1')"""
+                    ),
+                    (
+                        "products",
+                        None,
+                        """INSERT INTO products (id, name, category, description, images_json, width, material, min_order, price_type, price, featured, visible)
+                        SELECT 'acc-2', 'Vỏ đựng thẻ (Card holder) in theo yêu cầu', 'accessory',
+                               'Vỏ đựng thẻ cứng cáp in full màu theo thiết kế riêng, bảo vệ thẻ khỏi trầy xước, cong vênh. Thiết kế sang trọng, có thể in logo nhận diện thương hiệu, nhận in từ 20 cái.',
+                               '["media_1789317114085.jpg", "media_1789287073763.jpg", "media_1789286087649.jpg", "media_1789286087652.jpg", "media_1789286087760.jpg", "media_1789320043265.jpg"]',
+                               'Vừa thẻ tiêu chuẩn (86x54mm)', 'Chất liệu nhựa ABS', 20, 'contact', 0, 1, 1
+                        WHERE NOT EXISTS (SELECT 1 FROM products WHERE id = 'acc-2')"""
+                    )
+                ]
             )
         ]
 

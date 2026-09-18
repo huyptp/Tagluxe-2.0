@@ -17,7 +17,7 @@ def get_database_uri():
     return f"sqlite:///{sqlite_path}"
 
 def seed_initial_data():
-    from backend.models import PriceTier, Product, Quote, DemoRequest
+    from backend.models import PriceTier, Product, Quote, DemoRequest, SchemaMigration
     from backend.config import DATA_FILE
     import json
 
@@ -103,31 +103,9 @@ def seed_initial_data():
             db.session.add(PriceTier(category=cat, min_qty=q_min, max_qty=q_max, unit_price=price))
         db.session.commit()
 
-    # 2. Seed Products & Quotes from data.json ONLY ONCE on brand new DB
-    from backend.models import SchemaMigration
-    from datetime import datetime
-
+    # 2. Seed Products, Quotes & Demo Requests from data.json if not already seeded
     seed_flag = SchemaMigration.query.filter_by(version='seed_initial_data_v1').first()
     if seed_flag:
-        return  # Database was already seeded or marked. NEVER re-seed even if products were deleted!
-
-    has_existing_products = Product.query.count() > 0
-    if has_existing_products:
-        try:
-            db.session.add(SchemaMigration(version='seed_initial_data_v1', applied_at=datetime.utcnow()))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-        return
-
-    total_migrations = SchemaMigration.query.count()
-    if total_migrations > 1:
-        # Existing upgraded database where products were intentionally deleted
-        try:
-            db.session.add(SchemaMigration(version='seed_initial_data_v1', applied_at=datetime.utcnow()))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
         return
 
     if os.path.exists(DATA_FILE):
@@ -185,8 +163,12 @@ def seed_initial_data():
                 )
                 db.session.merge(req_obj)
 
-            db.session.add(SchemaMigration(version='seed_initial_data_v1', applied_at=datetime.utcnow()))
+            from datetime import datetime
+            if not SchemaMigration.query.filter_by(version='seed_initial_data_v1').first():
+                db.session.add(SchemaMigration(version='seed_initial_data_v1', applied_at=datetime.utcnow()))
+
             db.session.commit()
+            print(f"[DB_SEED] Successfully seeded products from {DATA_FILE}")
         except Exception as ex:
             db.session.rollback()
             print(f"[DB_SEED_ERROR] {ex}")
