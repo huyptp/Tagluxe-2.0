@@ -4,6 +4,23 @@ from datetime import timedelta
 
 # Base Directory: root repo
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# Load .env file if present (local dev)
+_env_path = os.path.join(BASE_DIR, '.env')
+if os.path.isfile(_env_path):
+    try:
+        with open(_env_path, 'r', encoding='utf-8') as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith('#') and '=' in _line:
+                    _k, _v = _line.split('=', 1)
+                    _k = _k.strip()
+                    _v = _v.strip().strip("'").strip('"')
+                    if _k and _k not in os.environ:
+                        os.environ[_k] = _v
+    except Exception:
+        pass
+
 DATA_FILE = os.path.join(BASE_DIR, 'data.json')
 
 # Frontend Paths
