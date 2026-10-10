@@ -67,6 +67,7 @@ frontend/storefront/static/uploads/requests/*
 # 6. AI Assistants & Workspace Metadata
 .gemini/
 .system_generated/
+.agents/
 
 # 7. Operating System & IDE Configs
 .DS_Store
