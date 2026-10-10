@@ -1912,45 +1912,84 @@ a {
     width: 14px;
     height: 14px;
 }
+/* Lanyard Running Marquee (Tự động chạy 2 hàng ngược chiều, hover để tạm dừng) */
+.lanyard-marquee-container {
+    position: relative;
+    margin: 20px 0 10px 0;
+    width: 100%;
+}
 .lanyard-marquee-wrapper {
     overflow: hidden;
     position: relative;
     border-radius: 16px;
     padding: 6px 0;
-    mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 2.5%, black 97.5%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 2.5%, black 97.5%, transparent);
 }
 .double-marquee-rows {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 .lanyard-marquee-track {
     display: flex;
     gap: 12px;
     width: max-content;
-    animation: lanyardMarqueeScroll 40s linear infinite;
+    will-change: transform;
 }
 .marquee-track-forward {
-    animation: lanyardMarqueeScroll 38s linear infinite;
+    animation: lanyardMarqueeScroll 45s linear infinite;
 }
 .marquee-track-reverse {
-    animation: lanyardMarqueeScrollReverse 42s linear infinite;
-}
-.marquee-track-pvc,
-.marquee-track-holder {
-    animation-duration: 32s;
-}
-.marquee-track-reverse.marquee-track-pvc,
-.marquee-track-reverse.marquee-track-holder {
-    animation-duration: 36s;
+    animation: lanyardMarqueeScrollReverse 48s linear infinite;
 }
 .lanyard-marquee-wrapper:hover .lanyard-marquee-track {
     animation-play-state: paused;
 }
+
+/* Gallery Manual Horizontal Scroll (Thẻ PVC & Vỏ thẻ: 1 hàng trượt thủ công) */
+.lanyard-gallery-container {
+    margin: 20px 0 10px 0;
+    width: 100%;
+}
+.gallery-scroll-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 4px 16px 4px;
+    cursor: grab;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+.gallery-scroll-box:active {
+    cursor: grabbing;
+}
+.gallery-scroll-box::-webkit-scrollbar {
+    height: 6px;
+}
+.gallery-scroll-box::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 999px;
+}
+.gallery-scroll-box::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+.gallery-scroll-box::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+.gallery-scroll-row {
+    display: flex;
+    gap: 12px;
+    width: max-content;
+}
 .lanyard-marquee-card {
     flex-shrink: 0;
-    width: 180px;
+    width: 190px;
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 14px;

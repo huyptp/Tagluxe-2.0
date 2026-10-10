@@ -195,22 +195,92 @@
 </div>
 
 <!-- ===== LANYARD PRODUCTS ===== -->
-<section id="products" class="section bg-light" aria-label="Dây đeo thẻ in chuyển nhiệt cao cấp">
+<section id="products" class="section bg-light" aria-label="Dây đeo thẻ in theo yêu cầu">
+    <style>
+        .lanyard-marquee-container {
+            position: relative;
+            margin: 20px 0 10px 0;
+            width: 100%;
+            overflow: hidden;
+        }
+        .double-marquee-rows {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            width: 100% !important;
+            overflow: hidden !important;
+        }
+        .lanyard-marquee-wrapper {
+            overflow: hidden !important;
+            position: relative !important;
+            border-radius: 16px !important;
+            padding: 6px 0 !important;
+            width: 100% !important;
+            mask-image: linear-gradient(to right, transparent, black 2.5%, black 97.5%, transparent) !important;
+            -webkit-mask-image: linear-gradient(to right, transparent, black 2.5%, black 97.5%, transparent) !important;
+        }
+        .lanyard-marquee-track {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+            width: max-content !important;
+            will-change: transform !important;
+        }
+        .marquee-track-forward {
+            animation: lanyardMarqueeScroll 45s linear infinite !important;
+        }
+        .marquee-track-reverse {
+            animation: lanyardMarqueeScrollReverse 48s linear infinite !important;
+        }
+        .lanyard-marquee-wrapper:hover .lanyard-marquee-track {
+            animation-play-state: paused !important;
+        }
+        .lanyard-marquee-card {
+            flex-shrink: 0 !important;
+            width: 190px !important;
+            background: #ffffff !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 14px !important;
+            overflow: hidden !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
+            text-decoration: none !important;
+            color: inherit !important;
+            display: flex !important;
+            flex-direction: column !important;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+        }
+        .lanyard-marquee-card:hover {
+            transform: translateY(-4px) !important;
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08) !important;
+            border-color: #2563eb !important;
+        }
+        @keyframes lanyardMarqueeScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        @keyframes lanyardMarqueeScrollReverse {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
+        @media (max-width: 768px) {
+            .lanyard-marquee-card {
+                width: 165px !important;
+            }
+        }
+    </style>
     <div class="container">
         <div class="section-header" data-aos="fade-up">
-            <h2>Dây đeo thẻ in chuyển nhiệt cao cấp</h2>
+            <h2>Dây Đeo Thẻ In Theo Yêu Cầu</h2>
             <p>Công nghệ in chuyển nhiệt cao cấp bền màu, in ấn sắc nét theo yêu cầu riêng. Phù hợp cho doanh nghiệp, trường học, sự kiện và fandom.</p>
         </div>
 
-        <!-- Băng chuyền ảnh sản phẩm chạy tự động (Lanyard Double-Row Marquee) -->
+        <!-- Băng chuyền ảnh dây đeo chạy tự động (2 hàng song song ngược chiều, hover tạm dừng) -->
         {% set half_len = (lanyard_photos|length // 2) + 1 %}
         {% set lan_row1 = lanyard_photos[:half_len] %}
         {% set lan_row2 = lanyard_photos[half_len:] %}
         <div class="lanyard-marquee-container" data-aos="fade-up">
-            <div class="lanyard-marquee-header">
-                <span class="lanyard-marquee-tag"><i data-lucide="sparkles"></i> Mẫu dây đeo thực tế đã sản xuất (2 hàng chạy song song)</span>
-                <span class="lanyard-marquee-hint"><i data-lucide="pause-circle"></i> Rê chuột để dừng xem chi tiết</span>
-            </div>
             <div class="double-marquee-rows">
                 <!-- Hàng 1: Chạy từ Phải sang Trái -->
                 <div class="lanyard-marquee-wrapper">
@@ -223,7 +293,7 @@
                             </div>
                             <div class="lanyard-card-body">
                                 <span class="lanyard-card-name">{{ photo.product_name }}</span>
-                                <span class="lanyard-card-action">Xem <i data-lucide="arrow-right"></i></span>
+                                <span class="lanyard-card-action">Xem chi tiết <i data-lucide="arrow-right"></i></span>
                             </div>
                         </a>
                         {% endfor %}
@@ -235,7 +305,7 @@
                             </div>
                             <div class="lanyard-card-body">
                                 <span class="lanyard-card-name">{{ photo.product_name }}</span>
-                                <span class="lanyard-card-action">Xem <i data-lucide="arrow-right"></i></span>
+                                <span class="lanyard-card-action">Xem chi tiết <i data-lucide="arrow-right"></i></span>
                             </div>
                         </a>
                         {% endfor %}
@@ -253,7 +323,7 @@
                             </div>
                             <div class="lanyard-card-body">
                                 <span class="lanyard-card-name">{{ photo.product_name }}</span>
-                                <span class="lanyard-card-action">Xem <i data-lucide="arrow-right"></i></span>
+                                <span class="lanyard-card-action">Xem chi tiết <i data-lucide="arrow-right"></i></span>
                             </div>
                         </a>
                         {% endfor %}
@@ -265,7 +335,7 @@
                             </div>
                             <div class="lanyard-card-body">
                                 <span class="lanyard-card-name">{{ photo.product_name }}</span>
-                                <span class="lanyard-card-action">Xem <i data-lucide="arrow-right"></i></span>
+                                <span class="lanyard-card-action">Xem chi tiết <i data-lucide="arrow-right"></i></span>
                             </div>
                         </a>
                         {% endfor %}
@@ -286,62 +356,30 @@
 </section>
 
 <!-- ===== THẺ NHỰA PVC ===== -->
-<section id="the-nhua-pvc" class="section" aria-label="In thẻ nhựa PVC theo yêu cầu">
+<section id="the-nhua-pvc" class="section" aria-label="Thẻ nhựa PVC in theo yêu cầu">
     <div id="accessories" style="position:relative; top:-80px;"></div>
     <div class="container">
         <div class="section-header" data-aos="fade-up">
-            <h2>In Thẻ Nhựa PVC Theo Yêu Cầu</h2>
-            <p>Thẻ nhựa PVC 4 lớp cao cấp in 2 mặt full màu sắc nét, chống nước và bền màu tuyệt đối. Phù hợp cho thẻ nhân viên, học sinh sinh viên, thẻ VIP và sự kiện.</p>
-        <!-- Băng chuyền ảnh thẻ nhựa PVC chạy tự động (PVC Double-Row Marquee) -->
+            <h2>Thẻ Nhựa PVC In Theo Yêu Cầu</h2>
+        </div>
+        <!-- Mẫu thẻ nhựa PVC thực tế (1 hàng trượt thủ công giống vỏ thẻ) -->
         {% set pvc_imgs = (pvc_product.images if pvc_product and pvc_product.images else []) %}
         {% if pvc_imgs %}
-        {% set pvc_half = (pvc_imgs|length // 2) %}
-        {% set pvc_row1 = pvc_imgs[:pvc_half] if pvc_half > 0 else pvc_imgs %}
-        {% set pvc_row2 = pvc_imgs[pvc_half:] if pvc_half > 0 else pvc_imgs %}
-        <div class="lanyard-marquee-container" data-aos="fade-up">
-            <div class="lanyard-marquee-header">
-                <span class="lanyard-marquee-tag"><i data-lucide="sparkles"></i> Mẫu thẻ nhựa PVC thực tế đã sản xuất (2 hàng chạy song song)</span>
-                <span class="lanyard-marquee-hint"><i data-lucide="pause-circle"></i> Rê chuột để dừng xem chi tiết</span>
-            </div>
-            <div class="double-marquee-rows">
-                <!-- Hàng 1: Chạy từ Phải sang Trái -->
-                <div class="lanyard-marquee-wrapper">
-                    <div class="lanyard-marquee-track marquee-track-forward marquee-track-pvc">
-                        {% for i in range(4) %}
-                        {% for img in pvc_row1 %}
-                        <a href="/product/{{ pvc_product.id if pvc_product else 'acc-1' }}" class="lanyard-marquee-card" aria-label="{{ pvc_product.name if pvc_product else 'Thẻ nhựa PVC' }}">
-                            <div class="lanyard-card-img">
-                                <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
-                                     alt="Mẫu thẻ nhựa PVC {{ loop.index }} - TagLuxe" loading="lazy">
-                            </div>
-                            <div class="lanyard-card-body">
-                                <span class="lanyard-card-name">{{ pvc_product.name if pvc_product else 'Thẻ nhựa PVC' }}</span>
-                                <span class="lanyard-card-action">Chi tiết <i data-lucide="arrow-right"></i></span>
-                            </div>
-                        </a>
-                        {% endfor %}
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Hàng 2: Chạy ngược chiều từ Trái sang Phải -->
-                <div class="lanyard-marquee-wrapper">
-                    <div class="lanyard-marquee-track marquee-track-reverse marquee-track-pvc">
-                        {% for i in range(4) %}
-                        {% for img in pvc_row2 %}
-                        <a href="/product/{{ pvc_product.id if pvc_product else 'acc-1' }}" class="lanyard-marquee-card" aria-label="{{ pvc_product.name if pvc_product else 'Thẻ nhựa PVC' }}">
-                            <div class="lanyard-card-img">
-                                <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
-                                     alt="Mẫu thẻ nhựa PVC {{ loop.index }} - TagLuxe" loading="lazy">
-                            </div>
-                            <div class="lanyard-card-body">
-                                <span class="lanyard-card-name">{{ pvc_product.name if pvc_product else 'Thẻ nhựa PVC' }}</span>
-                                <span class="lanyard-card-action">Chi tiết <i data-lucide="arrow-right"></i></span>
-                            </div>
-                        </a>
-                        {% endfor %}
-                        {% endfor %}
-                    </div>
+        <div class="lanyard-gallery-container" data-aos="fade-up">
+            <div class="gallery-scroll-box" id="pvcGalleryBox">
+                <div class="gallery-scroll-row">
+                    {% for img in pvc_imgs %}
+                    <a href="/product/{{ pvc_product.id if pvc_product else 'acc-1' }}" class="lanyard-marquee-card" aria-label="{{ pvc_product.name if pvc_product else 'Thẻ nhựa PVC' }}">
+                        <div class="lanyard-card-img">
+                            <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
+                                 alt="Mẫu thẻ nhựa PVC {{ loop.index }} - TagLuxe" loading="lazy">
+                        </div>
+                        <div class="lanyard-card-body">
+                            <span class="lanyard-card-name">{{ pvc_product.name if pvc_product else 'Thẻ nhựa PVC' }}</span>
+                            <span class="lanyard-card-action">Xem chi tiết <i data-lucide="arrow-right"></i></span>
+                        </div>
+                    </a>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -359,64 +397,31 @@
 </section>
 
 <!-- ===== VỎ ĐỰNG THẺ ===== -->
-<section id="vo-dung-the" class="section bg-light" aria-label="Vỏ đựng thẻ theo yêu cầu">
+<section id="vo-dung-the" class="section bg-light" aria-label="Vỏ đựng thẻ in theo yêu cầu">
     <div class="container">
         <div class="section-header" data-aos="fade-up">
-            <h2>Vỏ Đựng Thẻ (Card Holder) Theo Yêu Cầu</h2>
+            <h2>Vỏ Đựng Thẻ (Card Holder) In Theo Yêu Cầu</h2>
             <p>Vỏ đựng thẻ nhựa ABS cao cấp, chống trầy xước và bảo vệ thẻ nhân viên, thẻ sự kiện bền đẹp. Đa dạng màu sắc thời trang, hỗ trợ in logo thương hiệu theo yêu cầu.</p>
         </div>
 
-        <!-- Băng chuyền ảnh vỏ đựng thẻ chạy tự động (Holder Marquee Runner) -->
-        <!-- Băng chuyền ảnh vỏ đựng thẻ chạy tự động (Holder Double-Row Marquee) -->
+        <!-- Mẫu vỏ đựng thẻ thực tế (1 hàng trượt thủ công) -->
         {% set holder_imgs = (holder_product.images if holder_product and holder_product.images else []) %}
         {% if holder_imgs %}
-        {% set holder_half = (holder_imgs|length // 2) %}
-        {% set holder_row1 = holder_imgs[:holder_half] if holder_half > 0 else holder_imgs %}
-        {% set holder_row2 = holder_imgs[holder_half:] if holder_half > 0 else holder_imgs %}
-        <div class="lanyard-marquee-container" data-aos="fade-up">
-            <div class="lanyard-marquee-header">
-                <span class="lanyard-marquee-tag"><i data-lucide="sparkles"></i> Mẫu vỏ đựng thẻ thực tế đã sản xuất (2 hàng chạy song song)</span>
-                <span class="lanyard-marquee-hint"><i data-lucide="pause-circle"></i> Rê chuột để dừng xem chi tiết</span>
-            </div>
-            <div class="double-marquee-rows">
-                <!-- Hàng 1: Chạy từ Phải sang Trái -->
-                <div class="lanyard-marquee-wrapper">
-                    <div class="lanyard-marquee-track marquee-track-forward marquee-track-holder">
-                        {% for i in range(4) %}
-                        {% for img in holder_row1 %}
-                        <a href="/product/{{ holder_product.id if holder_product else 'acc-2' }}" class="lanyard-marquee-card" aria-label="{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}">
-                            <div class="lanyard-card-img">
-                                <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
-                                     alt="Mẫu vỏ đựng thẻ {{ loop.index }} - TagLuxe" loading="lazy">
-                            </div>
-                            <div class="lanyard-card-body">
-                                <span class="lanyard-card-name">{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}</span>
-                                <span class="lanyard-card-action">Chi tiết <i data-lucide="arrow-right"></i></span>
-                            </div>
-                        </a>
-                        {% endfor %}
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Hàng 2: Chạy ngược chiều từ Trái sang Phải -->
-                <div class="lanyard-marquee-wrapper">
-                    <div class="lanyard-marquee-track marquee-track-reverse marquee-track-holder">
-                        {% for i in range(4) %}
-                        {% for img in holder_row2 %}
-                        <a href="/product/{{ holder_product.id if holder_product else 'acc-2' }}" class="lanyard-marquee-card" aria-label="{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}">
-                            <div class="lanyard-card-img">
-                                <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
-                                     alt="Mẫu vỏ đựng thẻ {{ loop.index }} - TagLuxe" loading="lazy">
-                            </div>
-                            <div class="lanyard-card-body">
-                                <span class="lanyard-card-name">{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}</span>
-                                <span class="lanyard-card-action">Chi tiết <i data-lucide="arrow-right"></i></span>
-                            </div>
-                        </a>
-                        {% endfor %}
-                        {% endfor %}
-                    </div>
+        <div class="lanyard-gallery-container" data-aos="fade-up">
+            <div class="gallery-scroll-box" id="holderGalleryBox">
+                <div class="gallery-scroll-row">
+                    {% for img in holder_imgs %}
+                    <a href="/product/{{ holder_product.id if holder_product else 'acc-2' }}" class="lanyard-marquee-card" aria-label="{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}">
+                        <div class="lanyard-card-img">
+                            <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
+                                 alt="Mẫu vỏ đựng thẻ {{ loop.index }} - TagLuxe" loading="lazy">
+                        </div>
+                        <div class="lanyard-card-body">
+                            <span class="lanyard-card-name">{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}</span>
+                            <span class="lanyard-card-action">Xem chi tiết <i data-lucide="arrow-right"></i></span>
+                        </div>
+                    </a>
+                    {% endfor %}
                 </div>
             </div>
         </div>

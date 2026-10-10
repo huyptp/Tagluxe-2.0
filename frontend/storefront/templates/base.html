@@ -290,6 +290,111 @@
         </div>
     </footer>
 
+    <!-- ===== CAMPAIGN BANNER POPUP (Chỉ render khi có ảnh và đang bật) ===== -->
+    {% if campaign_banner and campaign_banner.enabled and (campaign_banner.image_desktop or campaign_banner.image_mobile or campaign_banner.image) %}
+    <style>
+        .campaign-banner-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 999999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .campaign-banner-backdrop.visible {
+            opacity: 1;
+        }
+        .campaign-banner-modal {
+            position: relative;
+            max-width: 680px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.92);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            line-height: 0;
+        }
+        .campaign-banner-backdrop.visible .campaign-banner-modal {
+            transform: scale(1);
+        }
+        @media (max-width: 767px) {
+            .campaign-banner-modal {
+                max-width: 360px;
+                width: calc(100vw - 36px);
+                border-radius: 14px;
+            }
+        }
+        .campaign-banner-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.75);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .campaign-banner-close-btn:hover {
+            background: #ef4444;
+            transform: scale(1.08) rotate(90deg);
+            border-color: #ffffff;
+        }
+        .campaign-banner-media {
+            width: 100%;
+            background: #000000;
+        }
+        .campaign-banner-picture {
+            display: block;
+            width: 100%;
+            line-height: 0;
+        }
+        .campaign-banner-img {
+            width: 100%;
+            height: auto;
+            max-height: 82vh;
+            display: block;
+            object-fit: contain;
+            margin: 0 auto;
+        }
+    </style>
+    <div id="campaignBannerOverlay" class="campaign-banner-backdrop" onclick="handleBannerBackdropClick(event)">
+        <div class="campaign-banner-modal" role="dialog" aria-modal="true" aria-label="{{ campaign_banner.title or 'Chương trình khuyến mại' }}">
+            <button type="button" class="campaign-banner-close-btn" onclick="closeCampaignBanner()" aria-label="Đóng banner quảng cáo" title="Đóng [X]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="campaign-banner-media">
+                <picture class="campaign-banner-picture">
+                    {% if campaign_banner.image_mobile %}
+                    <source media="(max-width: 767px)" srcset="{{ campaign_banner.image_mobile }}">
+                    {% endif %}
+                    {% if campaign_banner.image_desktop %}
+                    <source media="(min-width: 768px)" srcset="{{ campaign_banner.image_desktop }}">
+                    {% endif %}
+                    <img src="{{ campaign_banner.image_desktop or campaign_banner.image_mobile or campaign_banner.image }}"
+                         alt="{{ campaign_banner.title or 'Banner Khuyến Mại TagLuxe' }}"
+                         loading="eager" class="campaign-banner-img">
+                </picture>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Floating Scroll Actions (Tính giá & Về đầu trang) -->
     <div class="floating-scroll-actions" id="floatingScrollActions" aria-label="Thao tác nhanh">
         <a href="/#calculator" id="floatingCalcBtn" class="floating-action-btn floating-calc-btn" aria-label="Tính giá nhanh" title="Bảng tính báo giá nhanh">
@@ -390,21 +495,60 @@
             });
         }
 
-        // Switch accessory main photo smoothly
-        window.changeAccImg = function(targetId, newSrc, btn) {
-            const img = document.getElementById(targetId);
-            if (img) {
-                img.style.opacity = '0.4';
+        // Mouse Drag to Scroll for gallery boxes on PC
+        document.querySelectorAll('.gallery-scroll-box').forEach(box => {
+            let isDown = false;
+            let startX, scrollLeft;
+            box.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - box.offsetLeft;
+                scrollLeft = box.scrollLeft;
+            });
+            box.addEventListener('mouseleave', () => { isDown = false; });
+            box.addEventListener('mouseup', () => { isDown = false; });
+            box.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - box.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                box.scrollLeft = scrollLeft - walk;
+            });
+        });
+
+        // Campaign Banner Popup Controller (1 lần mỗi phiên duyệt web)
+        {% if campaign_banner and campaign_banner.enabled and campaign_banner.image %}
+        (function() {
+            const isClosed = sessionStorage.getItem('tagluxe_campaign_banner_closed');
+            if (!isClosed) {
                 setTimeout(() => {
-                    img.src = newSrc;
-                    img.style.opacity = '1';
-                }, 120);
+                    const overlay = document.getElementById('campaignBannerOverlay');
+                    if (overlay) {
+                        overlay.style.display = 'flex';
+                        requestAnimationFrame(() => {
+                            overlay.classList.add('visible');
+                        });
+                    }
+                }, 800);
             }
-            if (btn && btn.parentElement) {
-                btn.parentElement.querySelectorAll('.acc-thumb-item').forEach(el => el.classList.remove('active'));
-                btn.classList.add('active');
-            }
-        };
+
+            window.closeCampaignBanner = function() {
+                const overlay = document.getElementById('campaignBannerOverlay');
+                if (overlay) {
+                    overlay.classList.remove('visible');
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 280);
+                }
+                sessionStorage.setItem('tagluxe_campaign_banner_closed', '1');
+            };
+
+            window.handleBannerBackdropClick = function(e) {
+                if (e.target && e.target.id === 'campaignBannerOverlay') {
+                    window.closeCampaignBanner();
+                }
+            };
+        })();
+        {% endif %}
     </script>
     {% block extra_js %}{% endblock %}
 </body>

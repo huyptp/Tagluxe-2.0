@@ -169,7 +169,7 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.9">
 
     <!-- Preload critical above-fold image -->
     {% block preload_image %}{% endblock %}
@@ -229,8 +229,10 @@
             </button>
 
             <nav class="nav" id="mainNav" role="navigation" aria-label="Menu chính">
+                <a href="/">Trang chủ</a>
                 <a href="/#products">Dây đeo thẻ</a>
-                <a href="/#accessories">Thẻ & Vỏ thẻ</a>
+                <a href="/#the-nhua-pvc">Thẻ nhựa PVC</a>
+                <a href="/#vo-dung-the">Vỏ đựng thẻ</a>
                 <a href="/#calculator">Báo giá</a>
                 <a href="/#process">Quy trình</a>
                 <a href="/#faq">FAQ</a>
@@ -240,7 +242,7 @@
             <div class="header-actions">
                 <a href="https://zalo.me/0343019097" target="_blank" rel="noopener"
                    class="btn btn-primary btn-sm" aria-label="Liên hệ tư vấn qua Zalo">
-                    <i data-lucide="message-circle"></i> Tư vấn Zalo
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 50 50" fill="none" style="display:inline-block; vertical-align:middle; width:16px; height:16px; border-radius:3px; flex-shrink:0;"><path fill-rule="evenodd" clip-rule="evenodd" d="M22.782 0.166H27.199C33.265 0.166 36.81 1.057 39.957 2.744C43.104 4.431 45.588 6.896 47.256 10.043C48.943 13.19 49.834 16.735 49.834 22.801V27.199C49.834 33.265 48.943 36.81 47.256 39.957C45.568 43.104 43.104 45.588 39.957 47.256C36.81 48.943 33.265 49.834 27.199 49.834H22.801C16.735 49.834 13.19 48.943 10.043 47.256C6.896 45.569 4.412 43.104 2.744 39.957C1.057 36.81 0.166 33.265 0.166 27.199V22.801C0.166 16.735 1.057 13.19 2.744 10.043C4.431 6.896 6.896 4.412 10.043 2.744C13.171 1.057 16.735 0.166 22.782 0.166Z" fill="#0068FF"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.779 43.589C10.102 43.846 13.006 43.184 15.068 42.182C24.022 47.132 38.02 46.895 46.492 41.473C46.821 40.98 47.128 40.468 47.413 39.936C49.106 36.778 50 33.22 50 27.132V22.718C50 16.629 49.106 13.071 47.413 9.913C45.738 6.754 43.246 4.281 40.088 2.588C36.929 0.894 33.371 0 27.283 0H22.85C17.664 0 14.298 0.653 11.47 1.899C11.315 2.037 11.164 2.178 11.015 2.321C2.717 10.32 2.087 27.659 9.123 37.078C9.131 37.092 9.139 37.106 9.149 37.12C10.233 38.718 9.187 41.515 7.551 43.152C7.284 43.399 7.379 43.551 7.779 43.589Z" fill="white"/><path d="M20.563 17H10.838V19.085H17.587L10.933 27.332C10.724 27.635 10.573 27.919 10.573 28.564V29.095H19.748C20.203 29.095 20.582 28.716 20.582 28.261V27.142H13.492L19.748 19.294C19.843 19.18 20.013 18.972 20.089 18.877L20.127 18.82C20.487 18.289 20.563 17.834 20.563 17.284V17Z" fill="#0068FF"/><path d="M32.942 29.095H34.326V17H32.24V28.393C32.24 28.772 32.544 29.095 32.942 29.095Z" fill="#0068FF"/><path d="M25.814 19.692C23.198 19.692 21.075 21.816 21.075 24.432C21.075 27.048 23.198 29.171 25.814 29.171C28.43 29.171 30.553 27.048 30.553 24.432C30.572 21.816 28.449 19.692 25.814 19.692ZM25.814 27.218C24.278 27.218 23.027 25.967 23.027 24.432C23.027 22.896 24.278 21.645 25.814 21.645C27.35 21.645 28.601 22.896 28.601 24.432C28.601 25.967 27.368 27.218 25.814 27.218Z" fill="#0068FF"/><path d="M40.487 19.616C37.852 19.616 35.71 21.758 35.71 24.393C35.71 27.028 37.852 29.171 40.487 29.171C43.122 29.171 45.264 27.028 45.264 24.393C45.264 21.758 43.122 19.616 40.487 19.616ZM40.487 27.218C38.932 27.218 37.681 25.967 37.681 24.412C37.681 22.858 38.932 21.607 40.487 21.607C42.041 21.607 43.292 22.858 43.292 24.412C43.292 25.967 42.041 27.218 40.487 27.218Z" fill="#0068FF"/><path d="M29.456 29.094H30.575V19.957H28.622V28.279C28.622 28.715 29.001 29.094 29.456 29.094Z" fill="#0068FF"/></svg> Tư vấn Zalo
                 </a>
             </div>
         </div>
@@ -272,9 +274,10 @@
             </div>
             <div class="footer-links">
                 <h3 style="font-size:1rem; margin-bottom:20px; text-transform:uppercase; letter-spacing:1px;">Sản phẩm</h3>
+                <a href="/"><i data-lucide="home"></i> Trang chủ</a>
                 <a href="/#products"><i data-lucide="tag"></i> In dây đeo thẻ theo yêu cầu</a>
-                <a href="/#accessories"><i data-lucide="credit-card"></i> In thẻ nhựa PVC</a>
-                <a href="/#accessories"><i data-lucide="archive"></i> Vỏ đựng thẻ (Card holder)</a>
+                <a href="/#the-nhua-pvc"><i data-lucide="credit-card"></i> In thẻ nhựa PVC</a>
+                <a href="/#vo-dung-the"><i data-lucide="archive"></i> Vỏ đựng thẻ (Card holder)</a>
                 <a href="/#calculator"><i data-lucide="calculator"></i> Bảng tính báo giá tự động</a>
                 <a href="/#process"><i data-lucide="list-checks"></i> Quy trình & Duyệt mẫu</a>
                 <a href="/#faq"><i data-lucide="help-circle"></i> Câu hỏi thường gặp</a>
@@ -287,6 +290,122 @@
         </div>
     </footer>
 
+    <!-- ===== CAMPAIGN BANNER POPUP (Chỉ render khi có ảnh và đang bật) ===== -->
+    {% if campaign_banner and campaign_banner.enabled and (campaign_banner.image_desktop or campaign_banner.image_mobile or campaign_banner.image) %}
+    <style>
+        .campaign-banner-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 999999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .campaign-banner-backdrop.visible {
+            opacity: 1;
+        }
+        .campaign-banner-modal {
+            position: relative;
+            max-width: 680px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.92);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            line-height: 0;
+        }
+        .campaign-banner-backdrop.visible .campaign-banner-modal {
+            transform: scale(1);
+        }
+        @media (max-width: 767px) {
+            .campaign-banner-modal {
+                max-width: 360px;
+                width: calc(100vw - 36px);
+                border-radius: 14px;
+            }
+        }
+        .campaign-banner-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.75);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .campaign-banner-close-btn:hover {
+            background: #ef4444;
+            transform: scale(1.08) rotate(90deg);
+            border-color: #ffffff;
+        }
+        .campaign-banner-media {
+            width: 100%;
+            background: #000000;
+        }
+        .campaign-banner-picture {
+            display: block;
+            width: 100%;
+            line-height: 0;
+        }
+        .campaign-banner-img {
+            width: 100%;
+            height: auto;
+            max-height: 82vh;
+            display: block;
+            object-fit: contain;
+            margin: 0 auto;
+        }
+    </style>
+    <div id="campaignBannerOverlay" class="campaign-banner-backdrop" onclick="handleBannerBackdropClick(event)">
+        <div class="campaign-banner-modal" role="dialog" aria-modal="true" aria-label="{{ campaign_banner.title or 'Chương trình khuyến mại' }}">
+            <button type="button" class="campaign-banner-close-btn" onclick="closeCampaignBanner()" aria-label="Đóng banner quảng cáo" title="Đóng [X]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="campaign-banner-media">
+                <picture class="campaign-banner-picture">
+                    {% if campaign_banner.image_mobile %}
+                    <source media="(max-width: 767px)" srcset="{{ campaign_banner.image_mobile }}">
+                    {% endif %}
+                    {% if campaign_banner.image_desktop %}
+                    <source media="(min-width: 768px)" srcset="{{ campaign_banner.image_desktop }}">
+                    {% endif %}
+                    <img src="{{ campaign_banner.image_desktop or campaign_banner.image_mobile or campaign_banner.image }}"
+                         alt="{{ campaign_banner.title or 'Banner Khuyến Mại TagLuxe' }}"
+                         loading="eager" class="campaign-banner-img">
+                </picture>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Floating Scroll Actions (Tính giá & Về đầu trang) -->
+    <div class="floating-scroll-actions" id="floatingScrollActions" aria-label="Thao tác nhanh">
+        <a href="/#calculator" id="floatingCalcBtn" class="floating-action-btn floating-calc-btn" aria-label="Tính giá nhanh" title="Bảng tính báo giá nhanh">
+            <i data-lucide="calculator"></i>
+            <span>Tính giá</span>
+        </a>
+        <button type="button" id="backToTopBtn" class="floating-action-btn floating-top-btn" aria-label="Cuộn về đầu trang" title="Về đầu trang">
+            <i data-lucide="arrow-up"></i>
+        </button>
+    </div>
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- AOS Animation -->
@@ -294,6 +413,68 @@
     <script>
         AOS.init({ once: true, offset: 60, duration: 700, easing: 'ease-out-cubic' });
         lucide.createIcons();
+
+        // Smooth scroll for Home link when already on homepage
+        const homeLinks = document.querySelectorAll('a[href="/"]');
+        homeLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (window.location.pathname === '/' || window.location.pathname === '') {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (window.location.hash) {
+                        history.pushState(null, null, '/');
+                    }
+                }
+            });
+        });
+
+        // Sticky Header Shadow on Scroll
+        const headerEl = document.querySelector('.header');
+        if (headerEl) {
+            const checkHeaderScroll = () => {
+                if (window.scrollY > 15) {
+                    headerEl.classList.add('scrolled');
+                } else {
+                    headerEl.classList.remove('scrolled');
+                }
+            };
+            window.addEventListener('scroll', checkHeaderScroll, { passive: true });
+            checkHeaderScroll();
+        }
+
+        // Floating Scroll Actions (Back to Top & Quick Calc)
+        const floatingActions = document.getElementById('floatingScrollActions');
+        const backToTopBtn = document.getElementById('backToTopBtn');
+        const floatingCalcBtn = document.getElementById('floatingCalcBtn');
+
+        if (floatingActions) {
+            const toggleFloating = () => {
+                if (window.scrollY > 300 || window.location.search.includes('scroll=1')) {
+                    floatingActions.classList.add('visible');
+                } else {
+                    floatingActions.classList.remove('visible');
+                }
+            };
+            window.addEventListener('scroll', toggleFloating, { passive: true });
+            toggleFloating();
+        }
+
+        if (backToTopBtn) {
+            backToTopBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        if (floatingCalcBtn) {
+            floatingCalcBtn.addEventListener('click', (e) => {
+                const calcEl = document.getElementById('calculator');
+                if (calcEl) {
+                    e.preventDefault();
+                    calcEl.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        }
 
         // Mobile menu toggle
         const menuToggle = document.getElementById('menuToggle');
@@ -314,21 +495,60 @@
             });
         }
 
-        // Switch accessory main photo smoothly
-        window.changeAccImg = function(targetId, newSrc, btn) {
-            const img = document.getElementById(targetId);
-            if (img) {
-                img.style.opacity = '0.4';
+        // Mouse Drag to Scroll for gallery boxes on PC
+        document.querySelectorAll('.gallery-scroll-box').forEach(box => {
+            let isDown = false;
+            let startX, scrollLeft;
+            box.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - box.offsetLeft;
+                scrollLeft = box.scrollLeft;
+            });
+            box.addEventListener('mouseleave', () => { isDown = false; });
+            box.addEventListener('mouseup', () => { isDown = false; });
+            box.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - box.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                box.scrollLeft = scrollLeft - walk;
+            });
+        });
+
+        // Campaign Banner Popup Controller (1 lần mỗi phiên duyệt web)
+        {% if campaign_banner and campaign_banner.enabled and campaign_banner.image %}
+        (function() {
+            const isClosed = sessionStorage.getItem('tagluxe_campaign_banner_closed');
+            if (!isClosed) {
                 setTimeout(() => {
-                    img.src = newSrc;
-                    img.style.opacity = '1';
-                }, 120);
+                    const overlay = document.getElementById('campaignBannerOverlay');
+                    if (overlay) {
+                        overlay.style.display = 'flex';
+                        requestAnimationFrame(() => {
+                            overlay.classList.add('visible');
+                        });
+                    }
+                }, 800);
             }
-            if (btn && btn.parentElement) {
-                btn.parentElement.querySelectorAll('.acc-thumb-item').forEach(el => el.classList.remove('active'));
-                btn.classList.add('active');
-            }
-        };
+
+            window.closeCampaignBanner = function() {
+                const overlay = document.getElementById('campaignBannerOverlay');
+                if (overlay) {
+                    overlay.classList.remove('visible');
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 280);
+                }
+                sessionStorage.setItem('tagluxe_campaign_banner_closed', '1');
+            };
+
+            window.handleBannerBackdropClick = function(e) {
+                if (e.target && e.target.id === 'campaignBannerOverlay') {
+                    window.closeCampaignBanner();
+                }
+            };
+        })();
+        {% endif %}
     </script>
     {% block extra_js %}{% endblock %}
 </body>

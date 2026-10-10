@@ -129,3 +129,25 @@ def api_get_accessories():
         'success': True,
         'data': get_accessories_catalog()
     })
+
+
+@api_bp.route('/demo-images', methods=['GET'])
+def api_get_demo_images():
+    """Trả về cấu hình bộ ảnh demo báo giá động (PVC, Vỏ thẻ)"""
+    from backend.services.data_service import get_demo_images_config
+    return jsonify({
+        'success': True,
+        'data': get_demo_images_config()
+    })
+
+
+@api_bp.route('/campaign-banner', methods=['GET'])
+def api_get_campaign_banner():
+    """Trả về cấu hình banner quảng cáo chiến dịch"""
+    from backend.services.data_service import get_campaign_banner_config
+    return jsonify({
+        'success': True,
+        'data': get_campaign_banner_config()
+    })
+
+
