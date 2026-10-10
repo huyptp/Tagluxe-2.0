@@ -331,6 +331,7 @@ class Accessory(db.Model):
     title = db.Column(db.String(255), nullable=True)
     sort_order = db.Column(db.Integer, default=0)
     visible = db.Column(db.Boolean, default=True)
+    min_quantity = db.Column(db.Integer, default=0, nullable=False)
 
     @property
     def image_url(self):
@@ -351,5 +352,6 @@ class Accessory(db.Model):
             'description': self.description or '',
             'title': self.title or self.name,
             'sort_order': self.sort_order,
-            'visible': self.visible
+            'visible': self.visible,
+            'min_quantity': self.min_quantity or 0
         }

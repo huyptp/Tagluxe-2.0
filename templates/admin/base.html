@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        body { background-color: #f4f6f8; }
+        body { background-color: #f4f6f8; padding-top: 0 !important; }
         .admin-header {
             background: var(--primary-color);
             color: white;
@@ -21,7 +21,7 @@
         }
         .admin-header h1 { font-size: 1.25rem; margin: 0; }
         .admin-container {
-            max-width: 1000px;
+            max-width: 1280px;
             margin: 40px auto;
             padding: 0 20px;
         }
@@ -66,7 +66,9 @@
             <a href="/admin/products" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="package" style="width: 18px; height: 18px;"></i> Sản phẩm</a>
             <a href="/admin/quotes" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="calculator" style="width: 18px; height: 18px;"></i> Báo giá</a>
             <a href="/admin/requests" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="inbox" style="width: 18px; height: 18px;"></i> Yêu cầu Demo</a>
-            <a href="/admin/accessories" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="layers" style="width: 18px; height: 18px;"></i> Phụ kiện & Vỏ thẻ</a>
+            <a href="/admin/accessories" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="layers" style="width: 18px; height: 18px;"></i> Bảng giá & Phụ kiện</a>
+            <a href="/admin/demo-images" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="image" style="width: 18px; height: 18px;"></i> Ảnh Demo Báo Giá</a>
+            <a href="/admin/campaign-banner" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="flag" style="width: 18px; height: 18px;"></i> Banner Chiến Dịch</a>
             <a href="/" target="_blank" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500; opacity: 0.85;"><i data-lucide="external-link" style="width: 16px; height: 16px;"></i> Xem website</a>
             <a href="/admin/logout" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500; opacity: 0.85;"><i data-lucide="log-out" style="width: 16px; height: 16px;"></i> Đăng xuất</a>
         </div>

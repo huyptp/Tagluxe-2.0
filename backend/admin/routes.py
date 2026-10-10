@@ -17,7 +17,8 @@ from backend.services.data_service import (
     get_quotes_paginated, get_demo_requests_paginated,
     get_all_accessories, get_accessory_by_id, update_accessory,
     get_all_price_tiers_grouped, update_price_tiers_bulk,
-    add_accessory, delete_accessory, toggle_accessory_visibility
+    add_accessory, delete_accessory, toggle_accessory_visibility,
+    get_demo_images_config, save_demo_images_config
 )
 from backend.security import rate_limit, limiter, get_client_ip
 
@@ -641,6 +642,11 @@ def admin_add_accessory():
     description = request.form.get('description', '').strip()
     title = request.form.get('title', '').strip() or name
     visible = request.form.get('visible') != '0'
+    min_qty_raw = request.form.get('min_quantity', '0').replace('.', '').replace(',', '').strip()
+    try:
+        min_quantity = max(0, int(min_qty_raw))
+    except ValueError:
+        min_quantity = 0
 
     image_url = ''
     if 'image' in request.files:
@@ -664,7 +670,8 @@ def admin_add_accessory():
         'image': image_url,
         'description': description,
         'title': title,
-        'visible': visible
+        'visible': visible,
+        'min_quantity': min_quantity
     })
 
     if ok:
@@ -741,6 +748,11 @@ def admin_edit_accessory(acc_id):
     description = request.form.get('description', '').strip() or acc.get('description')
     title = request.form.get('title', '').strip() or acc.get('title')
     visible = request.form.get('visible') == '1' or request.form.get('visible') == 'true' or ('visible' in request.form and request.form.get('visible') != '0')
+    min_qty_raw = request.form.get('min_quantity')
+    try:
+        min_quantity = max(0, int(min_qty_raw)) if min_qty_raw is not None and min_qty_raw.strip() != '' else acc.get('min_quantity', 0)
+    except ValueError:
+        min_quantity = acc.get('min_quantity', 0)
 
     new_image_url = None
     if 'image' in request.files:
@@ -765,7 +777,8 @@ def admin_edit_accessory(acc_id):
         image=new_image_url,
         description=description,
         title=title,
-        visible=visible
+        visible=visible,
+        min_quantity=min_quantity
     )
 
     if ok:
@@ -813,4 +826,267 @@ def admin_upload_accessory_image(acc_id):
         return {'success': True, 'message': 'Đã tải ảnh lên thành công!', 'image_url': new_image_url, 'data': result}
     else:
         return {'success': False, 'message': f'Lỗi lưu ảnh: {result}'}, 500
+
+
+# --- QUẢN LÝ BỘ ẢNH DEMO BÁO GIÁ (STOREFRONT LIVE PREVIEW) ---
+@admin_bp.route('/demo-images', methods=['GET'])
+@login_required
+def admin_demo_images():
+    cfg = get_demo_images_config()
+    return render_template('admin/demo_images.html', demo_images=cfg)
+
+
+@admin_bp.route('/demo-images/update', methods=['POST'])
+@login_required
+def admin_update_demo_images():
+    if not validate_csrf():
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('CSRF token không hợp lệ. Vui lòng thử lại.', 'error')
+        return redirect(url_for('admin.admin_demo_images'))
+
+    cfg = get_demo_images_config()
+    keys = [
+        'pvc_no_hole', 'pvc_oval_hole', 'pvc_round_hole',
+        'holder_silicone_vertical', 'holder_silicone_horizontal',
+        'holder_plain_vertical', 'holder_plain_horizontal',
+        'holder_custom_vertical', 'holder_custom_horizontal',
+        'holder_vertical', 'holder_horizontal',
+        'lanyard_default', 'lanyard_15', 'lanyard_20', 'lanyard_25'
+    ]
+    updates = {}
+
+    for k in keys:
+        updates[k] = {}
+        if f'title_{k}' in request.form:
+            updates[k]['title'] = request.form.get(f'title_{k}', '').strip()
+        if f'pill_{k}' in request.form:
+            updates[k]['pill'] = request.form.get(f'pill_{k}', '').strip()
+        if f'caption_{k}' in request.form:
+            updates[k]['caption'] = request.form.get(f'caption_{k}', '').strip()
+
+        file_key = f'file_{k}'
+        if file_key in request.files:
+            f = request.files[file_key]
+            if f and f.filename:
+                if is_valid_image_file(f):
+                    ext = f.filename.rsplit('.', 1)[-1].lower()
+                    safe_filename = f"demo_{k}_{uuid.uuid4().hex[:8]}.{ext}"
+                    save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+                    f.save(save_path)
+                    updates[k]['image'] = f"/static/uploads/{safe_filename}"
+                else:
+                    if request.is_json or request.headers.get('Accept') == 'application/json':
+                        return {'success': False, 'message': f'Tệp ảnh "{f.filename}" không hợp lệ (hỗ trợ JPG, PNG, WEBP).'}, 400
+                    flash(f'Tệp ảnh "{f.filename}" không hợp lệ (hỗ trợ JPG, PNG, WEBP).', 'error')
+
+        url_val = request.form.get(f'url_{k}', '').strip()
+        if url_val and 'image' not in updates[k]:
+            updates[k]['image'] = url_val
+
+    ok, result = save_demo_images_config(updates)
+    if ok:
+        record_audit('update_demo_images', 'setting', 'demo_images', 'Cập nhật bộ ảnh demo báo giá trực quan')
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': True, 'message': 'Đã lưu cấu hình ảnh demo thành công!', 'data': result}
+        flash('Đã lưu cấu hình ảnh demo báo giá thành công!', 'success')
+    else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': f'Lỗi lưu cấu hình: {result}'}, 500
+        flash(f'Lỗi lưu cấu hình: {result}', 'error')
+
+    return redirect(url_for('admin.admin_demo_images'))
+
+
+@admin_bp.route('/demo-images/upload-single/<key>', methods=['POST'])
+@login_required
+def admin_upload_single_demo_image(key):
+    if not validate_csrf():
+        return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+
+    keys = [
+        'pvc_no_hole', 'pvc_oval_hole', 'pvc_round_hole',
+        'holder_silicone_vertical', 'holder_silicone_horizontal',
+        'holder_plain_vertical', 'holder_plain_horizontal',
+        'holder_custom_vertical', 'holder_custom_horizontal',
+        'holder_vertical', 'holder_horizontal',
+        'lanyard_default', 'lanyard_15', 'lanyard_20', 'lanyard_25'
+    ]
+    if key not in keys:
+        return {'success': False, 'message': 'Mục ảnh demo không hợp lệ'}, 400
+
+    if 'image' not in request.files:
+        return {'success': False, 'message': 'Vui lòng chọn tệp hình ảnh'}, 400
+
+    f = request.files['image']
+    if not f or not f.filename:
+        return {'success': False, 'message': 'Chưa chọn tệp hình ảnh'}, 400
+
+    if not is_valid_image_file(f):
+        return {'success': False, 'message': 'Định dạng ảnh không hợp lệ (hỗ trợ JPG, PNG, WEBP).'}, 400
+
+    ext = f.filename.rsplit('.', 1)[-1].lower()
+    safe_filename = f"demo_{key}_{uuid.uuid4().hex[:8]}.{ext}"
+    save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+    f.save(save_path)
+    img_url = f"/static/uploads/{safe_filename}"
+
+    payload = {key: {'image': img_url}}
+    if key == 'lanyard_20':
+        payload['lanyard_default'] = {'image': img_url}
+    ok, result = save_demo_images_config(payload)
+    if ok:
+        record_audit('upload_single_demo_image', 'setting', key, f"Tải ảnh mới cho {key}")
+        return {'success': True, 'message': 'Đã tải ảnh lên thành công!', 'image_url': img_url, 'key': key}
+    else:
+        return {'success': False, 'message': f'Lỗi lưu ảnh: {result}'}, 500
+
+
+# ==================== ROUTE QUẢN LÝ BANNER CHIẾN DỊCH (RESPONSIVE) ====================
+
+@admin_bp.route('/campaign-banner', methods=['GET'])
+@login_required
+def admin_campaign_banner():
+    from backend.services.data_service import get_campaign_banner_config
+    banner = get_campaign_banner_config()
+    return render_template('admin/campaign_banner.html', banner=banner, csrf_token=get_csrf_token())
+
+
+@admin_bp.route('/campaign-banner/update', methods=['POST'])
+@login_required
+def admin_update_campaign_banner():
+    if not validate_csrf():
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('Yêu cầu không hợp lệ hoặc phiên làm việc đã hết hạn (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_campaign_banner'))
+
+    from backend.services.data_service import get_campaign_banner_config, save_campaign_banner_config
+    current = get_campaign_banner_config()
+
+    title = request.form.get('title', '').strip() or current.get('title', 'Chương Trình Khuyến Mại')
+    enabled = request.form.get('enabled') in ('1', 'on', 'true', True)
+    img_desk = current.get('image_desktop', '')
+    img_mob = current.get('image_mobile', '')
+
+    # Cho phép cờ xóa từng ảnh nếu gửi từ form
+    if request.form.get('remove_desktop') == '1':
+        img_desk = ''
+    if request.form.get('remove_mobile') == '1':
+        img_mob = ''
+
+    # 1. Xử lý upload ảnh Desktop (16:9)
+    if 'banner_image_desktop' in request.files:
+        f_desk = request.files['banner_image_desktop']
+        if f_desk and f_desk.filename != '':
+            if not is_valid_image_file(f_desk):
+                msg = f'Tệp ảnh Desktop "{f_desk.filename}" không hợp lệ (hỗ trợ JPG, PNG, WEBP).'
+                if request.is_json:
+                    return {'success': False, 'message': msg}, 400
+                flash(msg, 'error')
+                return redirect(url_for('admin.admin_campaign_banner'))
+
+            ext = f_desk.filename.rsplit('.', 1)[-1].lower()
+            safe_filename = f"campaign_banner_desk_{uuid.uuid4().hex[:8]}.{ext}"
+            save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+            f_desk.save(save_path)
+            img_desk = f"/static/uploads/{safe_filename}"
+
+    # 2. Xử lý upload ảnh Mobile (4:5 hoặc 1:1)
+    if 'banner_image_mobile' in request.files:
+        f_mob = request.files['banner_image_mobile']
+        if f_mob and f_mob.filename != '':
+            if not is_valid_image_file(f_mob):
+                msg = f'Tệp ảnh Mobile "{f_mob.filename}" không hợp lệ (hỗ trợ JPG, PNG, WEBP).'
+                if request.is_json:
+                    return {'success': False, 'message': msg}, 400
+                flash(msg, 'error')
+                return redirect(url_for('admin.admin_campaign_banner'))
+
+            ext = f_mob.filename.rsplit('.', 1)[-1].lower()
+            safe_filename = f"campaign_banner_mob_{uuid.uuid4().hex[:8]}.{ext}"
+            save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+            f_mob.save(save_path)
+            img_mob = f"/static/uploads/{safe_filename}"
+
+    # 3. Hỗ trợ trường banner_image cũ tương thích ngược
+    if 'banner_image' in request.files:
+        f_legacy = request.files['banner_image']
+        if f_legacy and f_legacy.filename != '':
+            if is_valid_image_file(f_legacy):
+                ext = f_legacy.filename.rsplit('.', 1)[-1].lower()
+                safe_filename = f"campaign_banner_desk_{uuid.uuid4().hex[:8]}.{ext}"
+                save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+                f_legacy.save(save_path)
+                img_desk = f"/static/uploads/{safe_filename}"
+
+    # Ràng buộc an toàn: Nếu chưa có bất kỳ ảnh nào thì KHÔNG THỂ BẬT
+    if not img_desk and not img_mob:
+        enabled = False
+
+    ok, result = save_campaign_banner_config({
+        'title': title,
+        'image_desktop': img_desk,
+        'image_mobile': img_mob,
+        'enabled': enabled
+    })
+
+    if ok:
+        record_audit('update_campaign_banner', 'setting', 'campaign_banner', f"Cập nhật Banner Responsive: enabled={enabled}")
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': True, 'message': 'Đã cập nhật banner thành công!', 'data': result}
+        flash('Đã lưu cấu hình banner chiến dịch thành công!', 'success')
+    else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': f'Lỗi lưu banner: {result}'}, 500
+        flash(f'Lỗi lưu banner: {result}', 'error')
+
+    return redirect(url_for('admin.admin_campaign_banner'))
+
+
+@admin_bp.route('/campaign-banner/delete', methods=['POST'])
+@login_required
+def admin_delete_campaign_banner():
+    if not validate_csrf():
+        return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+
+    target = request.form.get('target') or (request.get_json(silent=True) or {}).get('target') or 'all'
+    from backend.services.data_service import delete_campaign_banner
+    ok, result = delete_campaign_banner(target=target)
+    if ok:
+        msg = 'Đã xóa toàn bộ ảnh banner và tắt hiển thị thành công!' if target == 'all' else f'Đã xóa ảnh banner {target} thành công!'
+        record_audit('delete_campaign_banner', 'setting', 'campaign_banner', f"Xóa banner: target={target}")
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': True, 'message': msg, 'data': result}
+        flash(msg, 'success')
+    else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': f'Lỗi xóa banner: {result}'}, 500
+        flash(f'Lỗi xóa banner: {result}', 'error')
+
+    return redirect(url_for('admin.admin_campaign_banner'))
+
+
+@admin_bp.route('/campaign-banner/toggle', methods=['POST'])
+@login_required
+def admin_toggle_campaign_banner():
+    if not validate_csrf():
+        return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+
+    from backend.services.data_service import get_campaign_banner_config, save_campaign_banner_config
+    current = get_campaign_banner_config()
+
+    # Ràng buộc an toàn: Chưa có ảnh nào thì không thể bật
+    if not current.get('image_desktop') and not current.get('image_mobile') and not current.get('image'):
+        return {'success': False, 'message': 'Bạn chưa tải ảnh banner lên. Hãy thêm ít nhất 1 ảnh trước khi bật hiển thị!'}, 400
+
+    new_state = not current.get('enabled', False)
+    ok, result = save_campaign_banner_config({'enabled': new_state})
+    if ok:
+        record_audit('toggle_campaign_banner', 'setting', 'campaign_banner', f"Chuyển trạng thái banner: enabled={new_state}")
+        return {'success': True, 'message': f'Đã {"bật" if new_state else "tắt"} hiển thị banner thành công!', 'enabled': new_state}
+    else:
+        return {'success': False, 'message': f'Lỗi cập nhật: {result}'}, 500
+
+
 

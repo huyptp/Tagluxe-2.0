@@ -1,0 +1,807 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<style>
+    .banner-admin-page {
+        margin-top: 10px;
+    }
+
+    .banner-header-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+        background: #ffffff;
+        padding: 20px 24px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .banner-header-info h2 {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 6px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .banner-header-info p {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .banner-grid-layout {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 24px;
+    }
+    @media (max-width: 1080px) {
+        .banner-grid-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .banner-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .banner-card-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 16px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 12px;
+    }
+
+    /* Switch Status Box */
+    .status-toggle-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    .status-info-left h4 {
+        margin: 0 0 4px 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .status-info-left p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .switch-ui {
+        position: relative;
+        display: inline-block;
+        width: 52px;
+        height: 28px;
+    }
+    .switch-ui input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .switch-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #cbd5e1;
+        transition: .3s;
+        border-radius: 34px;
+    }
+    .switch-slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    input:checked + .switch-slider {
+        background-color: #16a34a;
+    }
+    input:checked + .switch-slider:before {
+        transform: translateX(24px);
+    }
+    input:disabled + .switch-slider {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Form Upload Box */
+    .form-group-item {
+        margin-bottom: 20px;
+    }
+    .form-label-custom {
+        display: block;
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+    .form-input-text {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .form-input-text:focus {
+        border-color: #2563eb;
+    }
+
+    /* Device Upload Container */
+    .upload-section-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        background: #fbfcfe;
+        margin-bottom: 18px;
+    }
+    .upload-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .device-badge-desktop {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 20px;
+        border: 1px solid #bfdbfe;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .device-badge-mobile {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #faf5ff;
+        color: #7e22ce;
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 20px;
+        border: 1px solid #e9d5ff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .device-ratio-info {
+        font-size: 0.8rem;
+        color: #475569;
+        line-height: 1.45;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+    }
+    .device-ratio-info strong {
+        color: #0f172a;
+    }
+
+    .dropzone-box {
+        border: 2px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 20px 14px;
+        text-align: center;
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .dropzone-box:hover {
+        border-color: #2563eb;
+        background: #f0f7ff;
+    }
+    .dropzone-box i {
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+    .dropzone-box p {
+        margin: 3px 0 0 0;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .current-thumb-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 12px;
+    }
+    .thumb-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        overflow: hidden;
+    }
+    .thumb-preview-mini {
+        width: 48px;
+        height: 34px;
+        border-radius: 4px;
+        object-fit: cover;
+        border: 1px solid #cbd5e1;
+        background: #f1f5f9;
+        flex-shrink: 0;
+    }
+    .thumb-path-text {
+        font-size: 0.78rem;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+    }
+
+    .btn-action-primary {
+        background: #2563eb;
+        color: #ffffff;
+        padding: 11px 22px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s;
+    }
+    .btn-action-primary:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-action-danger {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        border: 1px solid #fecaca;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .btn-action-danger:hover {
+        background: #fecaca;
+        color: #b91c1c;
+    }
+
+    .btn-delete-single {
+        background: transparent;
+        color: #ef4444;
+        border: 1px solid #fca5a5;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+    }
+    .btn-delete-single:hover {
+        background: #fef2f2;
+        color: #b91c1c;
+        border-color: #ef4444;
+    }
+
+    /* Live Preview Tabs & Stage */
+    .preview-tabs-nav {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 10px;
+    }
+    .preview-tab-btn {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+    .preview-tab-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+
+    .preview-modal-mockup {
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 14px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 380px;
+        position: relative;
+    }
+
+    /* Preview Container Desktop (16:9) */
+    .preview-modal-content-desktop {
+        position: relative;
+        max-width: 440px;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .preview-modal-content-desktop .preview-img-box {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000000;
+        overflow: hidden;
+    }
+
+    /* Preview Container Mobile (4:5) */
+    .preview-modal-content-mobile {
+        position: relative;
+        max-width: 250px;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .preview-modal-content-mobile .preview-img-box {
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        background: #000000;
+        overflow: hidden;
+    }
+
+    .preview-close-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 26px;
+        height: 26px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #ffffff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid rgba(255, 255, 255, 0.85);
+        cursor: default;
+        z-index: 2;
+    }
+    .preview-img-box img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+    }
+
+    .no-image-placeholder {
+        padding: 40px 20px;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+    #adminToast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        background: #16a34a;
+        color: #ffffff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        font-size: 0.88rem;
+        font-weight: 700;
+        z-index: 99999;
+        display: none;
+        align-items: center;
+        gap: 8px;
+    }
+</style>
+
+<div id="adminToast">
+    <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+    <span id="adminToastMsg">Thao tác thành công!</span>
+</div>
+
+<div class="banner-admin-page">
+    <div class="banner-header-box">
+        <div class="banner-header-info">
+            <h2>
+                <i data-lucide="flag" style="width: 24px; height: 24px; color: #2563eb;"></i>
+                Quản Lý Banner Quảng Cáo Chiến Dịch (Responsive)
+            </h2>
+            <p>Hỗ trợ tải 2 ảnh banner riêng biệt: 1 ảnh ngang cho Màn hình Máy tính/Laptop & 1 ảnh dọc cho Điện thoại Smartphone.</p>
+        </div>
+        <div class="banner-header-status">
+            {% if banner.enabled and (banner.image_desktop or banner.image_mobile or banner.image) %}
+            <span style="display:inline-flex; align-items:center; gap:6px; background:#dcfce7; color:#15803d; font-weight:700; font-size:0.85rem; padding:6px 14px; border-radius:20px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#16a34a;"></span> Đang Bật Hiển Thị Trên Web
+            </span>
+            {% else %}
+            <span style="display:inline-flex; align-items:center; gap:6px; background:#f1f5f9; color:#64748b; font-weight:700; font-size:0.85rem; padding:6px 14px; border-radius:20px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#94a3b8;"></span> Đang Tắt (Không Hiện Trên Web)
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="banner-grid-layout">
+        <!-- CỘT 1: CẤU HÌNH & TẢI 2 BANNER -->
+        <div class="banner-card">
+            <h3 class="banner-card-title">
+                <i data-lucide="sliders" style="width: 18px; height: 18px; color: #2563eb;"></i>
+                Cài Đặt Ảnh Banner Chiến Dịch
+            </h3>
+
+            <!-- Hộp Công tắc Bật/Tắt nhanh -->
+            <div class="status-toggle-box">
+                <div class="status-info-left">
+                    <h4>Công Tắc Bật / Tắt Toàn Bộ Popup</h4>
+                    <p id="toggleHintText">
+                        {% if not banner.image_desktop and not banner.image_mobile and not banner.image %}
+                        Chưa có ảnh banner (hệ thống tự động khóa cho đến khi tải ít nhất 1 ảnh lên)
+                        {% elif banner.enabled %}
+                        Popup đang hiển thị tự động khi khách hàng truy cập website
+                        {% else %}
+                        Popup đang tắt tạm thời, khách vào web sẽ không thấy banner
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <label class="switch-ui" title="Bật/Tắt hiển thị">
+                        <input type="checkbox" id="bannerToggleSwitch" {% if banner.enabled and (banner.image_desktop or banner.image_mobile or banner.image) %}checked{% endif %} {% if not banner.image_desktop and not banner.image_mobile and not banner.image %}disabled{% endif %} onchange="toggleBannerStatus(this)">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Form Tải Ảnh Mới -->
+            <form method="POST" action="/admin/campaign-banner/update" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <div class="form-group-item">
+                    <label class="form-label-custom">Tiêu đề chiến dịch (nội bộ):</label>
+                    <input type="text" name="title" class="form-input-text" value="{{ banner.title or 'Chương Trình Khuyến Mại' }}" placeholder="VD: Khuyến Mại Khai Giảng 2026...">
+                </div>
+
+                <!-- 1. KHUNG TẢI BANNER DESKTOP -->
+                <div class="upload-section-card">
+                    <div class="upload-section-header">
+                        <span class="device-badge-desktop">
+                            <i data-lucide="monitor" style="width: 14px; height: 14px;"></i> 1. Banner Máy Tính & Laptop (Desktop)
+                        </span>
+                        {% if banner.image_desktop %}
+                        <button type="button" class="btn-delete-single" onclick="deleteSpecificBanner('desktop')">
+                            <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i> Xóa ảnh Desktop
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="device-ratio-info">
+                        📐 <strong>Tỉ lệ chuẩn: 16:9</strong> (hoặc 3:2)<br>
+                        🎯 <strong>Kích thước khuyên dùng: 1200 × 675 px</strong> (Tối thiểu 800 × 450 px, $\le 350$ KB)
+                    </div>
+                    <input type="file" id="bannerDesktopInput" name="banner_image_desktop" accept="image/*" style="display: none;" onchange="previewDeviceImage(this, 'desktop')">
+                    <div class="dropzone-box" onclick="document.getElementById('bannerDesktopInput').click()">
+                        <i data-lucide="upload-cloud" style="width: 28px; height: 28px;"></i>
+                        <p style="font-weight: 700; color: #1e293b;" id="desktopFileNameLabel">
+                            {% if banner.image_desktop %}Bấm để thay ảnh Desktop mới{% else %}Bấm để chọn ảnh Banner Desktop{% endif %}
+                        </p>
+                        <p>Kéo thả tệp hoặc bấm chọn ảnh (JPG, PNG, WEBP)</p>
+                    </div>
+
+                    {% if banner.image_desktop %}
+                    <div class="current-thumb-bar">
+                        <div class="thumb-left">
+                            <img src="{{ banner.image_desktop }}" alt="Thumb Desktop" class="thumb-preview-mini">
+                            <span class="thumb-path-text" title="{{ banner.image_desktop }}">{{ banner.image_desktop }}</span>
+                        </div>
+                        <span style="font-size:0.75rem; color:#16a34a; font-weight:700;">Đã lưu</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 2. KHUNG TẢI BANNER MOBILE -->
+                <div class="upload-section-card">
+                    <div class="upload-section-header">
+                        <span class="device-badge-mobile">
+                            <i data-lucide="smartphone" style="width: 14px; height: 14px;"></i> 2. Banner Điện Thoại (Mobile)
+                        </span>
+                        {% if banner.image_mobile %}
+                        <button type="button" class="btn-delete-single" onclick="deleteSpecificBanner('mobile')">
+                            <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i> Xóa ảnh Mobile
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="device-ratio-info">
+                        📐 <strong>Tỉ lệ chuẩn: 4:5</strong> (Chân dung) hoặc <strong>1:1</strong> (Vuông)<br>
+                        🎯 <strong>Kích thước khuyên dùng: 1080 × 1350 px</strong> (hoặc 1080 × 1080 px, $\le 250$ KB)
+                    </div>
+                    <input type="file" id="bannerMobileInput" name="banner_image_mobile" accept="image/*" style="display: none;" onchange="previewDeviceImage(this, 'mobile')">
+                    <div class="dropzone-box" onclick="document.getElementById('bannerMobileInput').click()">
+                        <i data-lucide="upload-cloud" style="width: 28px; height: 28px;"></i>
+                        <p style="font-weight: 700; color: #1e293b;" id="mobileFileNameLabel">
+                            {% if banner.image_mobile %}Bấm để thay ảnh Mobile mới{% else %}Bấm để chọn ảnh Banner Mobile{% endif %}
+                        </p>
+                        <p>Kéo thả tệp hoặc bấm chọn ảnh (JPG, PNG, WEBP)</p>
+                    </div>
+
+                    {% if banner.image_mobile %}
+                    <div class="current-thumb-bar">
+                        <div class="thumb-left">
+                            <img src="{{ banner.image_mobile }}" alt="Thumb Mobile" class="thumb-preview-mini" style="aspect-ratio:4/5; height:44px; width:auto;">
+                            <span class="thumb-path-text" title="{{ banner.image_mobile }}">{{ banner.image_mobile }}</span>
+                        </div>
+                        <span style="font-size:0.75rem; color:#7e22ce; font-weight:700;">Đã lưu</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group-item" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <input type="checkbox" name="enabled" id="formCheckEnabled" value="1" {% if banner.enabled and (banner.image_desktop or banner.image_mobile or banner.image) %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #2563eb;">
+                    <label for="formCheckEnabled" style="font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer;">
+                        Bật hiển thị popup ngay sau khi lưu
+                    </label>
+                </div>
+
+                <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <button type="submit" class="btn-action-primary">
+                        <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+                        Lưu Cấu Hình Banner
+                    </button>
+
+                    {% if banner.image_desktop or banner.image_mobile or banner.image %}
+                    <button type="button" class="btn-action-danger" onclick="confirmDeleteAllBanners()">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                        Xóa Cả 2 Banner & Tắt Popup
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+
+            <!-- Form Xóa Ẩn -->
+            <form id="deleteBannerActionForm" method="POST" action="/admin/campaign-banner/delete" style="display: none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="target" id="deleteTargetInput" value="all">
+            </form>
+        </div>
+
+        <!-- CỘT 2: XEM TRƯỚC (LIVE PREVIEW TRỰC QUAN ĐA THIẾT BỊ) -->
+        <div class="banner-card">
+            <h3 class="banner-card-title">
+                <i data-lucide="eye" style="width: 18px; height: 18px; color: #2563eb;"></i>
+                Mô Phỏng Trực Quan Trên Web (Live Preview)
+            </h3>
+
+            <!-- Tabs chọn thiết bị xem trước -->
+            <div class="preview-tabs-nav">
+                <button type="button" class="preview-tab-btn active" id="tabBtnDesktop" onclick="switchPreviewDevice('desktop')">
+                    <i data-lucide="monitor" style="width: 16px; height: 16px;"></i> 💻 Xem Desktop (16:9)
+                </button>
+                <button type="button" class="preview-tab-btn" id="tabBtnMobile" onclick="switchPreviewDevice('mobile')">
+                    <i data-lucide="smartphone" style="width: 16px; height: 16px;"></i> 📱 Xem Mobile (4:5)
+                </button>
+            </div>
+
+            <!-- Vùng hiển thị mô phỏng -->
+            <div class="preview-modal-mockup">
+                <!-- 1. Khung Preview Desktop -->
+                <div class="preview-modal-content-desktop" id="previewDesktopBox" style="{% if not banner.image_desktop and not banner.image %}display:none;{% endif %}">
+                    <div class="preview-close-btn" title="Nút tắt [X] trên máy tính">
+                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                    </div>
+                    <div class="preview-img-box">
+                        <img id="livePreviewImgDesktop" src="{{ banner.image_desktop or banner.image }}" alt="Desktop Banner">
+                    </div>
+                </div>
+
+                <!-- 2. Khung Preview Mobile -->
+                <div class="preview-modal-content-mobile" id="previewMobileBox" style="display: none;">
+                    <div class="preview-close-btn" title="Nút tắt [X] trên điện thoại">
+                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                    </div>
+                    <div class="preview-img-box">
+                        <img id="livePreviewImgMobile" src="{{ banner.image_mobile or banner.image_desktop or banner.image }}" alt="Mobile Banner">
+                    </div>
+                </div>
+
+                <!-- Placeholder khi chưa có ảnh -->
+                <div class="no-image-placeholder" id="placeholderEmptyBox" style="{% if banner.image_desktop or banner.image_mobile or banner.image %}display:none;{% endif %}">
+                    <i data-lucide="image-off" style="width: 44px; height: 44px; margin-bottom: 12px; color: #64748b;"></i>
+                    <h4 style="margin: 0 0 6px 0; color: #f8fafc; font-size: 1rem;">Chưa có ảnh banner</h4>
+                    <p style="margin: 0; font-size: 0.82rem; color: #94a3b8; max-width: 320px; line-height: 1.5;">
+                        Hãy chọn tệp ảnh ở cột bên trái. Khi chưa có ảnh hoặc đã bấm xóa, popup sẽ <strong>không bao giờ hiển thị</strong> trên trang web.
+                    </p>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px; font-size: 0.78rem; color: #64748b; line-height: 1.55;">
+                <p style="margin: 0 0 4px 0;"><strong>💡 Cơ chế Responsive thông minh của TAGLUXE:</strong></p>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li>Khách truy cập bằng <strong>Máy tính / Laptop</strong>: Tự động thấy ảnh Desktop (16:9).</li>
+                    <li>Khách truy cập bằng <strong>Điện thoại di động</strong>: Tự động thấy ảnh Mobile (4:5).</li>
+                    <li>Nếu chỉ tải 1 trong 2 ảnh: Hệ thống tự dùng ảnh đó làm dự phòng an toàn cho thiết bị còn lại.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPreviewMode = 'desktop';
+
+    function showToast(msg) {
+        const toast = document.getElementById('adminToast');
+        const txt = document.getElementById('adminToastMsg');
+        txt.textContent = msg;
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+
+    function switchPreviewDevice(device) {
+        currentPreviewMode = device;
+        const btnDesk = document.getElementById('tabBtnDesktop');
+        const btnMob = document.getElementById('tabBtnMobile');
+        const boxDesk = document.getElementById('previewDesktopBox');
+        const boxMob = document.getElementById('previewMobileBox');
+        const emptyBox = document.getElementById('placeholderEmptyBox');
+
+        const imgSrcDesk = document.getElementById('livePreviewImgDesktop').getAttribute('src');
+        const imgSrcMob = document.getElementById('livePreviewImgMobile').getAttribute('src');
+
+        if (device === 'desktop') {
+            btnDesk.classList.add('active');
+            btnMob.classList.remove('active');
+            if (imgSrcDesk) {
+                boxDesk.style.display = 'block';
+                boxMob.style.display = 'none';
+                if (emptyBox) emptyBox.style.display = 'none';
+            } else {
+                boxDesk.style.display = 'none';
+                boxMob.style.display = 'none';
+                if (emptyBox) emptyBox.style.display = 'block';
+            }
+        } else {
+            btnMob.classList.add('active');
+            btnDesk.classList.remove('active');
+            if (imgSrcMob || imgSrcDesk) {
+                boxMob.style.display = 'block';
+                boxDesk.style.display = 'none';
+                if (emptyBox) emptyBox.style.display = 'none';
+            } else {
+                boxDesk.style.display = 'none';
+                boxMob.style.display = 'none';
+                if (emptyBox) emptyBox.style.display = 'block';
+            }
+        }
+    }
+
+    function previewDeviceImage(input, device) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const emptyBox = document.getElementById('placeholderEmptyBox');
+                if (emptyBox) emptyBox.style.display = 'none';
+
+                if (device === 'desktop') {
+                    document.getElementById('desktopFileNameLabel').textContent = 'Đã chọn Desktop: ' + file.name;
+                    const img = document.getElementById('livePreviewImgDesktop');
+                    img.src = e.target.result;
+                    switchPreviewDevice('desktop');
+                } else {
+                    document.getElementById('mobileFileNameLabel').textContent = 'Đã chọn Mobile: ' + file.name;
+                    const img = document.getElementById('livePreviewImgMobile');
+                    img.src = e.target.result;
+                    switchPreviewDevice('mobile');
+                }
+
+                // Kích hoạt switch
+                const sw = document.getElementById('bannerToggleSwitch');
+                if (sw) sw.removeAttribute('disabled');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function toggleBannerStatus(switchEl) {
+        const csrfToken = '{{ csrf_token }}';
+        fetch('/admin/campaign-banner/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({ 'csrf_token': csrfToken })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message);
+                const hint = document.getElementById('toggleHintText');
+                if (hint) {
+                    hint.textContent = data.enabled 
+                        ? 'Popup đang hiển thị tự động khi khách hàng truy cập website'
+                        : 'Popup đang tắt tạm thời, khách vào web sẽ không thấy banner';
+                }
+                const chk = document.getElementById('formCheckEnabled');
+                if (chk) chk.checked = data.enabled;
+            } else {
+                alert(data.message || 'Lỗi cập nhật trạng thái');
+                switchEl.checked = !switchEl.checked;
+            }
+        })
+        .catch(err => {
+            alert('Lỗi kết nối máy chủ');
+            switchEl.checked = !switchEl.checked;
+        });
+    }
+
+    function deleteSpecificBanner(target) {
+        const label = target === 'desktop' ? 'Banner Desktop' : 'Banner Mobile';
+        if (confirm(`Bạn có chắc muốn xóa ảnh ${label} này không?`)) {
+            document.getElementById('deleteTargetInput').value = target;
+            document.getElementById('deleteBannerActionForm').submit();
+        }
+    }
+
+    function confirmDeleteAllBanners() {
+        if (confirm('Bạn có chắc chắn muốn xóa TOÀN BỘ ảnh banner không?\n\nSau khi xóa, hệ thống sẽ tự động gỡ bỏ và KHÔNG hiển thị banner trên web nữa.')) {
+            document.getElementById('deleteTargetInput').value = 'all';
+            document.getElementById('deleteBannerActionForm').submit();
+        }
+    }
+</script>
+{% endblock %}

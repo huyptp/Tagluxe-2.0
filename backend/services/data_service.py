@@ -6,7 +6,7 @@ import urllib.request
 import threading
 from datetime import datetime
 from urllib.parse import quote
-from backend.config import DATA_FILE, site_origin, GOOGLE_SHEET_WEBHOOK_URL
+from backend.config import DATA_FILE, BASE_DIR, site_origin, GOOGLE_SHEET_WEBHOOK_URL
 
 import sys
 
@@ -731,12 +731,15 @@ def get_holder_pricing_matrix():
         'note': 'Vỏ silicon dẻo 3.000 đ/cái. Vỏ ABS trơn 7.000 đ/cái. Vỏ ABS in theo thiết kế từ 20k - 35k theo số lượng. Vỏ đứng và vỏ ngang đồng giá.'
     }
 
-def calculate_holder_price(quantity, orientation='vertical', holder_type=None, printed_logo=None):
+def calculate_holder_price(quantity, orientation='vertical', holder_type=None, printed_logo=None, size='5.4x8.6'):
     """
     Calculate Card Holder (Vỏ đựng thẻ) pricing:
     - Nhận tối thiểu từ 20 cái.
-    - Tùy chọn 1: Vỏ silicon dẻo trong suốt (đồng giá 3.000đ/cái mọi số lượng).
-    - Tùy chọn 2: Vỏ nhựa ABS màu trơn không in (đồng giá 7.000đ/cái mọi số lượng).
+    - Tùy chọn 1: Vỏ silicon dẻo trong suốt:
+      + 5.4 x 8.6 cm: Đồng giá 3.000đ/cái.
+      + 7.0 x 11.0 cm: Đồng giá 5.000đ/cái.
+      + 9.0 x 12.0 cm: Đồng giá 7.000đ/cái.
+    - Tùy chọn 2: Vỏ nhựa ABS màu trơn không in (đồng giá 7.000đ/cái).
     - Tùy chọn 3: Vỏ nhựa ABS in ấn theo thiết kế riêng (bảng giá 7 bậc từ 20.000đ - 35.000đ).
     - Vỏ đứng và vỏ ngang đồng giá (0đ phụ phí).
     """
@@ -766,13 +769,30 @@ def calculate_holder_price(quantity, orientation='vertical', holder_type=None, p
     else:
         h_type = 'custom'
 
+    size_code = '5.4x8.6'
     if h_type == 'silicone':
         type_code = 'silicone'
-        db_sili = get_tier_price_from_db('holder_silicone', qty)
-        unit_price = db_sili if db_sili is not None else HOLDER_SILICONE_PRICE
-        type_label = 'Vỏ silicon dẻo trong suốt'
+        raw_sz = str(size or '5.4x8.6').strip().lower()
+        if '7x11' in raw_sz or '7.0x11' in raw_sz or '7*11' in raw_sz:
+            size_code = '7x11'
+            size_label = 'Khổ nhỡ 7 × 11 cm'
+            default_price = 5000
+        elif '9x12' in raw_sz or '9.0x12' in raw_sz or '9*12' in raw_sz:
+            size_code = '9x12'
+            size_label = 'Khổ lớn 9 × 12 cm'
+            default_price = 7000
+        else:
+            size_code = '5.4x8.6'
+            size_label = 'Chuẩn ATM 5.4 × 8.6 cm'
+            default_price = 3000
+
+        db_sili = get_tier_price_from_db(f'holder_silicone_{size_code}', qty)
+        if db_sili is None and size_code == '5.4x8.6':
+            db_sili = get_tier_price_from_db('holder_silicone', qty)
+        unit_price = db_sili if db_sili is not None else default_price
+        type_label = f'Vỏ silicon dẻo trong suốt ({size_label})'
         specs = f"{ori_label} — {type_label}"
-        accessories_list = ['Silicon dẻo trong suốt']
+        accessories_list = ['Silicon dẻo trong suốt', size_label]
         has_logo = False
     elif h_type == 'plain':
         type_code = 'plain'
@@ -811,6 +831,7 @@ def calculate_holder_price(quantity, orientation='vertical', holder_type=None, p
         'has_logo': has_logo,
         'accessories': accessories_list,
         'specs': specs,
+        'size': size_code,
         'unit_price': unit_price,
         'total_price': total_price
     }
@@ -904,7 +925,8 @@ def calculate_product_price(category='lanyard', quantity=10, **kwargs):
             quantity,
             orientation=kwargs.get('orientation', 'vertical'),
             holder_type=h_type if h_type else ('custom' if p_logo is not False else 'plain'),
-            printed_logo=p_logo
+            printed_logo=p_logo,
+            size=kwargs.get('size') or kwargs.get('width')
         )
     elif 'combo' in cat:
         result = calculate_combo_price(quantity, kwargs.get('width', '2.0'), kwargs.get('accessories', []))
@@ -1542,7 +1564,7 @@ def get_accessory_by_id(acc_id):
         return None
 
 
-def update_accessory(acc_id, name=None, price=None, image=None, description=None, title=None, visible=None):
+def update_accessory(acc_id, name=None, price=None, image=None, description=None, title=None, visible=None, min_quantity=None):
     from backend.models import Accessory
     from backend.database import db
     try:
@@ -1561,6 +1583,11 @@ def update_accessory(acc_id, name=None, price=None, image=None, description=None
             acc.title = title
         if visible is not None:
             acc.visible = bool(visible)
+        if min_quantity is not None:
+            try:
+                acc.min_quantity = max(0, int(min_quantity))
+            except (ValueError, TypeError):
+                pass
         db.session.commit()
         return True, acc.to_dict()
     except Exception as ex:
@@ -1588,7 +1615,8 @@ def get_accessories_catalog():
                 'raw_price': a.price,
                 'img': a.image_url,
                 'caption': a.description or a.name,
-                'title': a.title or a.name
+                'title': a.title or a.name,
+                'min_quantity': getattr(a, 'min_quantity', 0) or 0
             }
             if a.category == 'lanyard_acc':
                 res['lanyard_accs'][a.id] = formatted_item
@@ -1596,6 +1624,7 @@ def get_accessories_catalog():
                 res['holder_styles'][a.id] = formatted_item
             elif a.category == 'holder_material':
                 res['holder_materials'][a.id] = formatted_item
+        res['demo_images'] = get_demo_images_config()
         return res
     except Exception as ex:
         import logging
@@ -1827,7 +1856,8 @@ def add_accessory(data):
             description=data.get('description', '').strip(),
             title=data.get('title', '').strip() or data.get('name', '').strip(),
             sort_order=max_order + 1,
-            visible=bool(data.get('visible', True))
+            visible=bool(data.get('visible', True)),
+            min_quantity=int(data.get('min_quantity', 0) or 0)
         )
         db.session.add(acc)
         db.session.commit()
@@ -1881,6 +1911,308 @@ def toggle_accessory_visibility(acc_id):
         logging.getLogger(__name__).error(f"[DB_TOGGLE_ACC_VISIBILITY_ERROR] {ex}")
         return False, str(ex)
 
+# --- CẤU HÌNH BỘ ẢNH DEMO BÁO GIÁ ĐỘNG (TAGLUXE LIVE PREVIEW) ---
+DEFAULT_DEMO_IMAGES = {
+    'pvc_no_hole': {
+        'id': 'pvc_no_hole',
+        'title': 'Thẻ PVC Không Đục Lỗ',
+        'category': 'pvc',
+        'key': 'none',
+        'image': '/static/images/demo/demo_the_pvc_khong_duc_lo.jpg',
+        'pill': 'Thẻ Nguyên Bản (Không Đục Lỗ)',
+        'caption': 'Thẻ nguyên khối bo góc tiêu chuẩn, phù hợp lồng trong vỏ hoặc bao đựng thẻ.',
+        'modal_title': 'Thẻ nhựa PVC nguyên bản không đục lỗ — Demo 3D'
+    },
+    'pvc_oval_hole': {
+        'id': 'pvc_oval_hole',
+        'title': 'Thẻ PVC Đục Lỗ Oval (Con Nhộng)',
+        'category': 'pvc',
+        'key': 'capsule',
+        'image': '/static/images/demo/demo_the_pvc_lo_ovan.jpg',
+        'pill': 'Đục Lỗ Con Nhộng (Oval)',
+        'caption': 'Lỗ dẹt 3x15mm chuẩn cơ khí dập giữa đỉnh thẻ, giúp móc cài giữ thẻ luôn thẳng đứng khi đeo.',
+        'modal_title': 'Gia công đục lỗ con nhộng Oval chống xoay — Demo 3D'
+    },
+    'pvc_round_hole': {
+        'id': 'pvc_round_hole',
+        'title': 'Thẻ PVC Đục Lỗ Tròn (5mm)',
+        'category': 'pvc',
+        'key': 'round',
+        'image': '/static/images/demo/demo_the_pvc_lo_tron.jpg',
+        'pill': 'Đục Lỗ Tròn (5mm)',
+        'caption': 'Đục lỗ tròn chuẩn xác, mép cắt sắc gọn không nứt vỡ thẻ, tương thích nhiều loại móc kẹp.',
+        'modal_title': 'Gia công đục lỗ tròn tiêu chuẩn 5mm — Demo 3D'
+    },
+    'holder_silicone_vertical': {
+        'id': 'holder_silicone_vertical',
+        'title': 'Vỏ Silicon Dẻo (Dáng Đứng Dọc)',
+        'category': 'holder',
+        'key': 'silicone_vertical',
+        'image': '/static/images/demo/demo_vo_silicone_doc.jpg',
+        'pill': 'Vỏ Silicon Dọc (Khóa Zip Chống Nước)',
+        'caption': 'Vỏ silicon dẻo trong suốt dáng đứng dọc có khóa zip chống nước bảo vệ thẻ tối ưu.',
+        'modal_title': 'Vỏ Silicon Dẻo Dáng Đứng Dọc — Demo 3D'
+    },
+    'holder_silicone_horizontal': {
+        'id': 'holder_silicone_horizontal',
+        'title': 'Vỏ Silicon Dẻo (Dáng Nằm Ngang)',
+        'category': 'holder',
+        'key': 'silicone_horizontal',
+        'image': '/static/images/demo/demo_vo_silicone_ngang.jpg',
+        'pill': 'Vỏ Silicon Ngang (Khóa Zip Chống Nước)',
+        'caption': 'Vỏ silicon dẻo trong suốt dáng nằm ngang có khóa zip chống nước bảo vệ thẻ tối ưu.',
+        'modal_title': 'Vỏ Silicon Dẻo Dáng Nằm Ngang — Demo 3D'
+    },
+    'holder_plain_vertical': {
+        'id': 'holder_plain_vertical',
+        'title': 'Vỏ Nhựa ABS Trơn (Dáng Đứng Dọc)',
+        'category': 'holder',
+        'material': 'plain',
+        'key': 'plain_vertical',
+        'image': '/static/images/demo/demo_vo_abs_tron_doc.jpg',
+        'pill': 'Vỏ ABS Trơn Dọc (Chuẩn ATM)',
+        'caption': 'Vỏ nhựa ABS màu trơn không in dáng đứng dọc chuẩn thẻ ATM, bảo vệ thẻ chống gãy gập.',
+        'modal_title': 'Vỏ nhựa ABS trơn dáng đứng dọc — Demo 3D'
+    },
+    'holder_plain_horizontal': {
+        'id': 'holder_plain_horizontal',
+        'title': 'Vỏ Nhựa ABS Trơn (Dáng Nằm Ngang)',
+        'category': 'holder',
+        'material': 'plain',
+        'key': 'plain_horizontal',
+        'image': '/static/images/demo/demo_vo_abs_tron_ngang.jpg',
+        'pill': 'Vỏ ABS Trơn Ngang (Chuẩn ATM)',
+        'caption': 'Vỏ nhựa ABS màu trơn không in dáng nằm ngang sang trọng, bảo vệ thẻ tối ưu.',
+        'modal_title': 'Vỏ nhựa ABS trơn dáng nằm ngang — Demo 3D'
+    },
+    'holder_custom_vertical': {
+        'id': 'holder_custom_vertical',
+        'title': 'Vỏ Nhựa ABS In UV (Dáng Đứng Dọc)',
+        'category': 'holder',
+        'material': 'custom',
+        'key': 'custom_vertical',
+        'image': '/static/images/demo/demo_vo_abs_in_doc.jpg',
+        'pill': 'Vỏ ABS In UV Dọc (Theo Yêu Cầu)',
+        'caption': 'Vỏ nhựa ABS in UV sắc nét logo và nhận diện thương hiệu dáng đứng dọc theo thiết kế riêng.',
+        'modal_title': 'Vỏ nhựa ABS in UV dáng đứng dọc — Demo 3D'
+    },
+    'holder_custom_horizontal': {
+        'id': 'holder_custom_horizontal',
+        'title': 'Vỏ Nhựa ABS In UV (Dáng Nằm Ngang)',
+        'category': 'holder',
+        'material': 'custom',
+        'key': 'custom_horizontal',
+        'image': '/static/images/demo/demo_vo_abs_in_ngang.jpg',
+        'pill': 'Vỏ ABS In UV Ngang (Theo Yêu Cầu)',
+        'caption': 'Vỏ nhựa ABS in UV sắc nét logo và nhận diện thương hiệu dáng nằm ngang theo thiết kế riêng.',
+        'modal_title': 'Vỏ nhựa ABS in UV dáng nằm ngang — Demo 3D'
+    },
+    'holder_vertical': {
+        'id': 'holder_vertical',
+        'title': 'Vỏ Nhựa ABS (Dáng Đứng Dọc)',
+        'category': 'holder',
+        'key': 'vertical',
+        'image': '/static/images/demo/demo_vo_abs_tron_doc.jpg',
+        'pill': 'Vỏ Nhựa ABS Dọc (Chuẩn ATM)',
+        'caption': 'Vỏ thẻ dáng đứng dọc chuẩn thẻ học sinh, sinh viên, nhân viên. Chống gãy gập thẻ tối ưu.',
+        'modal_title': 'Vỏ đựng thẻ nhựa ABS dáng đứng dọc — Demo 3D'
+    },
+    'holder_horizontal': {
+        'id': 'holder_horizontal',
+        'title': 'Vỏ Nhựa ABS (Dáng Nằm Ngang)',
+        'category': 'holder',
+        'key': 'horizontal',
+        'image': '/static/images/demo/demo_vo_abs_tron_ngang.jpg',
+        'pill': 'Vỏ Nhựa ABS Ngang (Chuẩn ATM)',
+        'caption': 'Vỏ thẻ dáng nằm ngang sang trọng, mở rộng diện tích thể hiện logo công ty.',
+        'modal_title': 'Vỏ đựng thẻ nhựa ABS dáng nằm ngang — Demo 3D'
+    },
+    'lanyard_default': {
+        'id': 'lanyard_default',
+        'title': 'Dây Đeo Thẻ In Chuyển Nhiệt',
+        'category': 'lanyard',
+        'key': 'default',
+        'image': '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg',
+        'pill': 'Dây Đeo Thẻ In Chuyển Nhiệt',
+        'caption': 'Dây lụa satin 2.0cm tiêu chuẩn sắc nét, phối móc kim loại cao cấp.',
+        'modal_title': 'Mẫu Dây Đeo Thẻ In Chuyển Nhiệt — Demo 3D'
+    },
+    'lanyard_15': {
+        'id': 'lanyard_15',
+        'title': 'Dây Đeo Thẻ Bản 1.5 cm',
+        'category': 'lanyard',
+        'key': '1.5',
+        'image': '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg',
+        'pill': 'Dây Đeo Thẻ Bản 1.5 cm',
+        'caption': 'Dây in nhiệt lụa satin 1.5cm nhỏ gọn, tinh tế, phối móc kim loại cao cấp.',
+        'modal_title': 'Mẫu Dây Đeo Thẻ Bản 1.5cm — Demo 3D'
+    },
+    'lanyard_20': {
+        'id': 'lanyard_20',
+        'title': 'Dây Đeo Thẻ Bản 2.0 cm (Chuẩn)',
+        'category': 'lanyard',
+        'key': '2.0',
+        'image': '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg',
+        'pill': 'Dây Đeo Thẻ Bản 2.0 cm (Chuẩn)',
+        'caption': 'Dây lụa satin 2.0cm tiêu chuẩn sắc nét, phối móc kim loại cao cấp.',
+        'modal_title': 'Mẫu Dây Đeo Thẻ Bản 2.0cm — Demo 3D'
+    },
+    'lanyard_25': {
+        'id': 'lanyard_25',
+        'title': 'Dây Đeo Thẻ Bản 2.5 cm',
+        'category': 'lanyard',
+        'key': '2.5',
+        'image': '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg',
+        'pill': 'Dây Đeo Thẻ Bản 2.5 cm',
+        'caption': 'Dây in nhiệt lụa satin 2.5cm to bản sang trọng, phối móc kim loại cao cấp.',
+        'modal_title': 'Mẫu Dây Đeo Thẻ Bản 2.5cm — Demo 3D'
+    }
+}
+
+def get_demo_images_storage_path():
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    storage_dir = os.path.join(root_dir, 'storage')
+    os.makedirs(storage_dir, exist_ok=True)
+    return os.path.join(storage_dir, 'demo_images.json')
+
+def get_demo_images_config():
+    """Lấy cấu hình ảnh demo báo giá đầy đủ từ storage hoặc mặc định"""
+    import copy
+    cfg = copy.deepcopy(DEFAULT_DEMO_IMAGES)
+    path = get_demo_images_storage_path()
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                saved = json.load(f)
+                if isinstance(saved, dict):
+                    for k, v in saved.items():
+                        if k in cfg and isinstance(v, dict):
+                            cfg[k].update(v)
+                        elif isinstance(v, dict):
+                            cfg[k] = v
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"[LOAD_DEMO_IMAGES_ERROR] {e}")
+    return cfg
+
+def save_demo_images_config(data):
+    """Lưu cấu hình ảnh demo báo giá vào storage/demo_images.json"""
+    path = get_demo_images_storage_path()
+    current = get_demo_images_config()
+    for k, v in data.items():
+        if k in current and isinstance(v, dict):
+            current[k].update(v)
+        elif isinstance(v, dict):
+            current[k] = v
+    try:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(current, f, ensure_ascii=False, indent=2)
+        return True, current
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"[SAVE_DEMO_IMAGES_ERROR] {e}")
+        return False, str(e)
 
 
+# ==================== CẤU HÌNH BANNER QUẢNG CÁO CHIẾN DỊCH (RESPONSIVE) ====================
+
+DEFAULT_CAMPAIGN_BANNER = {
+    'enabled': False,
+    'image': '',
+    'image_desktop': '',
+    'image_mobile': '',
+    'title': 'Chương Trình Khuyến Mại',
+    'updated_at': ''
+}
+
+def get_campaign_banner_storage_path():
+    path = os.path.join(BASE_DIR, 'storage', 'campaign_banner.json')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    return path
+
+def get_campaign_banner_config():
+    """Lấy cấu hình banner chiến dịch. Tự động kiểm tra: nếu chưa có ảnh hoặc ảnh rỗng thì ép enabled = False."""
+    import copy
+    cfg = copy.deepcopy(DEFAULT_CAMPAIGN_BANNER)
+    path = get_campaign_banner_storage_path()
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                saved = json.load(f)
+                if isinstance(saved, dict):
+                    cfg.update(saved)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"[LOAD_CAMPAIGN_BANNER_ERROR] {e}")
+
+    # Đồng bộ tương thích ngược giữa các trường
+    desk = str(cfg.get('image_desktop') or '').strip()
+    mob = str(cfg.get('image_mobile') or '').strip()
+    legacy = str(cfg.get('image') or '').strip()
+
+    if not desk and legacy:
+        cfg['image_desktop'] = legacy
+        desk = legacy
+    if not legacy and (desk or mob):
+        cfg['image'] = desk or mob
+
+    # RÀNG BUỘC AN TOÀN: Nếu chưa upload bất kỳ ảnh nào thì TUYỆT ĐỐI không bật
+    if not desk and not mob and not legacy:
+        cfg['enabled'] = False
+        cfg['image'] = ''
+        cfg['image_desktop'] = ''
+        cfg['image_mobile'] = ''
+    return cfg
+
+def save_campaign_banner_config(data):
+    """Lưu cấu hình banner chiến dịch (hỗ trợ cả ảnh Desktop và Mobile)."""
+    path = get_campaign_banner_storage_path()
+    current = get_campaign_banner_config()
+    if isinstance(data, dict):
+        current.update(data)
+    
+    desk = str(current.get('image_desktop') or '').strip()
+    mob = str(current.get('image_mobile') or '').strip()
+    current['image_desktop'] = desk
+    current['image_mobile'] = mob
+    current['image'] = desk or mob or ''
+
+    # Ràng buộc an toàn: Không có ảnh nào thì không được bật
+    if not desk and not mob:
+        current['enabled'] = False
+        current['image'] = ''
+
+    current['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    try:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(current, f, ensure_ascii=False, indent=2)
+        return True, current
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"[SAVE_CAMPAIGN_BANNER_ERROR] {e}")
+        return False, str(e)
+
+def delete_campaign_banner(target='all'):
+    """
+    Xóa bỏ ảnh banner (hỗ trợ target='all', target='desktop', target='mobile').
+    Nếu cả 2 ảnh đều rỗng thì tự động tắt hiển thị popup.
+    """
+    current = get_campaign_banner_config()
+    if target == 'desktop':
+        current['image_desktop'] = ''
+    elif target == 'mobile':
+        current['image_mobile'] = ''
+    else:  # all
+        current['image_desktop'] = ''
+        current['image_mobile'] = ''
+        current['image'] = ''
+        current['enabled'] = False
+
+    desk = str(current.get('image_desktop') or '').strip()
+    mob = str(current.get('image_mobile') or '').strip()
+    current['image'] = desk or mob or ''
+    if not desk and not mob:
+        current['enabled'] = False
+
+    return save_campaign_banner_config(current)
 

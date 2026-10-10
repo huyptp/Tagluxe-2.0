@@ -211,6 +211,12 @@ def run_migrations(app, db):
                     ("products", "badge", "ALTER TABLE products ADD COLUMN badge VARCHAR(255)"),
                     ("products", "specs_json", "ALTER TABLE products ADD COLUMN specs_json TEXT")
                 ]
+            ),
+            (
+                "v010_add_accessory_min_quantity",
+                [
+                    ("accessories", "min_quantity", "ALTER TABLE accessories ADD COLUMN min_quantity INTEGER DEFAULT 0")
+                ]
             )
         ]
 

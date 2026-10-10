@@ -79,9 +79,11 @@ def create_app(test_config=None):
     # Context processors & middleware
     @app.context_processor
     def seo_context():
+        from backend.services.data_service import get_campaign_banner_config
         return {
             'site_url': site_origin(),
-            'asset_v': '20260918_v2'
+            'asset_v': '20261010_v3',
+            'campaign_banner': get_campaign_banner_config()
         }
 
     @app.errorhandler(404)

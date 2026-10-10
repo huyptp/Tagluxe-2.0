@@ -1,0 +1,867 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<style>
+    .demo-img-admin-page {
+        margin-top: 10px;
+    }
+
+    /* Page Header */
+    .page-header-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 16px;
+        background: #ffffff;
+        padding: 20px 24px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .page-header-info h2 {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 6px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .page-header-info p {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .btn-save-all {
+        background: #16a34a;
+        color: #ffffff;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 800;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+        transition: all 0.2s ease;
+    }
+    .btn-save-all:hover {
+        background: #15803d;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
+    }
+
+    /* Tabs Bar */
+    .demo-tabs-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 0;
+    }
+    .demo-tab-btn {
+        background: none;
+        border: none;
+        padding: 12px 20px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+    }
+    .demo-tab-btn:hover {
+        color: #1e293b;
+    }
+    .demo-tab-btn.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+        background: #f8fafc;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+    .demo-tab-badge {
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: #e2e8f0;
+        color: #475569;
+    }
+    .demo-tab-btn.active .demo-tab-badge {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    /* Sub Group Container */
+    .demo-subgroup-title {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 20px 0 12px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-left: 4px;
+    }
+    .demo-subgroup-title span {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    /* Grid Layout */
+    .demo-cards-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    .demo-cards-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    @media (max-width: 1024px) {
+        .demo-cards-grid-3, .demo-cards-grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Card Item */
+    .demo-item-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .demo-item-card:hover {
+        border-color: #94a3b8;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .demo-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .demo-card-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+    .demo-card-pill {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    /* Thumbnail */
+    .demo-thumb-wrap {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 14px;
+    }
+    .demo-thumb-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #f8fafc;
+        transition: transform 0.25s ease;
+    }
+    .demo-thumb-wrap:hover img {
+        transform: scale(1.03);
+    }
+    .demo-thumb-actions {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        display: flex;
+        gap: 6px;
+    }
+    .btn-zoom-thumb {
+        background: rgba(15, 23, 42, 0.75);
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 0.72rem;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.15s;
+    }
+    .btn-zoom-thumb:hover {
+        background: rgba(15, 23, 42, 0.95);
+    }
+
+    /* Upload & Actions */
+    .demo-action-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+    .demo-file-input {
+        display: none;
+    }
+    .btn-upload-direct {
+        flex: 1;
+        background: #2563eb;
+        color: #ffffff;
+        padding: 9px 14px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+    }
+    .btn-upload-direct:hover {
+        background: #1d4ed8;
+    }
+    .btn-upload-direct:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+    }
+
+    .demo-url-box {
+        margin-bottom: 10px;
+    }
+    .demo-url-input {
+        width: 100%;
+        padding: 7px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        color: #334155;
+        background: #f8fafc;
+        box-sizing: border-box;
+        outline: none;
+    }
+    .demo-url-input:focus {
+        border-color: #2563eb;
+        background: #ffffff;
+    }
+
+    /* Accordion Settings */
+    .demo-advanced-toggle {
+        font-size: 0.76rem;
+        color: #64748b;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 600;
+    }
+    .demo-advanced-toggle:hover {
+        color: #0f172a;
+    }
+    .demo-advanced-fields {
+        display: none;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #e2e8f0;
+    }
+    .demo-field-label {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 3px;
+        display: block;
+    }
+    .demo-field-input {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        margin-bottom: 8px;
+        box-sizing: border-box;
+    }
+
+    /* Floating Toast */
+    #adminToast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        background: #16a34a;
+        color: #ffffff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        font-size: 0.88rem;
+        font-weight: 700;
+        z-index: 99999;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div id="adminToast">
+    <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+    <span id="adminToastMsg">Đã cập nhật ảnh thành công!</span>
+</div>
+
+<div class="demo-img-admin-page">
+    <form id="demoImagesForm" method="POST" action="/admin/demo-images/update" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="page-header-box">
+            <div class="page-header-info">
+                <h2>
+                    <i data-lucide="image" style="width: 24px; height: 24px; color: #2563eb;"></i>
+                    Quản Lý Ảnh Demo Báo Giá
+                </h2>
+                <p>Giao diện tinh gọn: Xem trước ảnh 3D, chọn file đổi ảnh tức thì không cần thao tác rườm rà.</p>
+            </div>
+            <div>
+                <button type="submit" class="btn-save-all">
+                    <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+                    Lưu Toàn Bộ Cấu Hình
+                </button>
+            </div>
+        </div>
+
+        <!-- TABS BAR -->
+        <div class="demo-tabs-bar">
+            <button type="button" class="demo-tab-btn active" id="tabBtn_lanyard" onclick="switchAdminDemoTab('lanyard')">
+                <i data-lucide="tag" style="width: 18px; height: 18px;"></i>
+                Dây Đeo Thẻ
+                <span class="demo-tab-badge">3 Bản Rộng</span>
+            </button>
+            <button type="button" class="demo-tab-btn" id="tabBtn_pvc" onclick="switchAdminDemoTab('pvc')">
+                <i data-lucide="credit-card" style="width: 18px; height: 18px;"></i>
+                Thẻ Nhựa PVC
+                <span class="demo-tab-badge">3 Mẫu Đục Lỗ</span>
+            </button>
+            <button type="button" class="demo-tab-btn" id="tabBtn_holder" onclick="switchAdminDemoTab('holder')">
+                <i data-lucide="shield" style="width: 18px; height: 18px;"></i>
+                Vỏ Đựng Thẻ
+                <span class="demo-tab-badge">6 Mẫu (Silicon, Trơn &amp; In UV)</span>
+            </button>
+        </div>
+
+        <!-- ==================== TAB 1: DÂY ĐEO THẺ ==================== -->
+        <div id="tabContent_lanyard" class="demo-tab-content">
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; font-size: 0.88rem; color: #1e40af; display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="info" style="width: 20px; height: 20px; color: #2563eb; flex-shrink: 0;"></i>
+                <span>Ảnh demo này sẽ hiển thị trực quan trong <strong>Bảng Tính Giá</strong> khi khách hàng tùy chọn kích thước bản rộng dây đeo (đặc biệt khi khách không chọn phụ kiện đi kèm).</span>
+            </div>
+
+            <div class="demo-cards-grid-3">
+                <!-- 1. Bản 2.0 cm (Chuẩn) -->
+                {% set item = demo_images.get('lanyard_20') or demo_images.get('lanyard_default', {}) %}
+                <div class="demo-item-card" id="card_lanyard_20">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Dây Đeo Bản 2.0 cm (Chuẩn)</h4>
+                        <span class="demo-card-pill" style="background:#e0f2fe; color:#0369a1;">Phổ Biến Nhất</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_lanyard_20" src="{{ item.image or '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg' }}" alt="Dây Đeo Bản 2.0cm Chuẩn">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_lanyard_20" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'lanyard_20')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_lanyard_20').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_lanyard_20" id="url_lanyard_20" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_lanyard_20')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_lanyard_20">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_lanyard_20" class="demo-field-input" value="{{ item.title or 'Dây Đeo Thẻ Bản 2.0 cm (Chuẩn)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_lanyard_20" class="demo-field-input" value="{{ item.pill or 'Dây Đeo Thẻ Bản 2.0 cm (Chuẩn)' }}">
+                        <label class="demo-field-label">Chú thích (Caption):</label>
+                        <input type="text" name="caption_lanyard_20" class="demo-field-input" value="{{ item.caption or 'Dây in nhiệt lụa satin 2.0cm tiêu chuẩn sắc nét, phối móc kim loại cao cấp.' }}">
+                    </div>
+                </div>
+
+                <!-- 2. Bản 1.5 cm -->
+                {% set item = demo_images.get('lanyard_15', {}) %}
+                <div class="demo-item-card" id="card_lanyard_15">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Dây Đeo Bản 1.5 cm</h4>
+                        <span class="demo-card-pill" style="background:#fef3c7; color:#92400e;">Nhỏ Gọn</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_lanyard_15" src="{{ item.image or '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg' }}" alt="Dây Đeo Bản 1.5cm">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_lanyard_15" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'lanyard_15')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_lanyard_15').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_lanyard_15" id="url_lanyard_15" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_lanyard_15')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_lanyard_15">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_lanyard_15" class="demo-field-input" value="{{ item.title or 'Dây Đeo Thẻ Bản 1.5 cm' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_lanyard_15" class="demo-field-input" value="{{ item.pill or 'Dây Đeo Thẻ Bản 1.5 cm' }}">
+                        <label class="demo-field-label">Chú thích (Caption):</label>
+                        <input type="text" name="caption_lanyard_15" class="demo-field-input" value="{{ item.caption or 'Dây in nhiệt lụa satin 1.5cm nhỏ gọn, tinh tế, phối móc kim loại sáng bóng.' }}">
+                    </div>
+                </div>
+
+                <!-- 3. Bản 2.5 cm -->
+                {% set item = demo_images.get('lanyard_25', {}) %}
+                <div class="demo-item-card" id="card_lanyard_25">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Dây Đeo Bản 2.5 cm</h4>
+                        <span class="demo-card-pill" style="background:#dcfce7; color:#166534;">To Bản Sang Trọng</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_lanyard_25" src="{{ item.image or '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg' }}" alt="Dây Đeo Bản 2.5cm">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_lanyard_25" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'lanyard_25')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_lanyard_25').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_lanyard_25" id="url_lanyard_25" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_lanyard_25')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_lanyard_25">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_lanyard_25" class="demo-field-input" value="{{ item.title or 'Dây Đeo Thẻ Bản 2.5 cm' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_lanyard_25" class="demo-field-input" value="{{ item.pill or 'Dây Đeo Thẻ Bản 2.5 cm' }}">
+                        <label class="demo-field-label">Chú thích (Caption):</label>
+                        <input type="text" name="caption_lanyard_25" class="demo-field-input" value="{{ item.caption or 'Dây in nhiệt lụa satin 2.5cm to bản sang trọng, phối móc kim loại cao cấp.' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: THẺ NHỰA PVC ==================== -->
+        <div id="tabContent_pvc" class="demo-tab-content" style="display: none;">
+            <div class="demo-cards-grid-3">
+                <!-- 1. Không đục lỗ -->
+                {% set item = demo_images.get('pvc_no_hole', {}) %}
+                <div class="demo-item-card" id="card_pvc_no_hole">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Không Đục Lỗ</h4>
+                        <span class="demo-card-pill" style="background:#e0f2fe; color:#0369a1;">Nguyên Bản</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_pvc_no_hole" src="{{ item.image or '/static/images/demo/demo_the_pvc_khong_duc_lo.jpg' }}" alt="Thẻ PVC Không Đục Lỗ">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_pvc_no_hole" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'pvc_no_hole')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_pvc_no_hole').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_pvc_no_hole" id="url_pvc_no_hole" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_the_pvc_khong_duc_lo.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_pvc_no_hole')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_pvc_no_hole">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_pvc_no_hole" class="demo-field-input" value="{{ item.title or 'Thẻ PVC Không Đục Lỗ' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_pvc_no_hole" class="demo-field-input" value="{{ item.pill or 'Thẻ Nguyên Bản (Không Đục Lỗ)' }}">
+                    </div>
+                </div>
+
+                <!-- 2. Đục lỗ Oval -->
+                {% set item = demo_images.get('pvc_oval_hole', {}) %}
+                <div class="demo-item-card" id="card_pvc_oval_hole">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Đục Lỗ Oval (Con Nhộng)</h4>
+                        <span class="demo-card-pill" style="background:#fef3c7; color:#92400e;">Chống Xoay</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_pvc_oval_hole" src="{{ item.image or '/static/images/demo/demo_the_pvc_lo_ovan.jpg' }}" alt="Thẻ PVC Lỗ Oval">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_pvc_oval_hole" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'pvc_oval_hole')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_pvc_oval_hole').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_pvc_oval_hole" id="url_pvc_oval_hole" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_the_pvc_lo_ovan.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_pvc_oval_hole')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_pvc_oval_hole">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_pvc_oval_hole" class="demo-field-input" value="{{ item.title or 'Thẻ PVC Đục Lỗ Oval (Con Nhộng)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_pvc_oval_hole" class="demo-field-input" value="{{ item.pill or 'Đục Lỗ Con Nhộng (Oval)' }}">
+                    </div>
+                </div>
+
+                <!-- 3. Đục lỗ Tròn -->
+                {% set item = demo_images.get('pvc_round_hole', {}) %}
+                <div class="demo-item-card" id="card_pvc_round_hole">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Đục Lỗ Tròn (5mm)</h4>
+                        <span class="demo-card-pill" style="background:#dcfce7; color:#166534;">Chuẩn 5mm</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_pvc_round_hole" src="{{ item.image or '/static/images/demo/demo_the_pvc_lo_tron.jpg' }}" alt="Thẻ PVC Lỗ Tròn">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_pvc_round_hole" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'pvc_round_hole')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_pvc_round_hole').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_pvc_round_hole" id="url_pvc_round_hole" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_the_pvc_lo_tron.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_pvc_round_hole')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_pvc_round_hole">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_pvc_round_hole" class="demo-field-input" value="{{ item.title or 'Thẻ PVC Đục Lỗ Tròn (5mm)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_pvc_round_hole" class="demo-field-input" value="{{ item.pill or 'Đục Lỗ Tròn (5mm)' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: VỎ ĐỰNG THẺ ==================== -->
+        <div id="tabContent_holder" class="demo-tab-content" style="display: none;">
+            
+            <!-- NHÓM A: VỎ SILICON DẺO -->
+            <div class="demo-subgroup-title">
+                <i data-lucide="shield" style="width: 18px; height: 18px; color: #0284c7;"></i>
+                A. Vỏ Silicon Dẻo (Khóa Zip Chống Nước — 3k, 5k, 7k)
+                <span>(Hiển thị khi khách chọn Vỏ Silicon)</span>
+            </div>
+            <div class="demo-cards-grid-2">
+                <!-- Silicon Dọc -->
+                {% set item = demo_images.get('holder_silicone_vertical', {}) %}
+                <div class="demo-item-card" id="card_holder_silicone_vertical">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Vỏ Silicon Dẻo — Dáng Đứng Dọc</h4>
+                        <span class="demo-card-pill" style="background:#e0f2fe; color:#0369a1;">Dọc (Zip)</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_holder_silicone_vertical" src="{{ item.image or '/static/images/demo/demo_vo_silicone_doc.jpg' }}" alt="Vỏ Silicon Dọc">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_holder_silicone_vertical" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_silicone_vertical')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_silicone_vertical').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_holder_silicone_vertical" id="url_holder_silicone_vertical" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_silicone_doc.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_holder_silicone_vertical')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_holder_silicone_vertical">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_holder_silicone_vertical" class="demo-field-input" value="{{ item.title or 'Vỏ Silicon Dẻo (Dáng Đứng Dọc)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_holder_silicone_vertical" class="demo-field-input" value="{{ item.pill or 'Vỏ Silicon Dọc (Khóa Zip Chống Nước)' }}">
+                    </div>
+                </div>
+
+                <!-- Silicon Ngang -->
+                {% set item = demo_images.get('holder_silicone_horizontal', {}) %}
+                <div class="demo-item-card" id="card_holder_silicone_horizontal">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Vỏ Silicon Dẻo — Dáng Nằm Ngang</h4>
+                        <span class="demo-card-pill" style="background:#e0f2fe; color:#0369a1;">Ngang (Zip)</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_holder_silicone_horizontal" src="{{ item.image or '/static/images/demo/demo_vo_silicone_ngang.jpg' }}" alt="Vỏ Silicon Ngang">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_holder_silicone_horizontal" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_silicone_horizontal')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_silicone_horizontal').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_holder_silicone_horizontal" id="url_holder_silicone_horizontal" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_silicone_ngang.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_holder_silicone_horizontal')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_holder_silicone_horizontal">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_holder_silicone_horizontal" class="demo-field-input" value="{{ item.title or 'Vỏ Silicon Dẻo (Dáng Nằm Ngang)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_holder_silicone_horizontal" class="demo-field-input" value="{{ item.pill or 'Vỏ Silicon Ngang (Khóa Zip Chống Nước)' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- NHÓM B: VỎ NHỰA ABS MÀU TRƠN -->
+            <div class="demo-subgroup-title" style="margin-top: 32px;">
+                <i data-lucide="box" style="width: 18px; height: 18px; color: #475569;"></i>
+                B. Vỏ Nhựa ABS Màu Trơn (Không In — Đồng Giá 7.000 đ)
+                <span>(Hiển thị khi khách chọn Vỏ Nhựa ABS Trơn)</span>
+            </div>
+            <div class="demo-cards-grid-2">
+                <!-- ABS Trơn Dọc -->
+                {% set item = demo_images.get('holder_plain_vertical', {}) %}
+                <div class="demo-item-card" id="card_holder_plain_vertical">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Vỏ ABS Trơn — Dáng Đứng Dọc</h4>
+                        <span class="demo-card-pill" style="background:#f1f5f9; color:#334155;">Trơn Dọc</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_holder_plain_vertical" src="{{ item.image or '/static/images/demo/demo_vo_abs_tron_doc.jpg' }}" alt="Vỏ ABS Trơn Dọc">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_holder_plain_vertical" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_plain_vertical')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_plain_vertical').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_holder_plain_vertical" id="url_holder_plain_vertical" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_abs_tron_doc.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_holder_plain_vertical')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_holder_plain_vertical">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_holder_plain_vertical" class="demo-field-input" value="{{ item.title or 'Vỏ Nhựa ABS Trơn (Dáng Đứng Dọc)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_holder_plain_vertical" class="demo-field-input" value="{{ item.pill or 'Vỏ ABS Trơn Dọc (Chuẩn ATM)' }}">
+                    </div>
+                </div>
+
+                <!-- ABS Trơn Ngang -->
+                {% set item = demo_images.get('holder_plain_horizontal', {}) %}
+                <div class="demo-item-card" id="card_holder_plain_horizontal">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Vỏ ABS Trơn — Dáng Nằm Ngang</h4>
+                        <span class="demo-card-pill" style="background:#f1f5f9; color:#334155;">Trơn Ngang</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_holder_plain_horizontal" src="{{ item.image or '/static/images/demo/demo_vo_abs_tron_ngang.jpg' }}" alt="Vỏ ABS Trơn Ngang">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_holder_plain_horizontal" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_plain_horizontal')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_plain_horizontal').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_holder_plain_horizontal" id="url_holder_plain_horizontal" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_abs_tron_ngang.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_holder_plain_horizontal')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_holder_plain_horizontal">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_holder_plain_horizontal" class="demo-field-input" value="{{ item.title or 'Vỏ Nhựa ABS Trơn (Dáng Nằm Ngang)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_holder_plain_horizontal" class="demo-field-input" value="{{ item.pill or 'Vỏ ABS Trơn Ngang (Chuẩn ATM)' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- NHÓM C: VỎ NHỰA ABS IN UV THEO YÊU CẦU -->
+            <div class="demo-subgroup-title" style="margin-top: 32px;">
+                <i data-lucide="palette" style="width: 18px; height: 18px; color: #8b5cf6;"></i>
+                C. Vỏ Nhựa ABS In UV (In Theo Thiết Kế Riêng — Bảng Giá 20k - 35k)
+                <span>(Hiển thị khi khách chọn Vỏ ABS In Thiết Kế)</span>
+            </div>
+            <div class="demo-cards-grid-2">
+                <!-- ABS In UV Dọc -->
+                {% set item = demo_images.get('holder_custom_vertical', {}) %}
+                <div class="demo-item-card" id="card_holder_custom_vertical">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Vỏ ABS In UV — Dáng Đứng Dọc</h4>
+                        <span class="demo-card-pill" style="background:#ede9fe; color:#6d28d9;">In UV Dọc</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_holder_custom_vertical" src="{{ item.image or '/static/images/demo/demo_vo_abs_in_doc.jpg' }}" alt="Vỏ ABS In UV Dọc">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_holder_custom_vertical" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_custom_vertical')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_custom_vertical').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_holder_custom_vertical" id="url_holder_custom_vertical" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_abs_in_doc.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_holder_custom_vertical')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_holder_custom_vertical">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_holder_custom_vertical" class="demo-field-input" value="{{ item.title or 'Vỏ Nhựa ABS In UV (Dáng Đứng Dọc)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_holder_custom_vertical" class="demo-field-input" value="{{ item.pill or 'Vỏ ABS In UV Dọc (Theo Yêu Cầu)' }}">
+                    </div>
+                </div>
+
+                <!-- ABS In UV Ngang -->
+                {% set item = demo_images.get('holder_custom_horizontal', {}) %}
+                <div class="demo-item-card" id="card_holder_custom_horizontal">
+                    <div class="demo-card-head">
+                        <h4 class="demo-card-title">Vỏ ABS In UV — Dáng Nằm Ngang</h4>
+                        <span class="demo-card-pill" style="background:#ede9fe; color:#6d28d9;">In UV Ngang</span>
+                    </div>
+                    <div class="demo-thumb-wrap">
+                        <img id="thumb_holder_custom_horizontal" src="{{ item.image or '/static/images/demo/demo_vo_abs_in_ngang.jpg' }}" alt="Vỏ ABS In UV Ngang">
+                    </div>
+                    <div class="demo-action-row">
+                        <input type="file" id="file_holder_custom_horizontal" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_custom_horizontal')">
+                        <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_custom_horizontal').click()">
+                            <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                    </div>
+                    <div class="demo-url-box">
+                        <input type="text" name="url_holder_custom_horizontal" id="url_holder_custom_horizontal" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_abs_in_ngang.jpg' }}" placeholder="Đường dẫn ảnh...">
+                    </div>
+                    <button type="button" class="demo-advanced-toggle" onclick="toggleAdvanced('adv_holder_custom_horizontal')">
+                        <i data-lucide="settings-2" style="width: 13px; height: 13px;"></i> Tùy chỉnh chữ hiển thị
+                    </button>
+                    <div class="demo-advanced-fields" id="adv_holder_custom_horizontal">
+                        <label class="demo-field-label">Tên hiển thị:</label>
+                        <input type="text" name="title_holder_custom_horizontal" class="demo-field-input" value="{{ item.title or 'Vỏ Nhựa ABS In UV (Dáng Nằm Ngang)' }}">
+                        <label class="demo-field-label">Nhãn Badge:</label>
+                        <input type="text" name="pill_holder_custom_horizontal" class="demo-field-input" value="{{ item.pill or 'Vỏ ABS In UV Ngang (Theo Yêu Cầu)' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 24px; margin-bottom: 40px;">
+            <button type="submit" class="btn-save-all" style="font-size: 1rem; padding: 12px 32px;">
+                <i data-lucide="save" style="width: 20px; height: 20px;"></i>
+                Lưu Toàn Bộ Cấu Hình Ảnh Demo
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function switchAdminDemoTab(tab) {
+        document.querySelectorAll('.demo-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.demo-tab-content').forEach(c => c.style.display = 'none');
+        
+        const btn = document.getElementById('tabBtn_' + tab);
+        const content = document.getElementById('tabContent_' + tab);
+        if (btn) btn.classList.add('active');
+        if (content) content.style.display = 'block';
+    }
+
+    function toggleAdvanced(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+    }
+
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('adminToast');
+        const txt = document.getElementById('adminToastMsg');
+        if (!toast || !txt) return;
+        txt.textContent = msg;
+        toast.style.background = isError ? '#dc2626' : '#16a34a';
+        toast.style.display = 'inline-flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3200);
+    }
+
+    async function autoUploadFile(input, key) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const thumb = document.getElementById('thumb_' + key);
+        const urlInput = document.getElementById('url_' + key);
+
+        // Preview tạm thời
+        if (thumb) thumb.src = URL.createObjectURL(file);
+
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('csrf_token', '{{ csrf_token }}');
+
+        showToast('Đang tải ảnh lên máy chủ...');
+
+        try {
+            const res = await fetch(`/admin/demo-images/upload-single/${key}`, {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (urlInput) urlInput.value = data.image_url;
+                if (thumb) thumb.src = data.image_url;
+                showToast(`Đã cập nhật ảnh "${key}" thành công!`);
+            } else {
+                showToast('Lỗi: ' + (data.message || 'Không thể tải ảnh'), true);
+            }
+        } catch (err) {
+            showToast('Lỗi kết nối máy chủ khi tải ảnh', true);
+        }
+    }
+</script>
+{% endblock %}
