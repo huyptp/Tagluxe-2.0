@@ -121,4 +121,11 @@ def api_submit_quote():
     return jsonify(resp), status_code
 
 
-
+@api_bp.route('/accessories', methods=['GET'])
+def api_get_accessories():
+    """Trả về toàn bộ danh mục phụ kiện và vỏ thẻ kèm hình ảnh từ CSDL"""
+    from backend.services.data_service import get_accessories_catalog
+    return jsonify({
+        'success': True,
+        'data': get_accessories_catalog()
+    })

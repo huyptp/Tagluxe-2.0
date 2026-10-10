@@ -109,6 +109,8 @@ def update_product(product_id, updated_fields):
         for key, val in updated_fields.items():
             if key == 'images':
                 prod.images = val
+            elif key == 'specs':
+                prod.specs = val
             elif hasattr(prod, key):
                 setattr(prod, key, val)
         db.session.commit()
@@ -1211,8 +1213,10 @@ def create_quote_with_idempotency(clean_data, idemp_key, request_id, content_has
         db.session.commit()
         return 200, response_data
 
-    except IntegrityError:
+    except IntegrityError as ie:
         db.session.rollback()
+        import logging
+        logging.getLogger(__name__).debug(f"[QUOTE_INTEGRITY] Handled concurrency: {ie}")
         existing = IdempotencyRecord.query.filter_by(key=idemp_key).first()
         if existing:
             if existing.content_hash and existing.content_hash != content_hash:
@@ -1514,6 +1518,369 @@ def retry_demo_request_sync(req_id, app=None):
         'status': d.status
     }
     return send_quote_to_google_sheet(sheet_payload, app)
+
+
+def get_all_accessories():
+    from backend.models import Accessory
+    try:
+        accs = Accessory.query.order_by(Accessory.sort_order.asc()).all()
+        return [a.to_dict() for a in accs]
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_GET_ALL_ACCESSORIES_ERROR] {ex}")
+        return []
+
+
+def get_accessory_by_id(acc_id):
+    from backend.models import Accessory
+    try:
+        acc = Accessory.query.filter_by(id=acc_id).first()
+        return acc.to_dict() if acc else None
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_GET_ACCESSORY_ERROR] {ex}")
+        return None
+
+
+def update_accessory(acc_id, name=None, price=None, image=None, description=None, title=None, visible=None):
+    from backend.models import Accessory
+    from backend.database import db
+    try:
+        acc = Accessory.query.filter_by(id=acc_id).first()
+        if not acc:
+            return False, "Không tìm thấy phụ kiện"
+        if name is not None:
+            acc.name = name
+        if price is not None:
+            acc.price = int(price)
+        if image is not None:
+            acc.image = image
+        if description is not None:
+            acc.description = description
+        if title is not None:
+            acc.title = title
+        if visible is not None:
+            acc.visible = bool(visible)
+        db.session.commit()
+        return True, acc.to_dict()
+    except Exception as ex:
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_UPDATE_ACCESSORY_ERROR] {ex}")
+        return False, str(ex)
+
+
+def get_accessories_catalog():
+    from backend.models import Accessory
+    try:
+        accs = Accessory.query.filter_by(visible=True).order_by(Accessory.sort_order.asc()).all()
+        res = {
+            'lanyard_accs': {},
+            'holder_styles': {},
+            'holder_materials': {},
+            'raw_list': [a.to_dict() for a in accs]
+        }
+        for a in accs:
+            formatted_item = {
+                'id': a.id,
+                'name': a.name,
+                'price': f'+{a.price:,.0f} đ'.replace(',', '.') if a.price > 0 else '0 đ',
+                'raw_price': a.price,
+                'img': a.image_url,
+                'caption': a.description or a.name,
+                'title': a.title or a.name
+            }
+            if a.category == 'lanyard_acc':
+                res['lanyard_accs'][a.id] = formatted_item
+            elif a.category == 'holder_orientation':
+                res['holder_styles'][a.id] = formatted_item
+            elif a.category == 'holder_material':
+                res['holder_materials'][a.id] = formatted_item
+        return res
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_GET_CATALOG_ERROR] {ex}")
+        return {'lanyard_accs': {}, 'holder_styles': {}, 'holder_materials': {}, 'raw_list': []}
+
+
+def get_all_price_tiers_grouped():
+    """
+    Lấy toàn bộ các bậc giá PriceTier trong CSDL và gom nhóm phục vụ trang Admin Pricing Matrix.
+    """
+    from backend.models import PriceTier
+    try:
+        tiers = PriceTier.query.order_by(PriceTier.category, PriceTier.min_qty).all()
+        grouped = {
+            'lanyard': [],
+            'pvc_5_4x8_6': [],
+            'pvc_7x11': [],
+            'pvc_9x12': [],
+            'pvc_other': [],
+            'holder': [],
+            'holder_plain': [],
+            'holder_silicone': [],
+            'combo': [],
+            'raw_list': [t.to_dict() for t in tiers]
+        }
+        for t in tiers:
+            d = t.to_dict()
+            cat = t.category
+            if cat == 'lanyard':
+                grouped['lanyard'].append(d)
+            elif cat == 'pvc_5.4x8.6':
+                grouped['pvc_5_4x8_6'].append(d)
+            elif cat == 'pvc_7x11':
+                grouped['pvc_7x11'].append(d)
+            elif cat == 'pvc_9x12':
+                grouped['pvc_9x12'].append(d)
+            elif cat == 'pvc':
+                pass # Bỏ qua để không bị trùng lặp với pvc_5.4x8.6 chuẩn
+            elif cat == 'holder':
+                grouped['holder'].append(d)
+            elif cat == 'holder_plain':
+                grouped['holder_plain'].append(d)
+            elif cat == 'holder_silicone':
+                grouped['holder_silicone'].append(d)
+            elif cat == 'combo':
+                grouped['combo'].append(d)
+        return grouped
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"[DB_GET_PRICE_TIERS_ERROR] {ex}")
+        return {
+            'lanyard': [], 'pvc_5_4x8_6': [], 'pvc_7x11': [], 'pvc_9x12': [],
+            'pvc_other': [], 'holder': [], 'holder_plain': [], 'holder_silicone': [],
+            'combo': [], 'raw_list': []
+        }
+
+
+def update_price_tiers_bulk(updates):
+    """
+    Cập nhật giá và mốc số lượng hàng loạt cho các PriceTier.
+    Hỗ trợ:
+      - Cập nhật unit_price, min_qty, max_qty cho tier hiện có
+      - Thêm mốc mới (action='create' hoặc id dạng 'new_...')
+      - Xóa mốc (action='delete' hoặc deleted=True)
+      - Tự động đồng bộ 2 chiều pvc_5.4x8.6 và pvc
+    """
+    from backend.models import PriceTier
+    from backend.database import db
+    try:
+        updated_count = 0
+        added_count = 0
+        deleted_count = 0
+
+        if isinstance(updates, dict):
+            # Tương thích cũ: dict {id: price}
+            items = [{'id': k, 'unit_price': v} for k, v in updates.items()]
+        elif isinstance(updates, list):
+            items = updates
+        else:
+            return False, "Định dạng dữ liệu không hợp lệ"
+
+        for u in items:
+            raw_id = u.get('id')
+            action = u.get('action')
+            is_deleted = u.get('deleted') is True or action == 'delete'
+
+            # 1. Trường hợp XÓA mốc
+            if is_deleted and raw_id and not str(raw_id).startswith('new_'):
+                try:
+                    t_id = int(raw_id)
+                    tier = PriceTier.query.get(t_id)
+                    if tier:
+                        if tier.category == 'pvc_5.4x8.6':
+                            twin_pvc = PriceTier.query.filter_by(category='pvc', min_qty=tier.min_qty).first()
+                            if twin_pvc:
+                                db.session.delete(twin_pvc)
+                        db.session.delete(tier)
+                        deleted_count += 1
+                except (ValueError, TypeError):
+                    pass
+                continue
+
+            # 2. Trường hợp THÊM MỐC MỚI
+            if action == 'create' or not raw_id or str(raw_id).startswith('new_'):
+                cat = str(u.get('category', 'lanyard')).strip()
+                try:
+                    min_q = int(str(u.get('min_qty', 0)).replace('.', '').replace(',', '').strip())
+                    max_q = int(str(u.get('max_qty', 99999)).replace('.', '').replace(',', '').strip())
+                    u_price = int(str(u.get('unit_price', 0)).replace('.', '').replace(',', '').strip())
+                except (ValueError, TypeError):
+                    continue
+
+                new_tier = PriceTier(
+                    category=cat,
+                    min_qty=min_q,
+                    max_qty=max_q,
+                    unit_price=u_price
+                )
+                db.session.add(new_tier)
+                added_count += 1
+
+                # Nếu là pvc_5.4x8.6 thì thêm cả twin pvc
+                if cat == 'pvc_5.4x8.6':
+                    twin_tier = PriceTier(
+                        category='pvc',
+                        min_qty=min_q,
+                        max_qty=max_q,
+                        unit_price=u_price
+                    )
+                    db.session.add(twin_tier)
+                continue
+
+            # 3. Trường hợp CẬP NHẬT MỐC HIỆN CÓ
+            try:
+                t_id = int(raw_id)
+            except (ValueError, TypeError):
+                continue
+
+            tier = PriceTier.query.get(t_id)
+            if not tier:
+                continue
+
+            old_min = tier.min_qty
+            changed = False
+
+            if 'unit_price' in u:
+                try:
+                    clean_p = int(str(u['unit_price']).replace('.', '').replace(',', '').strip())
+                    tier.unit_price = clean_p
+                    changed = True
+                except (ValueError, TypeError):
+                    pass
+
+            if 'min_qty' in u:
+                try:
+                    clean_min = int(str(u['min_qty']).replace('.', '').replace(',', '').strip())
+                    tier.min_qty = clean_min
+                    changed = True
+                except (ValueError, TypeError):
+                    pass
+
+            if 'max_qty' in u:
+                try:
+                    clean_max = int(str(u['max_qty']).replace('.', '').replace(',', '').strip())
+                    tier.max_qty = clean_max
+                    changed = True
+                except (ValueError, TypeError):
+                    pass
+
+            if changed:
+                updated_count += 1
+                # Đồng bộ luôn category 'pvc' tương ứng nếu là 'pvc_5.4x8.6'
+                if tier.category == 'pvc_5.4x8.6':
+                    twin_pvc = PriceTier.query.filter_by(category='pvc', min_qty=old_min).first()
+                    if twin_pvc:
+                        twin_pvc.min_qty = tier.min_qty
+                        twin_pvc.max_qty = tier.max_qty
+                        twin_pvc.unit_price = tier.unit_price
+                    else:
+                        new_twin = PriceTier(
+                            category='pvc',
+                            min_qty=tier.min_qty,
+                            max_qty=tier.max_qty,
+                            unit_price=tier.unit_price
+                        )
+                        db.session.add(new_twin)
+
+        db.session.commit()
+        total_ops = updated_count + added_count + deleted_count
+        return True, total_ops
+    except Exception as ex:
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_UPDATE_PRICE_TIERS_ERROR] {ex}")
+        return False, str(ex)
+
+
+def add_accessory(data):
+    """
+    Thêm một phụ kiện mới vào CSDL accessories.
+    data: dict chứa name, category, price, image, description, title, visible
+    """
+    from backend.models import Accessory
+    from backend.database import db
+    import re
+    try:
+        raw_id = (data.get('id') or '').strip().lower()
+        if not raw_id:
+            # Tự tạo id từ tên không dấu hoặc uuid
+            name_clean = re.sub(r'[^a-zA-Z0-9]+', '_', data.get('name', 'acc').strip().lower()).strip('_')
+            raw_id = f"{name_clean[:30]}_{uuid.uuid4().hex[:6]}" if name_clean else f"acc_{uuid.uuid4().hex[:8]}"
+
+        # Đảm bảo id là duy nhất
+        existing = Accessory.query.filter_by(id=raw_id).first()
+        if existing:
+            raw_id = f"{raw_id}_{uuid.uuid4().hex[:4]}"
+
+        # Tìm sort_order lớn nhất hiện có
+        max_order = db.session.query(db.func.max(Accessory.sort_order)).scalar() or 0
+
+        acc = Accessory(
+            id=raw_id,
+            name=data.get('name', '').strip(),
+            category=data.get('category', 'lanyard_acc'),
+            price=int(data.get('price', 0)),
+            image=data.get('image', ''),
+            description=data.get('description', '').strip(),
+            title=data.get('title', '').strip() or data.get('name', '').strip(),
+            sort_order=max_order + 1,
+            visible=bool(data.get('visible', True))
+        )
+        db.session.add(acc)
+        db.session.commit()
+        return True, acc.to_dict()
+    except Exception as ex:
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_ADD_ACCESSORY_ERROR] {ex}")
+        return False, str(ex)
+
+
+def delete_accessory(acc_id):
+    """
+    Xóa phụ kiện khỏi CSDL.
+    """
+    from backend.models import Accessory
+    from backend.database import db
+    try:
+        acc = Accessory.query.filter_by(id=acc_id).first()
+        if not acc:
+            return False, "Không tìm thấy phụ kiện cần xóa"
+        db.session.delete(acc)
+        db.session.commit()
+        return True, "Đã xóa phụ kiện thành công"
+    except Exception as ex:
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_DELETE_ACCESSORY_ERROR] {ex}")
+        return False, str(ex)
+
+
+def toggle_accessory_visibility(acc_id):
+    """
+    Bật/tắt trạng thái hiển thị của phụ kiện.
+    """
+    from backend.models import Accessory
+    from backend.database import db
+    try:
+        acc = Accessory.query.filter_by(id=acc_id).first()
+        if not acc:
+            return False, "Không tìm thấy phụ kiện"
+        acc.visible = not acc.visible
+        db.session.commit()
+        return True, acc.visible
+    except Exception as ex:
+        from backend.database import db
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"[DB_TOGGLE_ACC_VISIBILITY_ERROR] {ex}")
+        return False, str(ex)
+
 
 
 

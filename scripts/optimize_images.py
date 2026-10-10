@@ -1,7 +1,8 @@
 import os, sys
 from PIL import Image, ImageOps
 
-UPLOADS = os.path.join('static', 'uploads')
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+UPLOADS = os.path.join(BASE_DIR, 'static', 'uploads')
 MAX_SIZE = 1200
 QUALITY = 82
 

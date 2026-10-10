@@ -14,7 +14,10 @@ from backend.services.data_service import (
     get_demo_requests, update_demo_request_status, delete_demo_request,
     get_quotes, update_quote_status, delete_quote,
     retry_quote_sync, retry_demo_request_sync,
-    get_quotes_paginated, get_demo_requests_paginated
+    get_quotes_paginated, get_demo_requests_paginated,
+    get_all_accessories, get_accessory_by_id, update_accessory,
+    get_all_price_tiers_grouped, update_price_tiers_bulk,
+    add_accessory, delete_accessory, toggle_accessory_visibility
 )
 from backend.security import rate_limit, limiter, get_client_ip
 
@@ -147,7 +150,87 @@ def admin_dashboard():
 @login_required
 def admin_products():
     products = get_all_products()
-    return render_template('admin/products.html', products=products)
+    lan_prod = next((p for p in products if p['id'] == 'lan-1'), None)
+    pvc_prod = next((p for p in products if p['id'] == 'acc-1' or 'pvc' in p['name'].lower()), None)
+    holder_prod = next((p for p in products if p['id'] == 'acc-2' or 'vỏ' in p['name'].lower() or 'holder' in p['name'].lower()), None)
+
+    active_tab = request.args.get('tab', 'list')
+    active_prod = request.args.get('prod', 'lan-1')
+
+    return render_template(
+        'admin/products.html',
+        products=products,
+        lan_prod=lan_prod,
+        pvc_prod=pvc_prod,
+        holder_prod=holder_prod,
+        active_tab=active_tab,
+        active_prod=active_prod
+    )
+
+@admin_bp.route('/products/update-specs', methods=['POST'])
+@login_required
+def admin_update_product_specs():
+    if not validate_csrf():
+        flash('Yêu cầu không hợp lệ hoặc phiên làm việc đã hết hạn (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_products', tab='specs'))
+
+    product_id = request.form.get('product_id')
+    if not product_id:
+        flash('Thiếu mã sản phẩm cần cập nhật.', 'error')
+        return redirect(url_for('admin.admin_products', tab='specs'))
+
+    prod = get_product_by_id(product_id, visible_only=False)
+    if not prod:
+        flash('Sản phẩm không tồn tại.', 'error')
+        return redirect(url_for('admin.admin_products', tab='specs'))
+
+    badge = (request.form.get('badge') or '').strip()
+    name = (request.form.get('name') or '').strip()
+    description = (request.form.get('description') or '').strip()
+    min_order = request.form.get('min_order')
+    width = request.form.get('width')
+
+    # Parse dynamic specs list from arrays: spec_icon[], spec_label[], spec_value[]
+    spec_icons = request.form.getlist('spec_icon[]')
+    spec_labels = request.form.getlist('spec_label[]')
+    spec_values = request.form.getlist('spec_value[]')
+
+    specs = []
+    max_len = max(len(spec_icons), len(spec_labels), len(spec_values))
+    for i in range(max_len):
+        icon = spec_icons[i].strip() if i < len(spec_icons) else 'check-circle-2'
+        label = spec_labels[i].strip() if i < len(spec_labels) else ''
+        value = spec_values[i].strip() if i < len(spec_values) else ''
+        if label or value:
+            specs.append({
+                'icon': icon or 'check-circle-2',
+                'label': label,
+                'value': value
+            })
+
+    updated_fields = {
+        'badge': badge,
+        'description': description,
+        'specs': specs
+    }
+    if name:
+        updated_fields['name'] = name
+    if min_order:
+        try:
+            updated_fields['min_order'] = int(min_order)
+        except ValueError:
+            pass
+    if width is not None:
+        updated_fields['width'] = width
+
+    saved = update_product(product_id, updated_fields)
+    if saved:
+        record_audit('update_product_specs', 'product', product_id, f"Updated specs & badge for {product_id}")
+        flash(f'Đã cập nhật thông số và mô tả cho sản phẩm "{saved.get("name", product_id)}" thành công!', 'success')
+    else:
+        flash('Lỗi khi lưu thông số sản phẩm.', 'error')
+
+    return redirect(url_for('admin.admin_products', tab='specs', prod=product_id))
 
 @admin_bp.route('/products/add', methods=['GET', 'POST'])
 @login_required
@@ -242,7 +325,12 @@ def admin_edit_product(id):
                     file.save(os.path.join(UPLOAD_FOLDER, unique_filename))
                     new_images.append(unique_filename)
             if new_images:
-                updated_data['images'] = new_images
+                keep_existing = request.form.get('keep_existing_images') != '0'
+                existing_images = product.get('images', []) if isinstance(product, dict) else getattr(product, 'images', [])
+                if keep_existing and existing_images:
+                    updated_data['images'] = list(existing_images) + new_images
+                else:
+                    updated_data['images'] = new_images
 
         saved = update_product(id, updated_data)
         if not saved:
@@ -452,3 +540,277 @@ def admin_retry_quote_sync(id):
         record_audit('retry_quote_sync_failed', 'quote', id, f"Thất bại: {msg}")
         flash(f'Đồng bộ thất bại: {msg}', 'error')
     return redirect(url_for('admin.admin_quotes'))
+
+
+@admin_bp.route('/accessories')
+@login_required
+def admin_accessories():
+    accessories = get_all_accessories()
+    stats = {
+        'total': len(accessories),
+        'lanyard': sum(1 for a in accessories if a.get('category') == 'lanyard_acc'),
+        'holder_ori': sum(1 for a in accessories if a.get('category') == 'holder_orientation'),
+        'holder_mat': sum(1 for a in accessories if a.get('category') == 'holder_material'),
+    }
+    price_tiers = get_all_price_tiers_grouped()
+    active_tab = request.args.get('tab', 'pricing')
+    return render_template('admin/accessories.html', accessories=accessories, stats=stats, price_tiers=price_tiers, active_tab=active_tab)
+
+
+@admin_bp.route('/pricing/update', methods=['POST'])
+@login_required
+def admin_update_pricing():
+    if not validate_csrf():
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_accessories', tab='pricing'))
+
+    updates = []
+    if request.is_json:
+        body = request.get_json() or {}
+        updates = body.get('updates', [])
+    else:
+        # Gom dữ liệu từ Form POST
+        tier_dict = {}
+        for key, val in request.form.items():
+            if key.startswith('tier_price_'):
+                tid = key.replace('tier_price_', '')
+                tier_dict.setdefault(tid, {})['unit_price'] = val
+            elif key.startswith('tier_min_'):
+                tid = key.replace('tier_min_', '')
+                tier_dict.setdefault(tid, {})['min_qty'] = val
+            elif key.startswith('tier_max_'):
+                tid = key.replace('tier_max_', '')
+                tier_dict.setdefault(tid, {})['max_qty'] = val
+            elif key.startswith('tier_deleted_'):
+                tid = key.replace('tier_deleted_', '')
+                tier_dict.setdefault(tid, {})['action'] = 'delete'
+            elif key.startswith('tier_cat_'):
+                tid = key.replace('tier_cat_', '')
+                tier_dict.setdefault(tid, {})['category'] = val
+
+        for tid, data in tier_dict.items():
+            item = {'id': tid}
+            item.update(data)
+            updates.append(item)
+
+    if not updates:
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': 'Không có bậc giá nào được chọn để cập nhật'}, 400
+        flash('Không có bậc giá nào được thay đổi.', 'info')
+        return redirect(url_for('admin.admin_accessories', tab='pricing'))
+
+    ok, res = update_price_tiers_bulk(updates)
+    if ok:
+        record_audit('update_price_tiers', 'price_tier', 'bulk', f"Cập nhật {res} bậc giá mới")
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': True, 'message': f'Đã lưu thành công {res} bậc giá mới!'}
+        flash(f'Đã lưu thành công {res} bậc giá mới! Hệ thống tính giá tự động đã cập nhật tức thì.', 'success')
+    else:
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': f'Lỗi: {res}'}, 500
+        flash(f'Lỗi cập nhật biểu giá: {res}', 'error')
+
+    return redirect(url_for('admin.admin_accessories', tab='pricing'))
+
+
+@admin_bp.route('/accessories/add', methods=['POST'])
+@login_required
+def admin_add_accessory():
+    if not validate_csrf():
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_accessories', tab='accessories'))
+
+    name = request.form.get('name', '').strip()
+    if not name:
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': 'Tên phụ kiện không được để trống'}, 400
+        flash('Tên phụ kiện không được để trống.', 'error')
+        return redirect(url_for('admin.admin_accessories', tab='accessories'))
+
+    category = request.form.get('category', 'lanyard_acc').strip()
+    price_raw = request.form.get('price', '0').replace('.', '').replace(',', '').strip()
+    try:
+        price = int(price_raw)
+    except ValueError:
+        price = 0
+
+    description = request.form.get('description', '').strip()
+    title = request.form.get('title', '').strip() or name
+    visible = request.form.get('visible') != '0'
+
+    image_url = ''
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename:
+            if not is_valid_image_file(file):
+                if request.headers.get('Accept') == 'application/json' or request.is_json:
+                    return {'success': False, 'message': 'File ảnh không hợp lệ (hỗ trợ JPG, PNG, WEBP).'}, 400
+                flash('File ảnh không đúng định dạng (hỗ trợ JPG, PNG, WEBP).', 'error')
+                return redirect(url_for('admin.admin_accessories', tab='accessories'))
+            ext = file.filename.rsplit('.', 1)[-1].lower()
+            safe_name = f"acc_{uuid.uuid4().hex[:10]}.{ext}"
+            file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+            file.save(file_path)
+            image_url = f"/static/uploads/{safe_name}"
+
+    ok, res = add_accessory({
+        'name': name,
+        'category': category,
+        'price': price,
+        'image': image_url,
+        'description': description,
+        'title': title,
+        'visible': visible
+    })
+
+    if ok:
+        record_audit('add_accessory', 'accessory', res.get('id', 'new'), f"Thêm phụ kiện mới: {name}")
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': True, 'message': f'Đã thêm mẫu phụ kiện "{name}" thành công!', 'data': res}
+        flash(f'Đã thêm mẫu phụ kiện "{name}" thành công!', 'success')
+    else:
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': f'Lỗi: {res}'}, 500
+        flash(f'Lỗi thêm phụ kiện: {res}', 'error')
+
+    return redirect(url_for('admin.admin_accessories', tab='accessories'))
+
+
+@admin_bp.route('/accessories/delete/<acc_id>', methods=['POST'])
+@login_required
+def admin_delete_accessory(acc_id):
+    if not validate_csrf():
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_accessories', tab='accessories'))
+
+    ok, res = delete_accessory(acc_id)
+    if ok:
+        record_audit('delete_accessory', 'accessory', acc_id, f"Xóa phụ kiện {acc_id}")
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': True, 'message': 'Đã xóa phụ kiện thành công!'}
+        flash('Đã xóa phụ kiện thành công!', 'success')
+    else:
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': f'Lỗi: {res}'}, 500
+        flash(f'Lỗi xóa phụ kiện: {res}', 'error')
+
+    return redirect(url_for('admin.admin_accessories', tab='accessories'))
+
+
+@admin_bp.route('/accessories/toggle/<acc_id>', methods=['POST'])
+@login_required
+def admin_toggle_accessory(acc_id):
+    if not validate_csrf():
+        return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+    ok, res = toggle_accessory_visibility(acc_id)
+    if ok:
+        record_audit('toggle_accessory', 'accessory', acc_id, f"Đổi trạng thái hiển thị: {res}")
+        return {'success': True, 'visible': res}
+    return {'success': False, 'message': str(res)}, 500
+
+
+
+@admin_bp.route('/accessories/edit/<acc_id>', methods=['POST'])
+@login_required
+def admin_edit_accessory(acc_id):
+    if not validate_csrf():
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_accessories'))
+
+    acc = get_accessory_by_id(acc_id)
+    if not acc:
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': 'Không tìm thấy phụ kiện'}, 404
+        flash('Không tìm thấy phụ kiện.', 'error')
+        return redirect(url_for('admin.admin_accessories'))
+
+    name = request.form.get('name', '').strip() or acc.get('name')
+    price_raw = request.form.get('price')
+    try:
+        price = int(price_raw) if price_raw is not None else acc.get('price', 0)
+    except ValueError:
+        price = acc.get('price', 0)
+    description = request.form.get('description', '').strip() or acc.get('description')
+    title = request.form.get('title', '').strip() or acc.get('title')
+    visible = request.form.get('visible') == '1' or request.form.get('visible') == 'true' or ('visible' in request.form and request.form.get('visible') != '0')
+
+    new_image_url = None
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename:
+            if not is_valid_image_file(file):
+                if request.headers.get('Accept') == 'application/json' or request.is_json:
+                    return {'success': False, 'message': 'Tệp hình ảnh không hợp lệ (hỗ trợ JPG, PNG, WEBP, GIF).'}, 400
+                flash('Tệp hình ảnh không hợp lệ.', 'error')
+                return redirect(url_for('admin.admin_accessories'))
+
+            ext = file.filename.rsplit('.', 1)[-1].lower()
+            safe_name = f"acc_{acc_id}_{uuid.uuid4().hex[:8]}.{ext}"
+            file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+            file.save(file_path)
+            new_image_url = f"/static/uploads/{safe_name}"
+
+    ok, result = update_accessory(
+        acc_id,
+        name=name,
+        price=price,
+        image=new_image_url,
+        description=description,
+        title=title,
+        visible=visible
+    )
+
+    if ok:
+        record_audit('update_accessory', 'accessory', acc_id, f"Cập nhật phụ kiện {acc_id}")
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': True, 'message': 'Cập nhật phụ kiện thành công!', 'data': result}
+        flash('Cập nhật phụ kiện thành công!', 'success')
+    else:
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': False, 'message': f'Lỗi: {result}'}, 500
+        flash(f'Lỗi cập nhật: {result}', 'error')
+
+    return redirect(url_for('admin.admin_accessories'))
+
+
+@admin_bp.route('/accessories/upload/<acc_id>', methods=['POST'])
+@login_required
+def admin_upload_accessory_image(acc_id):
+    if not validate_csrf():
+        return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+
+    acc = get_accessory_by_id(acc_id)
+    if not acc:
+        return {'success': False, 'message': 'Không tìm thấy phụ kiện'}, 404
+
+    if 'image' not in request.files:
+        return {'success': False, 'message': 'Vui lòng chọn tệp hình ảnh'}, 400
+
+    file = request.files['image']
+    if not file or not file.filename:
+        return {'success': False, 'message': 'Chưa chọn tệp hình ảnh'}, 400
+
+    if not is_valid_image_file(file):
+        return {'success': False, 'message': 'Định dạng ảnh không hợp lệ. Vui lòng tải file JPG, PNG, WEBP.'}, 400
+
+    ext = file.filename.rsplit('.', 1)[-1].lower()
+    safe_name = f"acc_{acc_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+    file.save(file_path)
+    new_image_url = f"/static/uploads/{safe_name}"
+
+    ok, result = update_accessory(acc_id, image=new_image_url)
+    if ok:
+        record_audit('upload_accessory_image', 'accessory', acc_id, f"Đổi ảnh cho {acc_id}")
+        return {'success': True, 'message': 'Đã tải ảnh lên thành công!', 'image_url': new_image_url, 'data': result}
+    else:
+        return {'success': False, 'message': f'Lỗi lưu ảnh: {result}'}, 500
+

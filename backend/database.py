@@ -103,7 +103,115 @@ def seed_initial_data():
             db.session.add(PriceTier(category=cat, min_qty=q_min, max_qty=q_max, unit_price=price))
         db.session.commit()
 
-    # 2. Seed Products, Quotes & Demo Requests from data.json if not already seeded
+    # 2. Seed Accessories & Holders if empty
+    from backend.models import Accessory
+    if Accessory.query.count() == 0:
+        accessories_data = [
+            {
+                'id': 'breakaway',
+                'name': 'Khóa an toàn sau gáy',
+                'category': 'lanyard_acc',
+                'price': 2500,
+                'image': '/static/images/demo/demo_pk_khoa_an_toan.jpg',
+                'title': 'Khóa an toàn sau gáy (Breakaway Safety Clasp)',
+                'description': 'Khóa an toàn sau gáy tự tách rời khi bị kéo căng mạnh, giúp bảo vệ người đeo không bị thắt cổ khi vướng máy móc.',
+                'sort_order': 1,
+                'visible': True
+            },
+            {
+                'id': 'quick_release',
+                'name': 'Khóa phụ tháo rời nhanh',
+                'category': 'lanyard_acc',
+                'price': 2500,
+                'image': '/static/images/demo/demo_pk_khoa_thao_roi.jpg',
+                'title': 'Khóa phụ tháo rời nhanh (Quick-Release Buckle)',
+                'description': 'Khóa bấm tháo rời nhanh tiện lợi, dễ dàng tháo riêng thẻ chấm công hoặc chìa khóa để quẹt mà không cần tháo cả dây qua đầu.',
+                'sort_order': 2,
+                'visible': True
+            },
+            {
+                'id': 'stopper',
+                'name': 'Cục thắt thu độ dài dây',
+                'category': 'lanyard_acc',
+                'price': 2500,
+                'image': '/static/images/demo/demo_pk_cuc_that.jpg',
+                'title': 'Cục thắt thu gọn độ dài dây đeo (Cord Stopper)',
+                'description': 'Cục thắt chặn hình tròn nhỏ gọn, trượt lên xuống để thu gọn độ dài dây đeo vừa vặn với từng vóc dáng người dùng.',
+                'sort_order': 3,
+                'visible': True
+            },
+            {
+                'id': 'adjuster',
+                'name': 'Tăng đơ tăng giảm độ dài',
+                'category': 'lanyard_acc',
+                'price': 2500,
+                'image': '/static/images/demo/demo_pk_tang_do.jpg',
+                'title': 'Tăng đơ điều chỉnh chiều dài dây (Length Adjuster)',
+                'description': 'Khóa tăng đơ 3 chấu cao cấp, tùy chỉnh nới dài hoặc rút ngắn chiều dài dây linh hoạt và chắc chắn.',
+                'sort_order': 4,
+                'visible': True
+            },
+            {
+                'id': 'black_hook',
+                'name': 'Móc kim loại đen mờ',
+                'category': 'lanyard_acc',
+                'price': 2500,
+                'image': '/static/images/demo/demo_pk_moc_den.jpg',
+                'title': 'Móc khóa kim loại đen mờ tĩnh điện (Matte Black Hook)',
+                'description': 'Móc càng cua kim loại cao cấp phủ sơn tĩnh điện đen mờ, chống xước, tạo điểm nhấn cá tính và hiện đại.',
+                'sort_order': 5,
+                'visible': True
+            },
+            {
+                'id': 'holder_vertical',
+                'name': 'Vỏ thẻ dáng đứng (Vertical)',
+                'category': 'holder_orientation',
+                'price': 0,
+                'image': '/static/images/demo/demo_vo_dung_the.jpg',
+                'title': 'Vỏ đựng thẻ dáng đứng dọc tiêu chuẩn',
+                'description': 'Kiểu dáng tiêu chuẩn phổ biến cho thẻ nhân viên và thẻ học sinh - sinh viên chuẩn kích thước.',
+                'sort_order': 6,
+                'visible': True
+            },
+            {
+                'id': 'holder_horizontal',
+                'name': 'Vỏ thẻ dáng ngang (Horizontal)',
+                'category': 'holder_orientation',
+                'price': 0,
+                'image': '/static/images/demo/demo_vo_dung_the.jpg',
+                'title': 'Vỏ đựng thẻ dáng nằm ngang tiêu chuẩn',
+                'description': 'Kiểu dáng ngang sang trọng, bề ngang rộng rãi phù hợp nhận diện thương hiệu công ty.',
+                'sort_order': 7,
+                'visible': True
+            },
+            {
+                'id': 'holder_silicone',
+                'name': 'Vỏ silicon dẻo trong suốt (Vỏ 3k)',
+                'category': 'holder_material',
+                'price': 3000,
+                'image': '/static/images/demo/demo_vo_dung_the.jpg',
+                'title': 'Vỏ đựng thẻ Silicon dẻo trong suốt chống nước',
+                'description': 'Chất liệu silicon mềm dẻo, chống nước và chống bám bụi bẩn tối ưu, giá thành kinh tế.',
+                'sort_order': 8,
+                'visible': True
+            },
+            {
+                'id': 'holder_plain',
+                'name': 'Vỏ nhựa ABS trơn không in (Vỏ 7k)',
+                'category': 'holder_material',
+                'price': 7000,
+                'image': '/static/images/demo/demo_vo_dung_the.jpg',
+                'title': 'Vỏ nhựa ABS cứng cao cấp màu trơn không in',
+                'description': 'Nhựa ABS cứng cáp nhiều màu sắc (xanh, đỏ, đen, xám, trắng...), chống va đập, bảo vệ thẻ tối ưu.',
+                'sort_order': 9,
+                'visible': True
+            }
+        ]
+        for acc in accessories_data:
+            db.session.add(Accessory(**acc))
+        db.session.commit()
+
+    # 3. Seed Products, Quotes & Demo Requests from data.json if not already seeded
     seed_flag = SchemaMigration.query.filter_by(version='seed_initial_data_v1').first()
     if seed_flag:
         return
