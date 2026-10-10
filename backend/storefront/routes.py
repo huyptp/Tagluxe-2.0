@@ -3,7 +3,7 @@ from urllib.parse import quote
 from flask import Blueprint, render_template, Response, redirect, url_for
 from backend.services.data_service import (
     get_visible_products, get_product_by_id, get_lanyard_photos,
-    get_showcase_items, product_schema
+    get_showcase_items, product_schema, get_demo_images_config
 )
 from backend.config import site_origin
 
@@ -18,13 +18,30 @@ def index():
     holder_product = next((p for p in accessories if 'vỏ' in (p.get('name') or '').lower() or 'holder' in (p.get('name') or '').lower() or p.get('id') == 'acc-2'), None)
     lanyard_photos = get_lanyard_photos(lanyards)
     showcase_items = get_showcase_items(lanyards, accessories)
+
+    demo_cfg = get_demo_images_config()
+    holder_demo_cards = []
+    holder_keys = [
+        'holder_custom_vertical', 'holder_custom_horizontal',
+        'holder_plain_vertical', 'holder_plain_horizontal',
+        'holder_silicone_vertical', 'holder_silicone_horizontal'
+    ]
+    for k in holder_keys:
+        item = demo_cfg.get(k)
+        if item and item.get('image') and '/uploads/' in item.get('image'):
+            holder_demo_cards.append({
+                'image_url': item['image'],
+                'name': item.get('pill') or item.get('title') or (holder_product.get('name') if holder_product else 'Vỏ đựng thẻ in theo yêu cầu')
+            })
+
     return render_template('index.html',
                            lanyards=lanyards,
                            accessories=accessories,
                            pvc_product=pvc_product,
                            holder_product=holder_product,
                            lanyard_photos=lanyard_photos,
-                           showcase_items=showcase_items)
+                           showcase_items=showcase_items,
+                           holder_demo_cards=holder_demo_cards)
 
 @storefront_bp.route('/product/<id>')
 def product_detail(id):
