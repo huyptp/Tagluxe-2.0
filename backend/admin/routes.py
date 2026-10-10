@@ -372,21 +372,7 @@ def admin_delete_product(id):
 @admin_bp.route('/requests')
 @login_required
 def admin_requests():
-    page = request.args.get('page', 1, type=int)
-    search_query = request.args.get('q', '').strip()
-    status_filter = request.args.get('status', 'all')
-    pagination = get_demo_requests_paginated(status=status_filter, search=search_query, page=page, per_page=20)
-    return render_template(
-        'admin/requests.html',
-        requests=pagination['items'],
-        page=pagination['page'],
-        total_pages=pagination['total_pages'],
-        total_items=pagination['total_items'],
-        has_prev=pagination['has_prev'],
-        has_next=pagination['has_next'],
-        current_status=status_filter,
-        search_query=search_query
-    )
+    return redirect(url_for('admin.admin_quotes'))
 
 @admin_bp.route('/requests/status/<id>', methods=['POST'])
 @login_required
