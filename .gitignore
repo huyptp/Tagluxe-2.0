@@ -1,38 +1,81 @@
-# Python & Bytecode
+# ==========================================
+# TAGLUXE PRODUCTION & ENTERPRISE .GITIGNORE
+# ==========================================
+
+# 1. Virtual Environments
+.venv/
+.venv*/
+venv/
+env/
+ENV/
+ENV*/
+
+# 2. Python Bytecode & Cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
 
-# Environment variables & secrets
+# 2.1. Local Test Suites (Do not commit to GitHub)
+tests/
+test_*.py
+*_test.py
+
+# 3. Environment Variables & Secret Credentials (ZERO LEAK)
 .env
 .env.*
 *.env
+!.env.example
 
-# Local Databases (Contains private customer records)
+# 4. Local Databases & Auto-backups
 *.db
+*.db-*
+*.sqlite
 *.sqlite3
 tagluxe.db
+tagluxe.db*
 *.bak
 *.db.bak
+*.db.*.bak
+storage/backups/*
+!storage/backups/.gitkeep
 
-# Private Customer Uploads
+# 5. Private Customer Files & Uploaded Assets
 storage/*
 !storage/.gitkeep
+!storage/backups/
+!storage/backups/.gitkeep
+storage/private_requests/*
+!storage/private_requests/.gitkeep
 static/uploads/requests/*
-frontend/storefront/static/uploads/requests/*
 !static/uploads/requests/.gitkeep
+frontend/storefront/static/uploads/requests/*
 !frontend/storefront/static/uploads/requests/.gitkeep
 
-# System & IDE
+# 6. AI Assistants & Workspace Metadata
+.gemini/
+.system_generated/
+
+# 7. Operating System & IDE Configs
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
 *.log
-.system_generated/

@@ -215,6 +215,8 @@ class Product(db.Model):
     price = db.Column(db.Integer, default=0)
     featured = db.Column(db.Boolean, default=True)
     visible = db.Column(db.Boolean, default=True)
+    badge = db.Column(db.String(255), nullable=True)
+    specs_json = db.Column(db.Text, nullable=True)
 
     @property
     def images(self):
@@ -229,12 +231,82 @@ class Product(db.Model):
     def images(self, val):
         self.images_json = json.dumps(val, ensure_ascii=False)
 
+    @property
+    def display_badge(self):
+        if self.badge and self.badge.strip():
+            return self.badge.strip()
+        if self.id == 'lan-1' or self.category == 'lanyard':
+            return 'DÂY ĐEO THẺ IN THEO YÊU CẦU'
+        elif self.id == 'acc-1' or 'pvc' in (self.name or '').lower():
+            return 'THẺ NHỰA PVC CHUẨN ISO 7810'
+        elif self.id == 'acc-2' or 'vỏ' in (self.name or '').lower() or 'holder' in (self.name or '').lower():
+            return 'VỎ ĐỰNG THẺ (CARD HOLDER) CAO CẤP'
+        return ''
+
+    @property
+    def specs(self):
+        if self.specs_json:
+            try:
+                data = json.loads(self.specs_json)
+                if isinstance(data, list) and len(data) > 0:
+                    return data
+            except Exception:
+                pass
+        # Default fallback
+        if self.id == 'lan-1' or self.category == 'lanyard':
+            return [
+                {"icon": "ruler", "label": "Bản rộng:", "value": f"{self.width or '1.5 cm / 2.0 cm / 2.5 cm'} (1.5cm / 2.0cm / 2.5cm)"},
+                {"icon": "layers", "label": "Chất liệu:", "value": self.material or "Lụa Satin Cao Cấp"},
+                {"icon": "check-circle-2", "label": "Tiêu chuẩn in:", "value": "In chuyển nhiệt 2 mặt sắc nét, bền màu"},
+                {"icon": "sparkles", "label": "Phụ kiện:", "value": "Móc cua kim loại, khóa an toàn, khóa nối"},
+                {"icon": "box", "label": "Nhận in từ:", "value": f"{self.min_order or 10} dây"},
+                {"icon": "clock", "label": "Thời gian sản xuất:", "value": "2–4 ngày làm việc"},
+                {"icon": "pen-tool", "label": "Thiết kế demo:", "value": "Hỗ trợ thiết kế cơ bản 2D"},
+                {"icon": "truck", "label": "Giao hàng:", "value": "Toàn quốc"},
+                {"icon": "file-text", "label": "Hóa đơn:", "value": "Có VAT"}
+            ]
+        elif self.id == 'acc-1' or 'pvc' in (self.name or '').lower():
+            return [
+                {"icon": "ruler", "label": "Kích thước:", "value": "5.4 × 8.6 cm (chuẩn ISO), 7 × 11 cm, 9 × 12 cm"},
+                {"icon": "layers", "label": "Chất liệu:", "value": "Nhựa PVC 4 lớp cao cấp (dày 0.76mm), chống nước 100%"},
+                {"icon": "check-circle-2", "label": "Tiêu chuẩn in:", "value": "In full màu 2 mặt sắc nét, chuẩn hệ màu CMYK"},
+                {"icon": "sparkles", "label": "Gia công:", "value": "Bo tròn 4 góc, đục lỗ hạt đậu / đục lỗ tròn đeo dây"},
+                {"icon": "shield-check", "label": "Cán màng bảo vệ:", "value": "Cán bóng, cán mờ hoặc cán sần chống xước"},
+                {"icon": "box", "label": "Nhận in từ:", "value": f"{self.min_order or 10} cái"},
+                {"icon": "clock", "label": "Thời gian sản xuất:", "value": "2–4 ngày làm việc"},
+                {"icon": "pen-tool", "label": "Thiết kế demo:", "value": "Hỗ trợ thiết kế cơ bản 2D"},
+                {"icon": "truck", "label": "Giao hàng:", "value": "Toàn quốc"},
+                {"icon": "file-text", "label": "Hóa đơn:", "value": "Có VAT"}
+            ]
+        elif self.id == 'acc-2' or 'vỏ' in (self.name or '').lower() or 'holder' in (self.name or '').lower():
+            return [
+                {"icon": "ruler", "label": "Kích thước lọt lòng:", "value": "5.4 × 8.6 cm (vừa vặn hoàn hảo thẻ nhựa ISO)"},
+                {"icon": "layers", "label": "Chất liệu:", "value": "Nhựa ABS nguyên sinh cao cấp, chịu lực va đập"},
+                {"icon": "palette", "label": "Màu sắc sẵn có:", "value": "Xanh dương, Đỏ, Đen, Xám, Trắng, Trong suốt"},
+                {"icon": "check-circle-2", "label": "In ấn nhận diện:", "value": "Hỗ trợ in ấn UV logo, slogan trực tiếp lên mặt vỏ"},
+                {"icon": "sparkles", "label": "Kết nối:", "value": "Dễ dàng gắn cùng dây đeo thẻ và yoyo co rút thông minh"},
+                {"icon": "box", "label": "Nhận in từ:", "value": f"{self.min_order or 20} cái"},
+                {"icon": "clock", "label": "Thời gian sản xuất:", "value": "2–4 ngày làm việc"},
+                {"icon": "pen-tool", "label": "Thiết kế demo:", "value": "Hỗ trợ thiết kế cơ bản 2D"},
+                {"icon": "truck", "label": "Giao hàng:", "value": "Toàn quốc"},
+                {"icon": "file-text", "label": "Hóa đơn:", "value": "Có VAT"}
+            ]
+        return []
+
+    @specs.setter
+    def specs(self, val):
+        self.specs_json = json.dumps(val, ensure_ascii=False) if val else "[]"
+
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
             'category': self.category,
             'description': self.description or '',
+            'badge': self.badge or '',
+            'display_badge': self.display_badge,
+            'specs': self.specs,
+            'specs_json': self.specs_json or json.dumps(self.specs, ensure_ascii=False),
             'images': self.images,
             'image': self.images[0] if self.images else '',
             'width': self.width,
@@ -243,5 +315,41 @@ class Product(db.Model):
             'price_type': self.price_type,
             'price': self.price,
             'featured': self.featured,
+            'visible': self.visible
+        }
+
+
+class Accessory(db.Model):
+    __tablename__ = 'accessories'
+
+    id = db.Column(db.String(50), primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    category = db.Column(db.String(50), nullable=False)  # 'lanyard_acc', 'holder_orientation', 'holder_material'
+    price = db.Column(db.Integer, nullable=False, default=0)
+    image = db.Column(db.String(255), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    title = db.Column(db.String(255), nullable=True)
+    sort_order = db.Column(db.Integer, default=0)
+    visible = db.Column(db.Boolean, default=True)
+
+    @property
+    def image_url(self):
+        if not self.image:
+            return ''
+        if self.image.startswith('/') or self.image.startswith('http'):
+            return self.image
+        return f'/static/uploads/{self.image}'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'category': self.category,
+            'price': self.price,
+            'image': self.image or '',
+            'image_url': self.image_url,
+            'description': self.description or '',
+            'title': self.title or self.name,
+            'sort_order': self.sort_order,
             'visible': self.visible
         }

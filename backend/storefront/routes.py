@@ -14,11 +14,15 @@ def index():
     products = get_visible_products()
     lanyards = [p for p in products if p.get('category') == 'lanyard']
     accessories = [p for p in products if p.get('category') == 'accessory']
+    pvc_product = next((p for p in accessories if 'pvc' in (p.get('name') or '').lower() or p.get('id') == 'acc-1'), None)
+    holder_product = next((p for p in accessories if 'vỏ' in (p.get('name') or '').lower() or 'holder' in (p.get('name') or '').lower() or p.get('id') == 'acc-2'), None)
     lanyard_photos = get_lanyard_photos(lanyards)
     showcase_items = get_showcase_items(lanyards, accessories)
     return render_template('index.html',
                            lanyards=lanyards,
                            accessories=accessories,
+                           pvc_product=pvc_product,
+                           holder_product=holder_product,
                            lanyard_photos=lanyard_photos,
                            showcase_items=showcase_items)
 

@@ -66,7 +66,12 @@
                              alt="Ảnh {{ loop.index }}">
                         {% endfor %}
                     </div>
-                    <small style="color:#888; display:block; margin-bottom:8px;">Ảnh hiện tại: {{ product.images|length }} ảnh. Tải ảnh mới sẽ <strong>thay thế toàn bộ</strong>.</small>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer; color: #374151;">
+                            <input type="checkbox" name="keep_existing_images" value="1" checked>
+                            <strong>Giữ lại ảnh hiện tại</strong> (ảnh tải lên mới sẽ được bổ sung vào danh sách)
+                        </label>
+                    </div>
                     {% endif %}
                     <input type="file" name="images" class="form-control" accept="image/*" multiple>
                     <small style="color:#666; display:block; margin-top:5px;">Chọn 1-5 file JPG/PNG. Giữ Ctrl/Cmd để chọn nhiều ảnh.</small>

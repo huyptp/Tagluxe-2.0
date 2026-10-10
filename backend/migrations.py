@@ -7,16 +7,28 @@ from sqlalchemy import inspect, text
 logger = logging.getLogger(__name__)
 
 def backup_sqlite_db(db_uri, base_dir):
-    """Safely backup SQLite database before applying migrations with timestamped versioning"""
+    """Safely backup SQLite database to storage/backups with rotation (keeps latest 5)"""
     if 'sqlite:///' in db_uri:
         sqlite_path = db_uri.replace('sqlite:///', '')
         if os.path.isabs(sqlite_path) and os.path.isfile(sqlite_path):
+            backup_dir = os.path.join(base_dir or os.path.dirname(sqlite_path), 'storage', 'backups')
+            os.makedirs(backup_dir, exist_ok=True)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            backup_path = f"{sqlite_path}.{timestamp}.bak"
-            standard_bak = f"{sqlite_path}.bak"
+            backup_path = os.path.join(backup_dir, f"tagluxe_{timestamp}.bak")
+            standard_bak = os.path.join(backup_dir, "tagluxe_latest.bak")
             try:
                 shutil.copy2(sqlite_path, backup_path)
                 shutil.copy2(sqlite_path, standard_bak)
+                # Keep latest 5 backups to prevent disk bloat
+                existing_backups = sorted(
+                    [os.path.join(backup_dir, f) for f in os.listdir(backup_dir) if f.startswith('tagluxe_') and f.endswith('.bak') and f != 'tagluxe_latest.bak']
+                )
+                if len(existing_backups) > 5:
+                    for old_file in existing_backups[:-5]:
+                        try:
+                            os.remove(old_file)
+                        except OSError:
+                            pass
                 logger.info(f"[MIGRATION_BACKUP] SQLite database backed up to {backup_path}")
                 return backup_path
             except Exception as e:
@@ -191,6 +203,13 @@ def run_migrations(app, db):
                                'Vừa thẻ tiêu chuẩn (86x54mm)', 'Chất liệu nhựa ABS', 20, 'contact', 0, 1, 1
                         WHERE NOT EXISTS (SELECT 1 FROM products WHERE id = 'acc-2')"""
                     )
+                ]
+            ),
+            (
+                "v009_add_product_badge_and_specs_columns",
+                [
+                    ("products", "badge", "ALTER TABLE products ADD COLUMN badge VARCHAR(255)"),
+                    ("products", "specs_json", "ALTER TABLE products ADD COLUMN specs_json TEXT")
                 ]
             )
         ]
