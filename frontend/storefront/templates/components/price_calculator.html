@@ -478,6 +478,32 @@
             margin-top: 2px;
         }
 
+        .addon-toggle-card.addon-locked {
+            opacity: 0.58;
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+            cursor: not-allowed !important;
+        }
+
+        .addon-toggle-card.addon-locked:hover {
+            border-color: #cbd5e1 !important;
+            background: #f8fafc !important;
+        }
+
+        .addon-lock-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #b45309;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            white-space: nowrap;
+        }
+
         /* Inputs */
         .contact-grid-2 {
             display: grid;
@@ -1044,7 +1070,7 @@
 
                         <!-- Slider -->
                         <div class="qty-slider-wrap">
-                            <input type="range" id="qtySliderInput" class="qty-range-slider" min="10" max="3000" step="5" value="50" oninput="onSliderMove(this.value)">
+                            <input type="range" id="qtySliderInput" class="qty-range-slider" min="0" max="1000" step="1" value="111" oninput="onSliderMove(this.value)" aria-label="Thanh trượt điều chỉnh số lượng">
                             <div class="slider-ticks-row">
                                 <span id="sliderMinTick">10</span>
                                 <span>100</span>
@@ -1528,10 +1554,12 @@
         pvcSize: '5.4x8.6',
         pvcFinish: 'matte',
         pvcHole: 'none',
+        pvcPreviewTab: 'main', // 'main' | 'finish' | 'hole'
         // Holder state
         holderOri: 'vertical',
         holderType: 'custom',
         holderPrint: true,
+        holderPreviewTab: 'ori', // 'ori' | 'material'
         lastResult: null
     };
 
@@ -1569,55 +1597,107 @@
             }
         },
         pvc: {
-            '5.4x8.6': {
-                img: '/static/images/demo/demo_the_nhua_pvc.jpg',
-                pill: 'Thẻ nhựa PVC 5.4 × 8.6 cm (ATM)',
-                caption: 'Thẻ nhựa 4 lớp chuẩn ISO / ATM bo góc tinh tế, đục lỗ con nhộng sắc nét',
-                title: 'Thẻ nhựa PVC 4 lớp chuẩn ISO 7810 (5.4 × 8.6 cm) — Demo 3D'
+            sizes: {
+                '5.4x8.6': {
+                    img: '/static/images/demo/demo_the_nhua_pvc.jpg',
+                    pill: 'Thẻ nhựa PVC 5.4 × 8.6 cm (ATM)',
+                    caption: 'Thẻ nhựa 4 lớp chuẩn ISO 7810 bo góc tinh tế, dày dặn 0.76mm tiêu chuẩn ngân hàng',
+                    title: 'Thẻ nhựa PVC 4 lớp chuẩn ISO 7810 (5.4 × 8.6 cm) — Demo 3D'
+                },
+                '7x11': {
+                    img: '/static/images/demo/demo_the_nhua_pvc.jpg',
+                    pill: 'Thẻ sự kiện khổ lớn 7 × 11 cm',
+                    caption: 'Thẻ đeo sự kiện, hội nghị khổ lớn 7×11cm in 2 mặt full màu nổi bật',
+                    title: 'Thẻ nhựa PVC khổ lớn sự kiện 7 × 11 cm — Demo 3D'
+                },
+                '9x12': {
+                    img: '/static/images/demo/demo_the_nhua_pvc.jpg',
+                    pill: 'Thẻ đại biểu khổ lớn 9 × 12 cm',
+                    caption: 'Thẻ đại biểu, ban tổ chức khổ lớn 9×12cm in 2 mặt chất lượng cao',
+                    title: 'Thẻ nhựa PVC khổ đại biểu 9 × 12 cm — Demo 3D'
+                },
+                'custom': {
+                    img: '/static/images/demo/demo_the_nhua_pvc.jpg',
+                    pill: 'Thẻ nhựa PVC ngoại size',
+                    caption: 'Gia công theo kích thước và hình dáng market thiết kế riêng',
+                    title: 'Thẻ nhựa PVC kích thước theo yêu cầu — Demo 3D'
+                }
             },
-            '7x11': {
-                img: '/static/images/demo/demo_the_nhua_pvc.jpg',
-                pill: 'Thẻ sự kiện khổ lớn 7 × 11 cm',
-                caption: 'Thẻ đeo sự kiện, hội nghị khổ lớn 7×11cm in 2 mặt full màu nổi bật',
-                title: 'Thẻ nhựa PVC khổ lớn sự kiện 7 × 11 cm — Demo 3D'
+            finishes: {
+                'matte': {
+                    img: '/static/images/demo/demo_the_nhua_pvc.jpg',
+                    pill: 'Cán Màng Mờ (Khuyên Dùng)',
+                    caption: 'Thẻ nhựa PVC 4 lớp cán màng mờ chống trầy xước, không bám vân tay, chống lóa sáng.',
+                    title: 'Thẻ nhựa PVC cán màng mờ — Demo 3D'
+                },
+                'glossy': {
+                    img: '/static/images/demo/demo_the_nhua_pvc.jpg',
+                    pill: 'Cán Màng Bóng (Tươi Sáng)',
+                    caption: 'Thẻ nhựa PVC 4 lớp cán màng bóng phản quang, màu sắc tươi sáng sắc nét.',
+                    title: 'Thẻ nhựa PVC cán màng bóng — Demo 3D'
+                },
+                'textured': {
+                    img: '/static/images/demo/demo_the_nhua_pvc.jpg',
+                    pill: 'Cán Màng Nhám (Hạt Sần)',
+                    caption: 'Thẻ nhựa PVC 4 lớp cán màng nhám hạt sần, tạo cảm giác chắc tay và chống xước tốt.',
+                    title: 'Thẻ nhựa PVC cán màng nhám sần — Demo 3D'
+                }
             },
-            '9x12': {
-                img: '/static/images/demo/demo_the_nhua_pvc.jpg',
-                pill: 'Thẻ đại biểu khổ lớn 9 × 12 cm',
-                caption: 'Thẻ đại biểu, ban tổ chức khổ lớn 9×12cm in 2 mặt chất lượng cao',
-                title: 'Thẻ nhựa PVC khổ đại biểu 9 × 12 cm — Demo 3D'
-            },
-            'custom': {
-                img: '/static/images/demo/demo_the_nhua_pvc.jpg',
-                pill: 'Thẻ nhựa PVC ngoại size',
-                caption: 'Gia công theo kích thước và hình dáng market thiết kế riêng',
-                title: 'Thẻ nhựa PVC kích thước theo yêu cầu — Demo 3D'
+            holes: {
+                'none': {
+                    img: '/static/images/demo/demo_the_nhua_pvc.jpg',
+                    pill: 'Thẻ Nguyên Bản (Không Đục Lỗ)',
+                    caption: 'Thẻ nguyên khối bo góc tiêu chuẩn, phù hợp lồng trong vỏ hoặc bao đựng thẻ.',
+                    title: 'Thẻ nhựa PVC nguyên bản không đục lỗ — Demo 3D'
+                },
+                'capsule': {
+                    img: '/static/images/demo/demo_the_pvc_lo_ovan.jpg',
+                    pill: 'Đục Lỗ Con Nhộng (Oval)',
+                    caption: 'Lỗ dẹt 3x15mm chuẩn cơ khí dập giữa đỉnh thẻ, giúp móc cài giữ thẻ luôn thẳng đứng khi đeo.',
+                    title: 'Gia công đục lỗ con nhộng Oval chống xoay — Demo 3D'
+                },
+                'round': {
+                    img: '/static/images/demo/demo_the_pvc_lo_tron.jpg',
+                    pill: 'Đục Lỗ Tròn (5mm)',
+                    caption: 'Đục lỗ tròn chuẩn xác, mép cắt sắc gọn không nứt vỡ thẻ, tương thích nhiều loại móc kẹp.',
+                    title: 'Gia công đục lỗ tròn tiêu chuẩn 5mm — Demo 3D'
+                }
             }
         },
         holder: {
-            'silicone': {
-                img: '/static/images/demo/demo_vo_dung_the.jpg',
-                pill: 'Vỏ silicon dẻo trong suốt',
-                caption: 'Chất liệu silicon mềm dẻo, chống nước bảo vệ thẻ tiện lợi',
-                title: 'Vỏ đựng thẻ Silicon dẻo trong suốt chống nước — Demo 3D'
+            orientations: {
+                'vertical': {
+                    img: '/static/images/demo/demo_vo_the_dung.jpg',
+                    pill: 'Vỏ Đựng Thẻ Dáng Đứng',
+                    caption: 'Kiểu dáng đứng chuẩn thẻ học sinh, sinh viên, nhân viên. Chống gãy gập thẻ tối ưu.',
+                    title: 'Vỏ đựng thẻ nhựa ABS dáng đứng dọc — Demo 3D'
+                },
+                'horizontal': {
+                    img: '/static/images/demo/demo_vo_the_ngang.jpg',
+                    pill: 'Vỏ Đựng Thẻ Dáng Ngang',
+                    caption: 'Dáng nằm ngang tạo phong thái chuyên nghiệp, mở rộng diện tích thể hiện logo công ty.',
+                    title: 'Vỏ đựng thẻ nhựa ABS dáng nằm ngang — Demo 3D'
+                }
             },
-            'plain': {
-                img: '/static/images/demo/demo_vo_dung_the.jpg',
-                pill: 'Vỏ nhựa ABS trơn không in',
-                caption: 'Nhựa ABS cứng cáp nhiều màu, chống va đập, bảo vệ thẻ tối ưu',
-                title: 'Vỏ nhựa ABS cứng cao cấp màu trơn không in — Demo 3D'
-            },
-            'custom_horizontal': {
-                img: '/static/images/demo/demo_vo_dung_the.jpg',
-                pill: 'Vỏ thẻ ABS dáng ngang in UV',
-                caption: 'Dáng nằm ngang in UV theo nhận diện thiết kế riêng sắc nét',
-                title: 'Vỏ đựng thẻ ABS dáng nằm ngang in UV sắc nét — Demo 3D'
-            },
-            'custom_vertical': {
-                img: '/static/images/demo/demo_vo_dung_the.jpg',
-                pill: 'Vỏ thẻ ABS dáng đứng in UV',
-                caption: 'Dáng đứng dọc in UV logo & họa tiết sắc nét theo nhận diện',
-                title: 'Vỏ đựng thẻ ABS dáng đứng in UV cao cấp — Demo 3D'
+            materials: {
+                'silicone': {
+                    img: '/static/images/demo/demo_vo_the_silicone.jpg',
+                    pill: 'Vỏ Silicon Dẻo Trong Suốt',
+                    caption: 'Chất liệu silicon dẻo bền bỉ trong suốt 2 mặt, có gờ zip miết miệng chống nước mưa bảo vệ thẻ.',
+                    title: 'Vỏ đựng thẻ Silicon dẻo trong suốt chống nước — Demo 3D'
+                },
+                'plain': {
+                    img: '/static/images/demo/demo_vo_dung_the.jpg',
+                    pill: 'Vỏ Nhựa ABS Trơn Không In',
+                    caption: 'Nhựa ABS cứng cáp cao cấp nhiều màu, chống va đập, bảo vệ thẻ tối ưu.',
+                    title: 'Vỏ nhựa ABS cứng cao cấp màu trơn không in — Demo 3D'
+                },
+                'custom': {
+                    img: '/static/images/demo/demo_vo_dung_the.jpg',
+                    pill: 'Vỏ Thẻ ABS In UV Thiết Kế',
+                    caption: 'In công nghệ UV sắc nét logo và họa tiết thương hiệu theo nhận diện riêng.',
+                    title: 'Vỏ đựng thẻ ABS in UV cao cấp theo nhận diện — Demo 3D'
+                }
             }
         },
         combo: {
@@ -1629,6 +1709,16 @@
             }
         }
     };
+
+    // Tương thích ngược phẳng
+    PREVIEW_CATALOG.pvc['5.4x8.6'] = PREVIEW_CATALOG.pvc.sizes['5.4x8.6'];
+    PREVIEW_CATALOG.pvc['7x11'] = PREVIEW_CATALOG.pvc.sizes['7x11'];
+    PREVIEW_CATALOG.pvc['9x12'] = PREVIEW_CATALOG.pvc.sizes['9x12'];
+    PREVIEW_CATALOG.pvc['custom'] = PREVIEW_CATALOG.pvc.sizes['custom'];
+    PREVIEW_CATALOG.holder['silicone'] = PREVIEW_CATALOG.holder.materials['silicone'];
+    PREVIEW_CATALOG.holder['plain'] = PREVIEW_CATALOG.holder.materials['plain'];
+    PREVIEW_CATALOG.holder['custom_horizontal'] = PREVIEW_CATALOG.holder.orientations['horizontal'];
+    PREVIEW_CATALOG.holder['custom_vertical'] = PREVIEW_CATALOG.holder.orientations['vertical'];
 
     const LANYARD_ACC_CATALOG = {
         breakaway: {
@@ -1680,12 +1770,19 @@
         updateProductPreview();
     };
 
+    window.setPvcPreviewTab = function(tab) {
+        state.pvcPreviewTab = tab;
+        updateProductPreview();
+    };
+
+    window.setHolderPreviewTab = function(tab) {
+        state.holderPreviewTab = tab;
+        updateProductPreview();
+    };
+
     function updateProductPreview() {
         const cat = state.category;
         const tabsEl = document.getElementById('calcPreviewTabs');
-        const tabBtnProd = document.getElementById('calcTabBtn_product');
-        const tabBtnAccs = document.getElementById('calcTabBtn_accs');
-        const tabAccCount = document.getElementById('calcTabAccCount');
         const singleWrap = document.getElementById('calcPreviewSingleWrap');
         const gridWrap = document.getElementById('calcPreviewGridWrap');
         const accGrid = document.getElementById('calcAccGrid');
@@ -1695,25 +1792,54 @@
         const capEl = document.getElementById('calcPreviewCaption');
         const tagMini = document.getElementById('calcPreviewTagMini');
 
-        // 1. Quản lý tabs chuyển đổi view
-        const hasAccs = (cat === 'lanyard' && state.lanyardAccs.length > 0);
+        // 1. Quản lý Tabs chuyển đổi góc nhìn theo Danh mục sản phẩm
         if (tabsEl) {
-            tabsEl.style.display = hasAccs ? 'flex' : 'none';
-        }
-        if (tabAccCount) {
-            tabAccCount.textContent = state.lanyardAccs.length;
+            if (cat === 'lanyard') {
+                const hasAccs = (state.lanyardAccs.length > 0);
+                tabsEl.style.display = hasAccs ? 'flex' : 'none';
+                if (!hasAccs) currentPreviewMode = 'product';
+                tabsEl.innerHTML = `
+                    <button type="button" class="calc-ptab-btn ${currentPreviewMode === 'product' ? 'active' : ''}" onclick="setPreviewView('product')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                        <span>Mẫu Dây Đeo</span>
+                    </button>
+                    <button type="button" class="calc-ptab-btn ${currentPreviewMode === 'accessories' ? 'active' : ''}" onclick="setPreviewView('accessories')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        <span>Phụ Kiện</span>
+                        <span class="calc-ptab-badge" id="calcTabAccCount">${state.lanyardAccs.length}</span>
+                    </button>
+                `;
+            } else if (cat === 'pvc') {
+                tabsEl.style.display = 'flex';
+                tabsEl.innerHTML = `
+                    <button type="button" class="calc-ptab-btn ${state.pvcPreviewTab === 'main' ? 'active' : ''}" onclick="setPvcPreviewTab('main')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                        <span>Mẫu Thẻ Nhựa</span>
+                    </button>
+                    <button type="button" class="calc-ptab-btn ${state.pvcPreviewTab === 'hole' ? 'active' : ''}" onclick="setPvcPreviewTab('hole')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/></svg>
+                        <span>Chi Tiết Lỗ Đục</span>
+                    </button>
+                `;
+            } else if (cat === 'holder') {
+                tabsEl.style.display = 'flex';
+                tabsEl.innerHTML = `
+                    <button type="button" class="calc-ptab-btn ${state.holderPreviewTab === 'ori' ? 'active' : ''}" onclick="setHolderPreviewTab('ori')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                        <span>Kiểu Dáng Vỏ</span>
+                    </button>
+                    <button type="button" class="calc-ptab-btn ${state.holderPreviewTab === 'material' ? 'active' : ''}" onclick="setHolderPreviewTab('material')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                        <span>Chất Liệu Vỏ</span>
+                    </button>
+                `;
+            } else {
+                tabsEl.style.display = 'none';
+            }
         }
 
-        if (!hasAccs) {
-            currentPreviewMode = 'product';
-        }
-
-        if (tabBtnProd && tabBtnAccs) {
-            tabBtnProd.classList.toggle('active', currentPreviewMode === 'product');
-            tabBtnAccs.classList.toggle('active', currentPreviewMode === 'accessories');
-        }
-
-        // 2. Chế độ xem PHỤ KIỆN
+        // 2. Chế độ xem PHỤ KIỆN DÂY ĐEO
+        const hasAccs = (cat === 'lanyard' && state.lanyardAccs.length > 0);
         if (hasAccs && currentPreviewMode === 'accessories') {
             const accList = state.lanyardAccs.map(k => LANYARD_ACC_CATALOG[k]).filter(Boolean);
 
@@ -1769,7 +1895,7 @@
             return;
         }
 
-        // 3. Chế độ xem SẢN PHẨM CHÍNH (Dây đeo thẻ, PVC, Vỏ thẻ, Combo)
+        // 3. Chế độ xem SẢN PHẨM & CÁC GÓC NHÌN QUY CÁCH (Dây đeo, Thẻ PVC, Vỏ thẻ, Combo)
         if (singleWrap) singleWrap.style.display = 'block';
         if (gridWrap) gridWrap.style.display = 'none';
 
@@ -1777,20 +1903,18 @@
         if (cat === 'lanyard') {
             pData = PREVIEW_CATALOG.lanyard[state.lanyardWidth] || PREVIEW_CATALOG.lanyard['2.0'];
         } else if (cat === 'pvc') {
-            pData = PREVIEW_CATALOG.pvc[state.pvcSize] || PREVIEW_CATALOG.pvc['5.4x8.6'];
-            if (state.pvcFinish === 'textured') {
-                pData = { ...pData, caption: pData.caption + ' • Cán nhám chống trầy' };
-            } else if (state.pvcFinish === 'glossy') {
-                pData = { ...pData, caption: pData.caption + ' • Cán bóng tươi sáng' };
+            if (state.pvcPreviewTab === 'finish') {
+                pData = (PREVIEW_CATALOG.pvc.finishes && PREVIEW_CATALOG.pvc.finishes[state.pvcFinish]) || PREVIEW_CATALOG.pvc.finishes['matte'];
+            } else if (state.pvcPreviewTab === 'hole') {
+                pData = (PREVIEW_CATALOG.pvc.holes && PREVIEW_CATALOG.pvc.holes[state.pvcHole]) || PREVIEW_CATALOG.pvc.holes['none'];
+            } else {
+                pData = (PREVIEW_CATALOG.pvc.sizes && PREVIEW_CATALOG.pvc.sizes[state.pvcSize]) || PREVIEW_CATALOG.pvc.sizes['5.4x8.6'];
             }
         } else if (cat === 'holder') {
-            if (state.holderType === 'silicone') {
-                pData = PREVIEW_CATALOG.holder.silicone;
-            } else if (state.holderType === 'plain') {
-                pData = PREVIEW_CATALOG.holder.plain;
+            if (state.holderPreviewTab === 'material') {
+                pData = (PREVIEW_CATALOG.holder.materials && PREVIEW_CATALOG.holder.materials[state.holderType]) || PREVIEW_CATALOG.holder.materials['custom'];
             } else {
-                const isHori = (state.holderOri === 'horizontal');
-                pData = isHori ? PREVIEW_CATALOG.holder.custom_horizontal : PREVIEW_CATALOG.holder.custom_vertical;
+                pData = (PREVIEW_CATALOG.holder.orientations && PREVIEW_CATALOG.holder.orientations[state.holderOri]) || PREVIEW_CATALOG.holder.orientations['vertical'];
             }
         } else if (cat === 'combo') {
             pData = PREVIEW_CATALOG.combo.default;
@@ -2055,24 +2179,80 @@
         const directInp = document.getElementById('qtyDirectInput');
         if (directInp) directInp.min = minQty;
         const sliderInp = document.getElementById('qtySliderInput');
-        if (sliderInp) sliderInp.min = minQty;
+        if (sliderInp) {
+            sliderInp.min = 0;
+            sliderInp.max = 1000;
+        }
 
         currentPreviewMode = 'product';
+        state.pvcPreviewTab = 'main';
+        state.holderPreviewTab = 'ori';
         updateProductPreview();
 
         if (state.qty < minQty) {
             setQty(minQty, true);
         } else {
-            fetchPrice();
+            setQty(state.qty, true);
         }
     };
+
+    // === THUẬT TOÁN ÁNH XẠ THANH KÉO PHI TUYẾN TÍNH (PIECEWISE CURVE MAPPING) ===
+    // Khớp chuẩn xác 100% với 5 mốc hiển thị: minQty (0%), 100 (25%), 500 (50%), 1.000 (75%), 3.000+ (100%)
+    function sliderPosToQty(pos, minQty) {
+        pos = Math.max(0, Math.min(1000, Number(pos) || 0));
+        if (pos <= 0) return minQty;
+        if (pos >= 1000) return 3000;
+
+        let q;
+        if (pos <= 250) {
+            const ratio = pos / 250;
+            q = minQty + ratio * (100 - minQty);
+            q = Math.round(q / 5) * 5;
+            return Math.max(minQty, Math.min(100, q));
+        } else if (pos <= 500) {
+            const ratio = (pos - 250) / 250;
+            q = 100 + ratio * 400;
+            q = Math.round(q / 25) * 25;
+            return Math.max(100, Math.min(500, q));
+        } else if (pos <= 750) {
+            const ratio = (pos - 500) / 250;
+            q = 500 + ratio * 500;
+            q = Math.round(q / 50) * 50;
+            return Math.max(500, Math.min(1000, q));
+        } else {
+            const ratio = (pos - 750) / 250;
+            q = 1000 + ratio * 2000;
+            q = Math.round(q / 100) * 100;
+            return Math.max(1000, Math.min(3000, q));
+        }
+    }
+
+    function qtyToSliderPos(qty, minQty) {
+        qty = Number(qty) || minQty;
+        if (qty <= minQty) return 0;
+        if (qty >= 3000) return 1000;
+
+        if (qty <= 100) {
+            const ratio = (qty - minQty) / (100 - minQty);
+            return Math.round(ratio * 250);
+        } else if (qty <= 500) {
+            const ratio = (qty - 100) / 400;
+            return Math.round(250 + ratio * 250);
+        } else if (qty <= 1000) {
+            const ratio = (qty - 500) / 500;
+            return Math.round(500 + ratio * 250);
+        } else {
+            const ratio = (qty - 1000) / 2000;
+            return Math.round(750 + ratio * 250);
+        }
+    }
 
     window.onDirectQtyInput = function(val) {
         const q = parseInt(val, 10);
         if (isNaN(q) || q < 1) {
             return;
         }
-        setQty(q, false);
+        setQty(q, false, true);
     };
 
     window.onDirectQtyBlur = function(input) {
@@ -2082,28 +2262,92 @@
             q = minQty;
         }
         input.value = q;
-        setQty(q, true);
+        setQty(q, true, true);
     };
 
     window.stepQty = function(delta) {
         const minQty = getMinQty();
-        setQty(Math.max(minQty, state.qty + delta), true);
+        setQty(Math.max(minQty, state.qty + delta), true, true);
     };
 
     window.onSliderMove = function(val) {
         const minQty = getMinQty();
-        setQty(Math.max(minQty, parseInt(val, 10) || minQty), true);
+        const calculatedQty = sliderPosToQty(val, minQty);
+        setQty(calculatedQty, true, false); // syncInput = true, syncSlider = false khi đang kéo chuột
     };
 
-    function setQty(val, syncInput = true) {
+    function checkAccessoryConstraints() {
+        if (state.category !== 'lanyard') return;
+        const currentQty = state.qty;
+
+        for (const [key, item] of Object.entries(LANYARD_ACC_CATALOG)) {
+            const minQ = item.min_quantity || 0;
+            const card = document.getElementById('lanyardAcc_' + key);
+            if (!card) continue;
+
+            const isLocked = (minQ > 0 && currentQty < minQ);
+
+            if (isLocked) {
+                card.classList.add('addon-locked');
+                card.setAttribute('title', `Chỉ áp dụng cho đơn từ ${minQ} dây trở lên`);
+
+                // Nếu khách đang chọn mà giảm số lượng xuống dưới minQ -> Tự động bỏ chọn
+                if (state.lanyardAccs.includes(key)) {
+                    const idx = state.lanyardAccs.indexOf(key);
+                    if (idx > -1) state.lanyardAccs.splice(idx, 1);
+                    card.classList.remove('selected');
+                }
+
+                let lockBadge = card.querySelector('.addon-lock-badge');
+                if (!lockBadge) {
+                    lockBadge = document.createElement('span');
+                    lockBadge.className = 'addon-lock-badge';
+                    const titleRow = card.querySelector('.addon-title-row');
+                    if (titleRow) titleRow.appendChild(lockBadge);
+                }
+                lockBadge.textContent = `🔒 Chỉ từ ${minQ} dây`;
+                lockBadge.style.display = 'inline-flex';
+            } else {
+                card.classList.remove('addon-locked');
+                card.removeAttribute('title');
+                const lockBadge = card.querySelector('.addon-lock-badge');
+                if (lockBadge) lockBadge.style.display = 'none';
+            }
+        }
+    }
+
+    function setQty(val, syncInput = true, syncSlider = true) {
         const minQty = getMinQty();
         state.qty = Math.max(minQty, val);
+
         if (syncInput) {
             const inp = document.getElementById('qtyDirectInput');
             if (inp) inp.value = state.qty;
         }
-        const slider = document.getElementById('qtySliderInput');
-        if (slider) slider.value = Math.min(state.qty, 3000);
+        if (syncSlider) {
+            const slider = document.getElementById('qtySliderInput');
+            if (slider) slider.value = qtyToSliderPos(state.qty, minQty);
+        }
+
+        // CẬP NHẬT TỨC THÌ 0ms TRÊN BẢNG DỰ TOÁN (TICKET)
+        const qtyEl = document.getElementById('ticketQty');
+        const unitSuffix = (state.category === 'lanyard' ? 'sợi' : (state.category === 'pvc' ? 'thẻ' : 'cái'));
+        if (qtyEl) qtyEl.textContent = `${state.qty} ${unitSuffix}`;
+
+        const shipPerk = document.getElementById('ticketShippingPerk');
+        if (shipPerk) {
+            if (state.qty >= 100) {
+                shipPerk.querySelector('span').textContent = 'Tặng phí vận chuyển nội thành TP.HCM (Đơn từ 100)';
+                shipPerk.style.color = '#fbbf24';
+            } else {
+                shipPerk.querySelector('span').textContent = 'Hỗ trợ đóng gói & giao hàng toàn quốc';
+                shipPerk.style.color = '';
+            }
+        }
+
+        // Ràng buộc điều kiện phụ kiện theo số lượng dây
+        checkAccessoryConstraints();
+
         fetchPrice();
     }
 
@@ -2119,6 +2363,13 @@
     };
 
     window.toggleLanyardAcc = function(acc) {
+        const item = LANYARD_ACC_CATALOG[acc];
+        const minQ = (item && item.min_quantity) ? item.min_quantity : 0;
+        if (minQ > 0 && state.qty < minQ) {
+            alert(`Phụ kiện "${item ? item.name : acc}" chỉ áp dụng cho đơn đặt in từ ${minQ} dây trở lên.\n\nBạn vui lòng tăng số lượng dây từ ${minQ} dây trở lên để chọn phụ kiện này nhé!`);
+            return;
+        }
+
         const idx = state.lanyardAccs.indexOf(acc);
         const wasAdded = (idx === -1);
         if (!wasAdded) state.lanyardAccs.splice(idx, 1);
@@ -2140,6 +2391,7 @@
     // PVC controls
     window.setPvcSize = function(s) {
         state.pvcSize = s;
+        state.pvcPreviewTab = 'main';
         document.querySelectorAll('#panel_pvc .calc-step-block:first-of-type .opt-card').forEach(c => c.classList.remove('selected'));
         const sizeMap = {
             '5.4x8.6': 'pvcSize_standard',
@@ -2156,6 +2408,7 @@
 
     window.setPvcFinish = function(f) {
         state.pvcFinish = f;
+        state.pvcPreviewTab = 'main';
         document.querySelectorAll('#panel_pvc .options-grid-3 .opt-card').forEach(c => c.classList.remove('selected'));
         const card = document.getElementById('pvcFinish_' + f);
         if (card) card.classList.add('selected');
@@ -2165,6 +2418,11 @@
 
     window.setPvcHole = function(h) {
         state.pvcHole = h;
+        if (h === 'capsule' || h === 'round') {
+            state.pvcPreviewTab = 'hole';
+        } else {
+            state.pvcPreviewTab = 'main';
+        }
         document.querySelectorAll('#panel_pvc .calc-step-block:last-of-type .opt-card').forEach(c => c.classList.remove('selected'));
         const card = document.getElementById('pvcHole_' + h);
         if (card) card.classList.add('selected');
@@ -2175,6 +2433,7 @@
     // Holder controls
     window.setHolderOri = function(ori) {
         state.holderOri = ori;
+        state.holderPreviewTab = 'ori';
         document.querySelectorAll('#panel_holder .options-grid-2 .opt-card').forEach(c => c.classList.remove('selected'));
         const card = document.getElementById('holderOri_' + ori);
         if (card) card.classList.add('selected');
@@ -2185,6 +2444,7 @@
     window.setHolderType = function(type) {
         state.holderType = type;
         state.holderPrint = (type === 'custom');
+        state.holderPreviewTab = 'material';
         document.querySelectorAll('#panel_holder .options-grid-3 .opt-card').forEach(c => c.classList.remove('selected'));
         const card = document.getElementById('holderType_' + type);
         if (card) card.classList.add('selected');
@@ -2342,29 +2602,31 @@
                             if (v.price) LANYARD_ACC_CATALOG[k].price = v.price;
                             if (v.caption) LANYARD_ACC_CATALOG[k].caption = v.caption;
                             if (v.title) LANYARD_ACC_CATALOG[k].title = v.title;
+                            if (v.min_quantity !== undefined) LANYARD_ACC_CATALOG[k].min_quantity = v.min_quantity;
                         } else {
                             LANYARD_ACC_CATALOG[k] = v;
                         }
                     }
+                    checkAccessoryConstraints();
                 }
                 if (d.holder_materials && PREVIEW_CATALOG.holder) {
-                    if (d.holder_materials.holder_silicone && PREVIEW_CATALOG.holder.silicone) {
-                        if (d.holder_materials.holder_silicone.img) PREVIEW_CATALOG.holder.silicone.img = d.holder_materials.holder_silicone.img;
-                        if (d.holder_materials.holder_silicone.title) PREVIEW_CATALOG.holder.silicone.title = d.holder_materials.holder_silicone.title;
-                        if (d.holder_materials.holder_silicone.caption) PREVIEW_CATALOG.holder.silicone.caption = d.holder_materials.holder_silicone.caption;
+                    if (d.holder_materials.holder_silicone && PREVIEW_CATALOG.holder.materials && PREVIEW_CATALOG.holder.materials.silicone) {
+                        if (d.holder_materials.holder_silicone.img) PREVIEW_CATALOG.holder.materials.silicone.img = d.holder_materials.holder_silicone.img;
+                        if (d.holder_materials.holder_silicone.title) PREVIEW_CATALOG.holder.materials.silicone.title = d.holder_materials.holder_silicone.title;
+                        if (d.holder_materials.holder_silicone.caption) PREVIEW_CATALOG.holder.materials.silicone.caption = d.holder_materials.holder_silicone.caption;
                     }
-                    if (d.holder_materials.holder_plain && PREVIEW_CATALOG.holder.plain) {
-                        if (d.holder_materials.holder_plain.img) PREVIEW_CATALOG.holder.plain.img = d.holder_materials.holder_plain.img;
-                        if (d.holder_materials.holder_plain.title) PREVIEW_CATALOG.holder.plain.title = d.holder_materials.holder_plain.title;
-                        if (d.holder_materials.holder_plain.caption) PREVIEW_CATALOG.holder.plain.caption = d.holder_materials.holder_plain.caption;
+                    if (d.holder_materials.holder_plain && PREVIEW_CATALOG.holder.materials && PREVIEW_CATALOG.holder.materials.plain) {
+                        if (d.holder_materials.holder_plain.img) PREVIEW_CATALOG.holder.materials.plain.img = d.holder_materials.holder_plain.img;
+                        if (d.holder_materials.holder_plain.title) PREVIEW_CATALOG.holder.materials.plain.title = d.holder_materials.holder_plain.title;
+                        if (d.holder_materials.holder_plain.caption) PREVIEW_CATALOG.holder.materials.plain.caption = d.holder_materials.holder_plain.caption;
                     }
                 }
                 if (d.holder_styles && PREVIEW_CATALOG.holder) {
-                    if (d.holder_styles.holder_horizontal && PREVIEW_CATALOG.holder.custom_horizontal) {
-                        if (d.holder_styles.holder_horizontal.img) PREVIEW_CATALOG.holder.custom_horizontal.img = d.holder_styles.holder_horizontal.img;
+                    if (d.holder_styles.holder_horizontal && PREVIEW_CATALOG.holder.orientations && PREVIEW_CATALOG.holder.orientations.horizontal) {
+                        if (d.holder_styles.holder_horizontal.img) PREVIEW_CATALOG.holder.orientations.horizontal.img = d.holder_styles.holder_horizontal.img;
                     }
-                    if (d.holder_styles.holder_vertical && PREVIEW_CATALOG.holder.custom_vertical) {
-                        if (d.holder_styles.holder_vertical.img) PREVIEW_CATALOG.holder.custom_vertical.img = d.holder_styles.holder_vertical.img;
+                    if (d.holder_styles.holder_vertical && PREVIEW_CATALOG.holder.orientations && PREVIEW_CATALOG.holder.orientations.vertical) {
+                        if (d.holder_styles.holder_vertical.img) PREVIEW_CATALOG.holder.orientations.vertical.img = d.holder_styles.holder_vertical.img;
                     }
                 }
                 updateProductPreview();
