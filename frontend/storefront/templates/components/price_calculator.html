@@ -1865,11 +1865,10 @@
     PREVIEW_CATALOG.pvc['7x11'] = PREVIEW_CATALOG.pvc.sizes['7x11'];
     PREVIEW_CATALOG.pvc['9x12'] = PREVIEW_CATALOG.pvc.sizes['9x12'];
     PREVIEW_CATALOG.pvc['custom'] = PREVIEW_CATALOG.pvc.sizes['custom'];
-    PREVIEW_CATALOG.holder['silicone'] = PREVIEW_CATALOG.holder.materials['silicone'];
-    PREVIEW_CATALOG.holder['plain'] = PREVIEW_CATALOG.holder.materials['plain'];
-    PREVIEW_CATALOG.holder['custom'] = PREVIEW_CATALOG.holder.materials['custom'];
-    PREVIEW_CATALOG.holder['custom_horizontal'] = PREVIEW_CATALOG.holder.orientations['horizontal'];
-    PREVIEW_CATALOG.holder['custom_vertical'] = PREVIEW_CATALOG.holder.orientations['vertical'];
+    if (PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.custom) {
+        PREVIEW_CATALOG.holder['custom_horizontal'] = PREVIEW_CATALOG.holder.custom.horizontal;
+        PREVIEW_CATALOG.holder['custom_vertical'] = PREVIEW_CATALOG.holder.custom.vertical;
+    }
 
     const LANYARD_ACC_CATALOG = {
         breakaway: {
@@ -2845,36 +2844,54 @@
                         if (di.pvc_round_hole.pill) PREVIEW_CATALOG.pvc.holes.round.pill = di.pvc_round_hole.pill;
                     }
                     if (di.holder_silicone_vertical && PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.silicone && PREVIEW_CATALOG.holder.silicone.vertical) {
-                        PREVIEW_CATALOG.holder.silicone.vertical.img = di.holder_silicone_vertical.image;
+                        if (di.holder_silicone_vertical.image) PREVIEW_CATALOG.holder.silicone.vertical.img = di.holder_silicone_vertical.image;
                         if (di.holder_silicone_vertical.pill) PREVIEW_CATALOG.holder.silicone.vertical.pill = di.holder_silicone_vertical.pill;
+                        if (di.holder_silicone_vertical.caption) PREVIEW_CATALOG.holder.silicone.vertical.caption = di.holder_silicone_vertical.caption;
+                        if (di.holder_silicone_vertical.modal_title) PREVIEW_CATALOG.holder.silicone.vertical.title = di.holder_silicone_vertical.modal_title;
                     }
                     if (di.holder_silicone_horizontal && PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.silicone && PREVIEW_CATALOG.holder.silicone.horizontal) {
-                        PREVIEW_CATALOG.holder.silicone.horizontal.img = di.holder_silicone_horizontal.image;
+                        if (di.holder_silicone_horizontal.image) PREVIEW_CATALOG.holder.silicone.horizontal.img = di.holder_silicone_horizontal.image;
                         if (di.holder_silicone_horizontal.pill) PREVIEW_CATALOG.holder.silicone.horizontal.pill = di.holder_silicone_horizontal.pill;
+                        if (di.holder_silicone_horizontal.caption) PREVIEW_CATALOG.holder.silicone.horizontal.caption = di.holder_silicone_horizontal.caption;
+                        if (di.holder_silicone_horizontal.modal_title) PREVIEW_CATALOG.holder.silicone.horizontal.title = di.holder_silicone_horizontal.modal_title;
                     }
                     if (di.holder_plain_vertical && PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.plain && PREVIEW_CATALOG.holder.plain.vertical) {
-                        PREVIEW_CATALOG.holder.plain.vertical.img = di.holder_plain_vertical.image;
+                        if (di.holder_plain_vertical.image) PREVIEW_CATALOG.holder.plain.vertical.img = di.holder_plain_vertical.image;
                         if (di.holder_plain_vertical.pill) PREVIEW_CATALOG.holder.plain.vertical.pill = di.holder_plain_vertical.pill;
+                        if (di.holder_plain_vertical.caption) PREVIEW_CATALOG.holder.plain.vertical.caption = di.holder_plain_vertical.caption;
+                        if (di.holder_plain_vertical.modal_title) PREVIEW_CATALOG.holder.plain.vertical.title = di.holder_plain_vertical.modal_title;
                     }
                     if (di.holder_plain_horizontal && PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.plain && PREVIEW_CATALOG.holder.plain.horizontal) {
-                        PREVIEW_CATALOG.holder.plain.horizontal.img = di.holder_plain_horizontal.image;
+                        if (di.holder_plain_horizontal.image) PREVIEW_CATALOG.holder.plain.horizontal.img = di.holder_plain_horizontal.image;
                         if (di.holder_plain_horizontal.pill) PREVIEW_CATALOG.holder.plain.horizontal.pill = di.holder_plain_horizontal.pill;
+                        if (di.holder_plain_horizontal.caption) PREVIEW_CATALOG.holder.plain.horizontal.caption = di.holder_plain_horizontal.caption;
+                        if (di.holder_plain_horizontal.modal_title) PREVIEW_CATALOG.holder.plain.horizontal.title = di.holder_plain_horizontal.modal_title;
                     }
                     if (di.holder_custom_vertical && PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.custom && PREVIEW_CATALOG.holder.custom.vertical) {
-                        PREVIEW_CATALOG.holder.custom.vertical.img = di.holder_custom_vertical.image;
+                        if (di.holder_custom_vertical.image) PREVIEW_CATALOG.holder.custom.vertical.img = di.holder_custom_vertical.image;
                         if (di.holder_custom_vertical.pill) PREVIEW_CATALOG.holder.custom.vertical.pill = di.holder_custom_vertical.pill;
+                        if (di.holder_custom_vertical.caption) PREVIEW_CATALOG.holder.custom.vertical.caption = di.holder_custom_vertical.caption;
+                        if (di.holder_custom_vertical.modal_title) PREVIEW_CATALOG.holder.custom.vertical.title = di.holder_custom_vertical.modal_title;
+                        PREVIEW_CATALOG.holder['custom_vertical'] = PREVIEW_CATALOG.holder.custom.vertical;
                     }
                     if (di.holder_custom_horizontal && PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.custom && PREVIEW_CATALOG.holder.custom.horizontal) {
-                        PREVIEW_CATALOG.holder.custom.horizontal.img = di.holder_custom_horizontal.image;
+                        if (di.holder_custom_horizontal.image) PREVIEW_CATALOG.holder.custom.horizontal.img = di.holder_custom_horizontal.image;
                         if (di.holder_custom_horizontal.pill) PREVIEW_CATALOG.holder.custom.horizontal.pill = di.holder_custom_horizontal.pill;
+                        if (di.holder_custom_horizontal.caption) PREVIEW_CATALOG.holder.custom.horizontal.caption = di.holder_custom_horizontal.caption;
+                        if (di.holder_custom_horizontal.modal_title) PREVIEW_CATALOG.holder.custom.horizontal.title = di.holder_custom_horizontal.modal_title;
+                        PREVIEW_CATALOG.holder['custom_horizontal'] = PREVIEW_CATALOG.holder.custom.horizontal;
                     }
                     if (di.holder_vertical && PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.abs && PREVIEW_CATALOG.holder.abs.vertical) {
-                        PREVIEW_CATALOG.holder.abs.vertical.img = di.holder_vertical.image;
+                        if (di.holder_vertical.image) PREVIEW_CATALOG.holder.abs.vertical.img = di.holder_vertical.image;
                         if (di.holder_vertical.pill) PREVIEW_CATALOG.holder.abs.vertical.pill = di.holder_vertical.pill;
+                        if (di.holder_vertical.caption) PREVIEW_CATALOG.holder.abs.vertical.caption = di.holder_vertical.caption;
+                        if (di.holder_vertical.modal_title) PREVIEW_CATALOG.holder.abs.vertical.title = di.holder_vertical.modal_title;
                     }
                     if (di.holder_horizontal && PREVIEW_CATALOG.holder && PREVIEW_CATALOG.holder.abs && PREVIEW_CATALOG.holder.abs.horizontal) {
-                        PREVIEW_CATALOG.holder.abs.horizontal.img = di.holder_horizontal.image;
+                        if (di.holder_horizontal.image) PREVIEW_CATALOG.holder.abs.horizontal.img = di.holder_horizontal.image;
                         if (di.holder_horizontal.pill) PREVIEW_CATALOG.holder.abs.horizontal.pill = di.holder_horizontal.pill;
+                        if (di.holder_horizontal.caption) PREVIEW_CATALOG.holder.abs.horizontal.caption = di.holder_horizontal.caption;
+                        if (di.holder_horizontal.modal_title) PREVIEW_CATALOG.holder.abs.horizontal.title = di.holder_horizontal.modal_title;
                     }
                     if (di.lanyard_default && PREVIEW_CATALOG.lanyard) {
                         const defImg = di.lanyard_default.image;

@@ -406,10 +406,24 @@
 
         <!-- Mẫu vỏ đựng thẻ thực tế (1 hàng trượt thủ công) -->
         {% set holder_imgs = (holder_product.images if holder_product and holder_product.images else []) %}
-        {% if holder_imgs %}
+        {% if holder_demo_cards or holder_imgs %}
         <div class="lanyard-gallery-container" data-aos="fade-up">
             <div class="gallery-scroll-box" id="holderGalleryBox">
                 <div class="gallery-scroll-row">
+                    {% if holder_demo_cards %}
+                    {% for card in holder_demo_cards %}
+                    <a href="/product/{{ holder_product.id if holder_product else 'acc-2' }}" class="lanyard-marquee-card" aria-label="{{ card.name }}">
+                        <div class="lanyard-card-img">
+                            <img src="{{ card.image_url }}?v={{ asset_v }}"
+                                 alt="{{ card.name }} - TagLuxe" loading="lazy">
+                        </div>
+                        <div class="lanyard-card-body">
+                            <span class="lanyard-card-name">{{ card.name }}</span>
+                            <span class="lanyard-card-action">Xem chi tiết <i data-lucide="arrow-right"></i></span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% endif %}
                     {% for img in holder_imgs %}
                     <a href="/product/{{ holder_product.id if holder_product else 'acc-2' }}" class="lanyard-marquee-card" aria-label="{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}">
                         <div class="lanyard-card-img">
