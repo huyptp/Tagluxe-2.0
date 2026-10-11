@@ -112,7 +112,7 @@ def seed_initial_data():
                 'name': 'Khóa an toàn sau gáy',
                 'category': 'lanyard_acc',
                 'price': 2500,
-                'image': '/static/images/demo/demo_pk_khoa_an_toan.jpg',
+                'image': '/static/uploads/acc_breakaway_f315a6d3.jpg',
                 'title': 'Khóa an toàn sau gáy (Breakaway Safety Clasp)',
                 'description': 'Khóa an toàn sau gáy tự tách rời khi bị kéo căng mạnh, giúp bảo vệ người đeo không bị thắt cổ khi vướng máy móc.',
                 'sort_order': 1,
@@ -123,7 +123,7 @@ def seed_initial_data():
                 'name': 'Khóa phụ tháo rời nhanh',
                 'category': 'lanyard_acc',
                 'price': 2500,
-                'image': '/static/images/demo/demo_pk_khoa_thao_roi.jpg',
+                'image': '/static/uploads/acc_quick_release_b3dc0c54.jpg',
                 'title': 'Khóa phụ tháo rời nhanh (Quick-Release Buckle)',
                 'description': 'Khóa bấm tháo rời nhanh tiện lợi, dễ dàng tháo riêng thẻ chấm công hoặc chìa khóa để quẹt mà không cần tháo cả dây qua đầu.',
                 'sort_order': 2,
@@ -134,7 +134,7 @@ def seed_initial_data():
                 'name': 'Cục thắt thu độ dài dây',
                 'category': 'lanyard_acc',
                 'price': 2500,
-                'image': '/static/images/demo/demo_pk_cuc_that.jpg',
+                'image': '/static/uploads/acc_stopper_37b2f290.jpg',
                 'title': 'Cục thắt thu gọn độ dài dây đeo (Cord Stopper)',
                 'description': 'Cục thắt chặn hình tròn nhỏ gọn, trượt lên xuống để thu gọn độ dài dây đeo vừa vặn với từng vóc dáng người dùng.',
                 'sort_order': 3,
@@ -156,10 +156,21 @@ def seed_initial_data():
                 'name': 'Móc kim loại đen mờ',
                 'category': 'lanyard_acc',
                 'price': 2500,
-                'image': '/static/images/demo/demo_pk_moc_den.jpg',
+                'image': '/static/uploads/acc_black_hook_11193e93.jpg',
                 'title': 'Móc khóa kim loại đen mờ tĩnh điện (Matte Black Hook)',
                 'description': 'Móc càng cua kim loại cao cấp phủ sơn tĩnh điện đen mờ, chống xước, tạo điểm nhấn cá tính và hiện đại.',
                 'sort_order': 5,
+                'visible': True
+            },
+            {
+                'id': 'm_c_nh_a_1819e1',
+                'name': 'Móc nhựa',
+                'category': 'lanyard_acc',
+                'price': 0,
+                'image': '/static/uploads/acc_838750c4be.jpg',
+                'title': 'Móc nhựa',
+                'description': 'Móc nhựa giúp đeo dây cố định không bị xoay khi hoạt động',
+                'sort_order': 6,
                 'visible': True
             },
             {
@@ -170,7 +181,7 @@ def seed_initial_data():
                 'image': '/static/images/demo/demo_vo_dung_the.jpg',
                 'title': 'Vỏ đựng thẻ dáng đứng dọc tiêu chuẩn',
                 'description': 'Kiểu dáng tiêu chuẩn phổ biến cho thẻ nhân viên và thẻ học sinh - sinh viên chuẩn kích thước.',
-                'sort_order': 6,
+                'sort_order': 7,
                 'visible': True
             },
             {
@@ -181,7 +192,7 @@ def seed_initial_data():
                 'image': '/static/images/demo/demo_vo_dung_the.jpg',
                 'title': 'Vỏ đựng thẻ dáng nằm ngang tiêu chuẩn',
                 'description': 'Kiểu dáng ngang sang trọng, bề ngang rộng rãi phù hợp nhận diện thương hiệu công ty.',
-                'sort_order': 7,
+                'sort_order': 8,
                 'visible': True
             },
             {
@@ -192,7 +203,7 @@ def seed_initial_data():
                 'image': '/static/images/demo/demo_vo_dung_the.jpg',
                 'title': 'Vỏ đựng thẻ Silicon dẻo trong suốt chống nước',
                 'description': 'Chất liệu silicon mềm dẻo, chống nước và chống bám bụi bẩn tối ưu, giá thành kinh tế.',
-                'sort_order': 8,
+                'sort_order': 9,
                 'visible': True
             },
             {
@@ -203,7 +214,7 @@ def seed_initial_data():
                 'image': '/static/images/demo/demo_vo_dung_the.jpg',
                 'title': 'Vỏ nhựa ABS cứng cao cấp màu trơn không in',
                 'description': 'Nhựa ABS cứng cáp nhiều màu sắc (xanh, đỏ, đen, xám, trắng...), chống va đập, bảo vệ thẻ tối ưu.',
-                'sort_order': 9,
+                'sort_order': 10,
                 'visible': True
             }
         ]

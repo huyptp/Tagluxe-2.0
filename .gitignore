@@ -55,6 +55,7 @@ storage/backups/*
 # 5. Private Customer Files & Uploaded Assets
 storage/*
 !storage/.gitkeep
+!storage/demo_images.json
 !storage/backups/
 !storage/backups/.gitkeep
 storage/private_requests/*
