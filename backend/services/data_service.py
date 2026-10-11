@@ -1928,7 +1928,7 @@ DEFAULT_DEMO_IMAGES = {
         'title': 'Thẻ PVC Đục Lỗ Oval (Con Nhộng)',
         'category': 'pvc',
         'key': 'capsule',
-        'image': '/static/images/demo/demo_the_pvc_lo_ovan.jpg',
+        'image': '/static/uploads/demo_pvc_oval_hole_a3f23833.jpg',
         'pill': 'Đục Lỗ Con Nhộng (Oval)',
         'caption': 'Lỗ dẹt 3x15mm chuẩn cơ khí dập giữa đỉnh thẻ, giúp móc cài giữ thẻ luôn thẳng đứng khi đeo.',
         'modal_title': 'Gia công đục lỗ con nhộng Oval chống xoay — Demo 3D'
@@ -1948,7 +1948,7 @@ DEFAULT_DEMO_IMAGES = {
         'title': 'Vỏ Silicon Dẻo (Dáng Đứng Dọc)',
         'category': 'holder',
         'key': 'silicone_vertical',
-        'image': '/static/images/demo/demo_vo_silicone_doc.jpg',
+        'image': '/static/uploads/demo_holder_silicone_vertical_38aecbf6.jpg',
         'pill': 'Vỏ Silicon Dọc (Khóa Zip Chống Nước)',
         'caption': 'Vỏ silicon dẻo trong suốt dáng đứng dọc có khóa zip chống nước bảo vệ thẻ tối ưu.',
         'modal_title': 'Vỏ Silicon Dẻo Dáng Đứng Dọc — Demo 3D'
@@ -1958,7 +1958,7 @@ DEFAULT_DEMO_IMAGES = {
         'title': 'Vỏ Silicon Dẻo (Dáng Nằm Ngang)',
         'category': 'holder',
         'key': 'silicone_horizontal',
-        'image': '/static/images/demo/demo_vo_silicone_ngang.jpg',
+        'image': '/static/uploads/demo_holder_silicone_horizontal_54f008a3.jpg',
         'pill': 'Vỏ Silicon Ngang (Khóa Zip Chống Nước)',
         'caption': 'Vỏ silicon dẻo trong suốt dáng nằm ngang có khóa zip chống nước bảo vệ thẻ tối ưu.',
         'modal_title': 'Vỏ Silicon Dẻo Dáng Nằm Ngang — Demo 3D'
@@ -1969,7 +1969,7 @@ DEFAULT_DEMO_IMAGES = {
         'category': 'holder',
         'material': 'plain',
         'key': 'plain_vertical',
-        'image': '/static/images/demo/demo_vo_abs_tron_doc.jpg',
+        'image': '/static/uploads/demo_holder_plain_vertical_fe8789f4.jpg',
         'pill': 'Vỏ ABS Trơn Dọc (Chuẩn ATM)',
         'caption': 'Vỏ nhựa ABS màu trơn không in dáng đứng dọc chuẩn thẻ ATM, bảo vệ thẻ chống gãy gập.',
         'modal_title': 'Vỏ nhựa ABS trơn dáng đứng dọc — Demo 3D'
@@ -1980,7 +1980,7 @@ DEFAULT_DEMO_IMAGES = {
         'category': 'holder',
         'material': 'plain',
         'key': 'plain_horizontal',
-        'image': '/static/images/demo/demo_vo_abs_tron_ngang.jpg',
+        'image': '/static/uploads/demo_holder_plain_horizontal_f01763d7.jpg',
         'pill': 'Vỏ ABS Trơn Ngang (Chuẩn ATM)',
         'caption': 'Vỏ nhựa ABS màu trơn không in dáng nằm ngang sang trọng, bảo vệ thẻ tối ưu.',
         'modal_title': 'Vỏ nhựa ABS trơn dáng nằm ngang — Demo 3D'
@@ -1991,7 +1991,7 @@ DEFAULT_DEMO_IMAGES = {
         'category': 'holder',
         'material': 'custom',
         'key': 'custom_vertical',
-        'image': '/static/images/demo/demo_vo_abs_in_doc.jpg',
+        'image': '/static/uploads/demo_holder_custom_vertical_66db4e63.jpg',
         'pill': 'Vỏ ABS In UV Dọc (Theo Yêu Cầu)',
         'caption': 'Vỏ nhựa ABS in UV sắc nét logo và nhận diện thương hiệu dáng đứng dọc theo thiết kế riêng.',
         'modal_title': 'Vỏ nhựa ABS in UV dáng đứng dọc — Demo 3D'
@@ -2002,7 +2002,7 @@ DEFAULT_DEMO_IMAGES = {
         'category': 'holder',
         'material': 'custom',
         'key': 'custom_horizontal',
-        'image': '/static/images/demo/demo_vo_abs_in_ngang.jpg',
+        'image': '/static/uploads/demo_holder_custom_horizontal_b989d184.jpg',
         'pill': 'Vỏ ABS In UV Ngang (Theo Yêu Cầu)',
         'caption': 'Vỏ nhựa ABS in UV sắc nét logo và nhận diện thương hiệu dáng nằm ngang theo thiết kế riêng.',
         'modal_title': 'Vỏ nhựa ABS in UV dáng nằm ngang — Demo 3D'
@@ -2032,7 +2032,7 @@ DEFAULT_DEMO_IMAGES = {
         'title': 'Dây Đeo Thẻ In Chuyển Nhiệt',
         'category': 'lanyard',
         'key': 'default',
-        'image': '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg',
+        'image': '/static/uploads/demo_lanyard_20_71df0b6c.jpg',
         'pill': 'Dây Đeo Thẻ In Chuyển Nhiệt',
         'caption': 'Dây lụa satin 2.0cm tiêu chuẩn sắc nét, phối móc kim loại cao cấp.',
         'modal_title': 'Mẫu Dây Đeo Thẻ In Chuyển Nhiệt — Demo 3D'
@@ -2042,7 +2042,7 @@ DEFAULT_DEMO_IMAGES = {
         'title': 'Dây Đeo Thẻ Bản 1.5 cm',
         'category': 'lanyard',
         'key': '1.5',
-        'image': '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg',
+        'image': '/static/uploads/demo_lanyard_15_014e18b7.jpg',
         'pill': 'Dây Đeo Thẻ Bản 1.5 cm',
         'caption': 'Dây in nhiệt lụa satin 1.5cm nhỏ gọn, tinh tế, phối móc kim loại cao cấp.',
         'modal_title': 'Mẫu Dây Đeo Thẻ Bản 1.5cm — Demo 3D'
@@ -2052,7 +2052,7 @@ DEFAULT_DEMO_IMAGES = {
         'title': 'Dây Đeo Thẻ Bản 2.0 cm (Chuẩn)',
         'category': 'lanyard',
         'key': '2.0',
-        'image': '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg',
+        'image': '/static/uploads/demo_lanyard_20_71df0b6c.jpg',
         'pill': 'Dây Đeo Thẻ Bản 2.0 cm (Chuẩn)',
         'caption': 'Dây lụa satin 2.0cm tiêu chuẩn sắc nét, phối móc kim loại cao cấp.',
         'modal_title': 'Mẫu Dây Đeo Thẻ Bản 2.0cm — Demo 3D'
@@ -2062,7 +2062,7 @@ DEFAULT_DEMO_IMAGES = {
         'title': 'Dây Đeo Thẻ Bản 2.5 cm',
         'category': 'lanyard',
         'key': '2.5',
-        'image': '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg',
+        'image': '/static/uploads/demo_lanyard_25_efd92cb3.jpg',
         'pill': 'Dây Đeo Thẻ Bản 2.5 cm',
         'caption': 'Dây in nhiệt lụa satin 2.5cm to bản sang trọng, phối móc kim loại cao cấp.',
         'modal_title': 'Mẫu Dây Đeo Thẻ Bản 2.5cm — Demo 3D'

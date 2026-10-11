@@ -1,0 +1,156 @@
+{
+  "holder_custom_horizontal": {
+    "caption": "Vỏ nhựa ABS in UV sắc nét logo và nhận diện thương hiệu dáng nằm ngang theo thiết kế riêng.",
+    "category": "holder",
+    "id": "holder_custom_horizontal",
+    "image": "/static/uploads/demo_holder_custom_horizontal_b989d184.jpg",
+    "key": "custom_horizontal",
+    "material": "custom",
+    "modal_title": "Vỏ nhựa ABS in UV dáng nằm ngang — Demo 3D",
+    "pill": "Vỏ ABS In UV Ngang (Theo Yêu Cầu)",
+    "title": "Vỏ Nhựa ABS In UV (Dáng Nằm Ngang)"
+  },
+  "holder_custom_vertical": {
+    "caption": "Vỏ nhựa ABS in UV sắc nét logo và nhận diện thương hiệu dáng đứng dọc theo thiết kế riêng.",
+    "category": "holder",
+    "id": "holder_custom_vertical",
+    "image": "/static/uploads/demo_holder_custom_vertical_66db4e63.jpg",
+    "key": "custom_vertical",
+    "material": "custom",
+    "modal_title": "Vỏ nhựa ABS in UV dáng đứng dọc — Demo 3D",
+    "pill": "Vỏ ABS In UV Dọc (Theo Yêu Cầu)",
+    "title": "Vỏ Nhựa ABS In UV (Dáng Đứng Dọc)"
+  },
+  "holder_horizontal": {
+    "caption": "Vỏ thẻ dáng nằm ngang sang trọng, mở rộng diện tích thể hiện logo công ty.",
+    "category": "holder",
+    "id": "holder_horizontal",
+    "image": "/static/images/demo/demo_vo_abs_tron_ngang.jpg",
+    "key": "horizontal",
+    "modal_title": "Vỏ đựng thẻ nhựa ABS dáng nằm ngang — Demo 3D",
+    "pill": "Vỏ Nhựa ABS Ngang (Chuẩn ATM)",
+    "title": "Vỏ Nhựa ABS (Dáng Nằm Ngang)"
+  },
+  "holder_plain_horizontal": {
+    "caption": "Vỏ nhựa ABS màu trơn không in dáng nằm ngang sang trọng, bảo vệ thẻ tối ưu.",
+    "category": "holder",
+    "id": "holder_plain_horizontal",
+    "image": "/static/uploads/demo_holder_plain_horizontal_f01763d7.jpg",
+    "key": "plain_horizontal",
+    "material": "plain",
+    "modal_title": "Vỏ nhựa ABS trơn dáng nằm ngang — Demo 3D",
+    "pill": "Vỏ ABS Trơn Ngang (Chuẩn ATM)",
+    "title": "Vỏ Nhựa ABS Trơn (Dáng Nằm Ngang)"
+  },
+  "holder_plain_vertical": {
+    "caption": "Vỏ nhựa ABS màu trơn không in dáng đứng dọc chuẩn thẻ ATM, bảo vệ thẻ chống gãy gập.",
+    "category": "holder",
+    "id": "holder_plain_vertical",
+    "image": "/static/uploads/demo_holder_plain_vertical_fe8789f4.jpg",
+    "key": "plain_vertical",
+    "material": "plain",
+    "modal_title": "Vỏ nhựa ABS trơn dáng đứng dọc — Demo 3D",
+    "pill": "Vỏ ABS Trơn Dọc (Chuẩn ATM)",
+    "title": "Vỏ Nhựa ABS Trơn (Dáng Đứng Dọc)"
+  },
+  "holder_silicone_horizontal": {
+    "caption": "Vỏ silicon dẻo trong suốt dáng nằm ngang có khóa zip chống nước bảo vệ thẻ tối ưu.",
+    "category": "holder",
+    "id": "holder_silicone_horizontal",
+    "image": "/static/uploads/demo_holder_silicone_horizontal_54f008a3.jpg",
+    "key": "silicone_horizontal",
+    "modal_title": "Vỏ Silicon Dẻo Dáng Nằm Ngang — Demo 3D",
+    "pill": "Vỏ Silicon Ngang (Khóa Zip Chống Nước)",
+    "title": "Vỏ Silicon Dẻo (Dáng Nằm Ngang)"
+  },
+  "holder_silicone_vertical": {
+    "caption": "Vỏ silicon dẻo trong suốt dáng đứng dọc có khóa zip chống nước bảo vệ thẻ tối ưu.",
+    "category": "holder",
+    "id": "holder_silicone_vertical",
+    "image": "/static/uploads/demo_holder_silicone_vertical_38aecbf6.jpg",
+    "key": "silicone_vertical",
+    "modal_title": "Vỏ Silicon Dẻo Dáng Đứng Dọc — Demo 3D",
+    "pill": "Vỏ Silicon Dọc (Khóa Zip Chống Nước)",
+    "title": "Vỏ Silicon Dẻo (Dáng Đứng Dọc)"
+  },
+  "holder_vertical": {
+    "caption": "Vỏ thẻ dáng đứng dọc chuẩn thẻ học sinh, sinh viên, nhân viên. Chống gãy gập thẻ tối ưu.",
+    "category": "holder",
+    "id": "holder_vertical",
+    "image": "/static/images/demo/demo_vo_abs_tron_doc.jpg",
+    "key": "vertical",
+    "modal_title": "Vỏ đựng thẻ nhựa ABS dáng đứng dọc — Demo 3D",
+    "pill": "Vỏ Nhựa ABS Dọc (Chuẩn ATM)",
+    "title": "Vỏ Nhựa ABS (Dáng Đứng Dọc)"
+  },
+  "lanyard_15": {
+    "caption": "Dây in nhiệt lụa satin 1.5cm nhỏ gọn, tinh tế, phối móc kim loại cao cấp.",
+    "category": "lanyard",
+    "id": "lanyard_15",
+    "image": "/static/uploads/demo_lanyard_15_014e18b7.jpg",
+    "key": "1.5",
+    "modal_title": "Mẫu Dây Đeo Thẻ Bản 1.5cm — Demo 3D",
+    "pill": "Dây Đeo Thẻ Bản 1.5 cm",
+    "title": "Dây Đeo Thẻ Bản 1.5 cm"
+  },
+  "lanyard_20": {
+    "caption": "Dây lụa satin 2.0cm tiêu chuẩn sắc nét, phối móc kim loại cao cấp.",
+    "category": "lanyard",
+    "id": "lanyard_20",
+    "image": "/static/uploads/demo_lanyard_20_71df0b6c.jpg",
+    "key": "2.0",
+    "modal_title": "Mẫu Dây Đeo Thẻ Bản 2.0cm — Demo 3D",
+    "pill": "Dây Đeo Thẻ Bản 2.0 cm (Chuẩn)",
+    "title": "Dây Đeo Thẻ Bản 2.0 cm (Chuẩn)"
+  },
+  "lanyard_25": {
+    "caption": "Dây in nhiệt lụa satin 2.5cm to bản sang trọng, phối móc kim loại cao cấp.",
+    "category": "lanyard",
+    "id": "lanyard_25",
+    "image": "/static/uploads/demo_lanyard_25_efd92cb3.jpg",
+    "key": "2.5",
+    "modal_title": "Mẫu Dây Đeo Thẻ Bản 2.5cm — Demo 3D",
+    "pill": "Dây Đeo Thẻ Bản 2.5 cm",
+    "title": "Dây Đeo Thẻ Bản 2.5 cm"
+  },
+  "lanyard_default": {
+    "caption": "Dây lụa satin 2.0cm tiêu chuẩn sắc nét, phối móc kim loại cao cấp.",
+    "category": "lanyard",
+    "id": "lanyard_default",
+    "image": "/static/uploads/demo_lanyard_20_71df0b6c.jpg",
+    "key": "default",
+    "modal_title": "Mẫu Dây Đeo Thẻ In Chuyển Nhiệt — Demo 3D",
+    "pill": "Dây Đeo Thẻ In Chuyển Nhiệt",
+    "title": "Dây Đeo Thẻ In Chuyển Nhiệt"
+  },
+  "pvc_no_hole": {
+    "caption": "Thẻ nguyên khối bo góc tiêu chuẩn, phù hợp lồng trong vỏ hoặc bao đựng thẻ.",
+    "category": "pvc",
+    "id": "pvc_no_hole",
+    "image": "/static/images/demo/demo_the_pvc_khong_duc_lo.jpg",
+    "key": "none",
+    "modal_title": "Thẻ nhựa PVC nguyên bản không đục lỗ — Demo 3D",
+    "pill": "Thẻ Nguyên Bản (Không Đục Lỗ)",
+    "title": "Thẻ PVC Không Đục Lỗ"
+  },
+  "pvc_oval_hole": {
+    "caption": "Lỗ dẹt 3x15mm chuẩn cơ khí dập giữa đỉnh thẻ, giúp móc cài giữ thẻ luôn thẳng đứng khi đeo.",
+    "category": "pvc",
+    "id": "pvc_oval_hole",
+    "image": "/static/uploads/demo_pvc_oval_hole_a3f23833.jpg",
+    "key": "capsule",
+    "modal_title": "Gia công đục lỗ con nhộng Oval chống xoay — Demo 3D",
+    "pill": "Đục Lỗ Con Nhộng (Oval)",
+    "title": "Thẻ PVC Đục Lỗ Oval (Con Nhộng)"
+  },
+  "pvc_round_hole": {
+    "caption": "Đục lỗ tròn chuẩn xác, mép cắt sắc gọn không nứt vỡ thẻ, tương thích nhiều loại móc kẹp.",
+    "category": "pvc",
+    "id": "pvc_round_hole",
+    "image": "/static/images/demo/demo_the_pvc_lo_tron.jpg",
+    "key": "round",
+    "modal_title": "Gia công đục lỗ tròn tiêu chuẩn 5mm — Demo 3D",
+    "pill": "Đục Lỗ Tròn (5mm)",
+    "title": "Thẻ PVC Đục Lỗ Tròn (5mm)"
+  }
+}
