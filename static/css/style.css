@@ -468,7 +468,8 @@ a {
 }
 
 .section-cta-group {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
@@ -476,9 +477,7 @@ a {
 }
 @media (max-width: 576px) {
     .section-cta-group {
-        display: flex;
         flex-direction: column;
-        width: 100%;
     }
     .section-cta-group .btn {
         width: 100%;
