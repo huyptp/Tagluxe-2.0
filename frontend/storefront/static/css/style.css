@@ -222,11 +222,14 @@ a {
     justify-content: space-between;
     align-items: center;
     height: 70px;
+    gap: 16px;
 }
 .logo {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 .logo img {
     height: 40px;
@@ -246,11 +249,13 @@ a {
     display: block;
     line-height: 1;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 .nav {
     display: flex;
     align-items: center;
     gap: 24px;
+    flex-wrap: nowrap;
 }
 .nav a {
     font-size: 0.95rem;
@@ -262,6 +267,7 @@ a {
     transition: color 0.25s ease;
     display: inline-flex;
     align-items: center;
+    white-space: nowrap;
 }
 .nav a::after {
     content: '';
