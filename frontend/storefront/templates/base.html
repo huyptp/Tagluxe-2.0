@@ -700,8 +700,16 @@
             });
         });
 
+        // Close desktop Products dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (navProductsDropdown && !navProductsDropdown.contains(e.target)) {
+                navProductsDropdown.classList.remove('open');
+                if (navProductsTrigger) navProductsTrigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
         // Campaign Banner Popup Controller (1 lần mỗi phiên duyệt web)
-        {% if campaign_banner and campaign_banner.enabled and campaign_banner.image %}
+        {% if campaign_banner and campaign_banner.enabled and (campaign_banner.image_desktop or campaign_banner.image_mobile or campaign_banner.image) %}
         (function() {
             const isClosed = sessionStorage.getItem('tagluxe_campaign_banner_closed');
             if (!isClosed) {
