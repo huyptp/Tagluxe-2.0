@@ -1605,9 +1605,17 @@
                 Mã: <strong id="modalQuoteId" style="color:#0369a1; font-family:monospace; background:#e0f2fe; padding:2px 8px; border-radius:6px;">#TL-0000</strong>
             </p>
             <div id="modalSummaryBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px; text-align:left; font-size:0.86rem; color:#334155; margin-bottom:20px; line-height:1.6;"></div>
-            <a id="modalZaloLink" href="https://zalo.me/0343019097" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:48px; background:#0068ff; color:#ffffff; border-radius:12px; font-weight:800; font-size:0.98rem; text-decoration:none; box-shadow:0 8px 20px rgba(0,104,255,0.3); margin-bottom:10px;">
-                Chat Zalo Ngay Để Nhận Demo 2D
-            </a>
+            <div style="font-size:0.82rem; font-weight:700; color:#475569; margin-bottom:8px;">Chọn chuyên viên Zalo để nhận Demo 2D ngay:</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                <a id="modalZaloLink" href="https://zalo.me/0343019097" target="_blank" rel="noopener" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; width:100%; padding:10px 8px; background:#0068ff; color:#ffffff; border-radius:12px; font-weight:800; font-size:0.88rem; text-decoration:none; box-shadow:0 6px 16px rgba(0,104,255,0.25);">
+                    <span>Zalo Quốc Huy</span>
+                    <span style="font-size:0.76rem; font-weight:600; opacity:0.92;">0343 019 097</span>
+                </a>
+                <a id="modalZaloLink2" href="https://zalo.me/0355314012" target="_blank" rel="noopener" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; width:100%; padding:10px 8px; background:#0284c7; color:#ffffff; border-radius:12px; font-weight:800; font-size:0.88rem; text-decoration:none; box-shadow:0 6px 16px rgba(2,132,199,0.25);">
+                    <span>Zalo Thanh Thảo</span>
+                    <span style="font-size:0.76rem; font-weight:600; opacity:0.92;">0355 314 012</span>
+                </a>
+            </div>
             <button type="button" onclick="closeQuoteModal()" style="width:100%; height:42px; background:transparent; border:1.5px solid #cbd5e1; border-radius:12px; color:#64748b; font-weight:600; font-size:0.88rem; cursor:pointer;">
                 Đóng cửa sổ
             </button>
@@ -2762,6 +2770,10 @@
                     `TagLuxe tư vấn và gửi demo 2D giúp mình nhé!`
                 );
                 document.getElementById('modalZaloLink').href = `https://zalo.me/0343019097?text=${zaloMsg}`;
+                const modalZaloLink2 = document.getElementById('modalZaloLink2');
+                if (modalZaloLink2) {
+                    modalZaloLink2.href = `https://zalo.me/0355314012?text=${zaloMsg}`;
+                }
 
                 document.getElementById('quoteSuccessModal').style.display = 'flex';
             } else {

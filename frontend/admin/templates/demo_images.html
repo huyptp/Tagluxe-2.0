@@ -255,6 +255,21 @@
         background: #94a3b8;
         cursor: not-allowed;
     }
+    .btn-reset-demo-img {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fca5a5;
+        padding: 9px 10px;
+        border-radius: 8px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .btn-reset-demo-img:hover {
+        background: #fecaca;
+        color: #b91c1c;
+    }
 
     .demo-url-box {
         margin-bottom: 10px;
@@ -405,6 +420,9 @@
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_lanyard_20').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
                         </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('lanyard_20')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
+                        </button>
                     </div>
                     <div class="demo-url-box">
                         <input type="text" name="url_lanyard_20" id="url_lanyard_20" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg' }}" placeholder="Đường dẫn ảnh...">
@@ -437,6 +455,9 @@
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_lanyard_15').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
                         </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('lanyard_15')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
+                        </button>
                     </div>
                     <div class="demo-url-box">
                         <input type="text" name="url_lanyard_15" id="url_lanyard_15" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_day_deo_the_chuyen_nhiet.jpg' }}" placeholder="Đường dẫn ảnh...">
@@ -468,6 +489,9 @@
                         <input type="file" id="file_lanyard_25" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'lanyard_25')">
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_lanyard_25').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('lanyard_25')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
                         </button>
                     </div>
                     <div class="demo-url-box">
@@ -506,6 +530,9 @@
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_pvc_no_hole').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
                         </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('pvc_no_hole')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
+                        </button>
                     </div>
                     <div class="demo-url-box">
                         <input type="text" name="url_pvc_no_hole" id="url_pvc_no_hole" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_the_pvc_khong_duc_lo.jpg' }}" placeholder="Đường dẫn ảnh...">
@@ -536,6 +563,9 @@
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_pvc_oval_hole').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
                         </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('pvc_oval_hole')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
+                        </button>
                     </div>
                     <div class="demo-url-box">
                         <input type="text" name="url_pvc_oval_hole" id="url_pvc_oval_hole" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_the_pvc_lo_ovan.jpg' }}" placeholder="Đường dẫn ảnh...">
@@ -565,6 +595,9 @@
                         <input type="file" id="file_pvc_round_hole" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'pvc_round_hole')">
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_pvc_round_hole').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('pvc_round_hole')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
                         </button>
                     </div>
                     <div class="demo-url-box">
@@ -608,6 +641,9 @@
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_silicone_vertical').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
                         </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('holder_silicone_vertical')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
+                        </button>
                     </div>
                     <div class="demo-url-box">
                         <input type="text" name="url_holder_silicone_vertical" id="url_holder_silicone_vertical" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_silicone_doc.jpg' }}" placeholder="Đường dẫn ảnh...">
@@ -637,6 +673,9 @@
                         <input type="file" id="file_holder_silicone_horizontal" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_silicone_horizontal')">
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_silicone_horizontal').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('holder_silicone_horizontal')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
                         </button>
                     </div>
                     <div class="demo-url-box">
@@ -676,6 +715,9 @@
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_plain_vertical').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
                         </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('holder_plain_vertical')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
+                        </button>
                     </div>
                     <div class="demo-url-box">
                         <input type="text" name="url_holder_plain_vertical" id="url_holder_plain_vertical" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_abs_tron_doc.jpg' }}" placeholder="Đường dẫn ảnh...">
@@ -705,6 +747,9 @@
                         <input type="file" id="file_holder_plain_horizontal" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_plain_horizontal')">
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_plain_horizontal').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('holder_plain_horizontal')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
                         </button>
                     </div>
                     <div class="demo-url-box">
@@ -744,6 +789,9 @@
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_custom_vertical').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
                         </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('holder_custom_vertical')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
+                        </button>
                     </div>
                     <div class="demo-url-box">
                         <input type="text" name="url_holder_custom_vertical" id="url_holder_custom_vertical" class="demo-url-input" value="{{ item.image or '/static/images/demo/demo_vo_abs_in_doc.jpg' }}" placeholder="Đường dẫn ảnh...">
@@ -773,6 +821,9 @@
                         <input type="file" id="file_holder_custom_horizontal" class="demo-file-input" accept="image/*" onchange="autoUploadFile(this, 'holder_custom_horizontal')">
                         <button type="button" class="btn-upload-direct" onclick="document.getElementById('file_holder_custom_horizontal').click()">
                             <i data-lucide="upload-cloud" style="width: 16px; height: 16px;"></i> Đổi Ảnh Mới
+                        </button>
+                        <button type="button" class="btn-reset-demo-img" onclick="resetDemoImageToDefault('holder_custom_horizontal')" title="Xóa ảnh tải nhầm, khôi phục ảnh mặc định">
+                            ✕ Xóa ảnh tải nhầm
                         </button>
                     </div>
                     <div class="demo-url-box">
@@ -861,6 +912,37 @@
             }
         } catch (err) {
             showToast('Lỗi kết nối máy chủ khi tải ảnh', true);
+        }
+    }
+
+    async function resetDemoImageToDefault(key) {
+        if (!confirm('Bạn có chắc muốn xóa ảnh vừa tải nhầm của mục này và khôi phục về ảnh mặc định ban đầu không?')) {
+            return;
+        }
+        const thumb = document.getElementById('thumb_' + key);
+        const urlInput = document.getElementById('url_' + key);
+        const fileInput = document.getElementById('file_' + key);
+        if (fileInput) fileInput.value = '';
+
+        const formData = new FormData();
+        formData.append('csrf_token', '{{ csrf_token }}');
+
+        try {
+            const res = await fetch(`/admin/demo-images/reset/${encodeURIComponent(key)}`, {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (urlInput) urlInput.value = data.image_url;
+                if (thumb) thumb.src = data.image_url;
+                showToast(data.message || 'Đã xóa ảnh tải nhầm và khôi phục mặc định!');
+            } else {
+                showToast('Lỗi: ' + (data.message || 'Không thể khôi phục ảnh'), true);
+            }
+        } catch (err) {
+            showToast('Lỗi kết nối máy chủ khi xóa ảnh', true);
         }
     }
 </script>

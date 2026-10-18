@@ -18,8 +18,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         .admin-header h1 { font-size: 1.25rem; margin: 0; }
+        .admin-nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border-bottom: 2px solid transparent;
+        }
+        .admin-nav-link.active {
+            background: rgba(255, 255, 255, 0.12);
+            border-bottom-color: #d4af37;
+            font-weight: 700;
+        }
         .admin-container {
             max-width: 1280px;
             margin: 40px auto;
@@ -56,20 +74,39 @@
         .flash-message { padding: 15px; border-radius: var(--radius-md); margin-bottom: 10px; font-weight: 500;}
         .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
         .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;}
+        .flash-info { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;}
     </style>
 </head>
 <body>
     {% if session.get('logged_in') %}
+    {% set curr_path = request.path %}
     <div class="admin-header">
         <h1>TagLuxe Admin Dashboard</h1>
-        <div class="nav" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-            <a href="/admin/products" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="package" style="width: 18px; height: 18px;"></i> Sản phẩm</a>
-            <a href="/admin/quotes" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="calculator" style="width: 18px; height: 18px;"></i> Báo giá</a>
-            <a href="/admin/accessories" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="layers" style="width: 18px; height: 18px;"></i> Bảng giá & Phụ kiện</a>
-            <a href="/admin/demo-images" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="image" style="width: 18px; height: 18px;"></i> Ảnh Demo Báo Giá</a>
-            <a href="/admin/campaign-banner" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500;"><i data-lucide="flag" style="width: 18px; height: 18px;"></i> Banner Chiến Dịch</a>
-            <a href="/" target="_blank" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500; opacity: 0.85;"><i data-lucide="external-link" style="width: 16px; height: 16px;"></i> Xem website</a>
-            <a href="/admin/logout" class="text-white" style="display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 500; opacity: 0.85;"><i data-lucide="log-out" style="width: 16px; height: 16px;"></i> Đăng xuất</a>
+        <div class="nav" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <a href="/admin/dashboard" class="text-white admin-nav-link {% if curr_path == '/admin/' or curr_path.startswith('/admin/dashboard') %}active{% endif %}">
+                <i data-lucide="bar-chart-2" style="width: 18px; height: 18px;"></i> Tổng quan
+            </a>
+            <a href="/admin/products" class="text-white admin-nav-link {% if curr_path.startswith('/admin/products') %}active{% endif %}">
+                <i data-lucide="package" style="width: 18px; height: 18px;"></i> Sản phẩm
+            </a>
+            <a href="/admin/quotes" class="text-white admin-nav-link {% if curr_path.startswith('/admin/quotes') %}active{% endif %}">
+                <i data-lucide="calculator" style="width: 18px; height: 18px;"></i> Báo giá
+            </a>
+            <a href="/admin/accessories" class="text-white admin-nav-link {% if curr_path.startswith('/admin/accessories') %}active{% endif %}">
+                <i data-lucide="layers" style="width: 18px; height: 18px;"></i> Bảng giá & Phụ kiện
+            </a>
+            <a href="/admin/demo-images" class="text-white admin-nav-link {% if curr_path.startswith('/admin/demo-images') %}active{% endif %}">
+                <i data-lucide="image" style="width: 18px; height: 18px;"></i> Ảnh Demo Báo Giá
+            </a>
+            <a href="/admin/campaign-banner" class="text-white admin-nav-link {% if curr_path.startswith('/admin/campaign-banner') %}active{% endif %}">
+                <i data-lucide="flag" style="width: 18px; height: 18px;"></i> Banner Chiến Dịch
+            </a>
+            <a href="/" target="_blank" class="text-white admin-nav-link" style="opacity: 0.85;">
+                <i data-lucide="external-link" style="width: 16px; height: 16px;"></i> Xem website
+            </a>
+            <a href="/admin/logout" class="text-white admin-nav-link" style="opacity: 0.85;">
+                <i data-lucide="log-out" style="width: 16px; height: 16px;"></i> Đăng xuất
+            </a>
         </div>
     </div>
     {% endif %}

@@ -538,6 +538,12 @@
                         </p>
                         <p>Kéo thả tệp hoặc bấm chọn ảnh (JPG, PNG, WEBP)</p>
                     </div>
+                    <div id="desktopStagedClearBar" style="display:none; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; background:#fff1f2; border:1px solid #fecdd3; border-radius:6px; padding:6px 10px;">
+                        <span id="desktopStagedFileName" style="font-size:0.78rem; color:#9f1239; font-weight:600;">Đã chọn tệp mới</span>
+                        <button type="button" class="btn-delete-single" onclick="clearStagedBannerFile('desktop')">
+                            ✕ Hủy tệp vừa chọn
+                        </button>
+                    </div>
 
                     {% if banner.image_desktop %}
                     <div class="current-thumb-bar">
@@ -573,6 +579,12 @@
                             {% if banner.image_mobile %}Bấm để thay ảnh Mobile mới{% else %}Bấm để chọn ảnh Banner Mobile{% endif %}
                         </p>
                         <p>Kéo thả tệp hoặc bấm chọn ảnh (JPG, PNG, WEBP)</p>
+                    </div>
+                    <div id="mobileStagedClearBar" style="display:none; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; background:#fff1f2; border:1px solid #fecdd3; border-radius:6px; padding:6px 10px;">
+                        <span id="mobileStagedFileName" style="font-size:0.78rem; color:#9f1239; font-weight:600;">Đã chọn tệp mới</span>
+                        <button type="button" class="btn-delete-single" onclick="clearStagedBannerFile('mobile')">
+                            ✕ Hủy tệp vừa chọn
+                        </button>
                     </div>
 
                     {% if banner.image_mobile %}
@@ -640,7 +652,7 @@
                         <i data-lucide="x" style="width: 14px; height: 14px;"></i>
                     </div>
                     <div class="preview-img-box">
-                        <img id="livePreviewImgDesktop" src="{{ banner.image_desktop or banner.image }}" alt="Desktop Banner">
+                        <img id="livePreviewImgDesktop" data-orig-src="{{ banner.image_desktop or banner.image or '' }}" src="{{ banner.image_desktop or banner.image }}" alt="Desktop Banner">
                     </div>
                 </div>
 
@@ -650,7 +662,7 @@
                         <i data-lucide="x" style="width: 14px; height: 14px;"></i>
                     </div>
                     <div class="preview-img-box">
-                        <img id="livePreviewImgMobile" src="{{ banner.image_mobile or banner.image_desktop or banner.image }}" alt="Mobile Banner">
+                        <img id="livePreviewImgMobile" data-orig-src="{{ banner.image_mobile or banner.image_desktop or banner.image or '' }}" src="{{ banner.image_mobile or banner.image_desktop or banner.image }}" alt="Mobile Banner">
                     </div>
                 </div>
 
@@ -738,11 +750,19 @@
 
                 if (device === 'desktop') {
                     document.getElementById('desktopFileNameLabel').textContent = 'Đã chọn Desktop: ' + file.name;
+                    const bar = document.getElementById('desktopStagedClearBar');
+                    const nameSpan = document.getElementById('desktopStagedFileName');
+                    if (nameSpan) nameSpan.textContent = 'Đang chọn: ' + file.name;
+                    if (bar) bar.style.display = 'flex';
                     const img = document.getElementById('livePreviewImgDesktop');
                     img.src = e.target.result;
                     switchPreviewDevice('desktop');
                 } else {
                     document.getElementById('mobileFileNameLabel').textContent = 'Đã chọn Mobile: ' + file.name;
+                    const bar = document.getElementById('mobileStagedClearBar');
+                    const nameSpan = document.getElementById('mobileStagedFileName');
+                    if (nameSpan) nameSpan.textContent = 'Đang chọn: ' + file.name;
+                    if (bar) bar.style.display = 'flex';
                     const img = document.getElementById('livePreviewImgMobile');
                     img.src = e.target.result;
                     switchPreviewDevice('mobile');
@@ -753,6 +773,30 @@
                 if (sw) sw.removeAttribute('disabled');
             };
             reader.readAsDataURL(file);
+        }
+    }
+
+    function clearStagedBannerFile(device) {
+        if (device === 'desktop') {
+            const input = document.getElementById('bannerDesktopInput');
+            if (input) input.value = '';
+            const bar = document.getElementById('desktopStagedClearBar');
+            if (bar) bar.style.display = 'none';
+            const img = document.getElementById('livePreviewImgDesktop');
+            const orig = img ? (img.getAttribute('data-orig-src') || '') : '';
+            if (img) img.setAttribute('src', orig);
+            document.getElementById('desktopFileNameLabel').textContent = orig ? 'Bấm để thay ảnh Desktop mới' : 'Bấm để chọn ảnh Banner Desktop';
+            switchPreviewDevice('desktop');
+        } else {
+            const input = document.getElementById('bannerMobileInput');
+            if (input) input.value = '';
+            const bar = document.getElementById('mobileStagedClearBar');
+            if (bar) bar.style.display = 'none';
+            const img = document.getElementById('livePreviewImgMobile');
+            const orig = img ? (img.getAttribute('data-orig-src') || '') : '';
+            if (img) img.setAttribute('src', orig);
+            document.getElementById('mobileFileNameLabel').textContent = orig ? 'Bấm để thay ảnh Mobile mới' : 'Bấm để chọn ảnh Banner Mobile';
+            switchPreviewDevice('mobile');
         }
     }
 

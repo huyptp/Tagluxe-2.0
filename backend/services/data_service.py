@@ -2114,6 +2114,21 @@ def save_demo_images_config(data):
         return False, str(e)
 
 
+def reset_single_demo_image(key):
+    """Khôi phục ảnh demo về mặc định cho mục key (khi admin lỡ tải nhầm ảnh)"""
+    if key not in DEFAULT_DEMO_IMAGES:
+        return False, "Mục ảnh demo không hợp lệ"
+    default_img = DEFAULT_DEMO_IMAGES[key].get('image', '')
+    payload = {key: {'image': default_img}}
+    if key == 'lanyard_20':
+        payload['lanyard_default'] = {'image': DEFAULT_DEMO_IMAGES.get('lanyard_default', {}).get('image', default_img)}
+    ok, _ = save_demo_images_config(payload)
+    if ok:
+        return True, default_img
+    return False, "Không thể lưu cấu hình khôi phục"
+
+
+
 # ==================== CẤU HÌNH BANNER QUẢNG CÁO CHIẾN DỊCH (RESPONSIVE) ====================
 
 DEFAULT_CAMPAIGN_BANNER = {

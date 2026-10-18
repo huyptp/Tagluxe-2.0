@@ -69,6 +69,7 @@ frontend/storefront/static/uploads/requests/*
 .gemini/
 .system_generated/
 .agents/
+backup/
 
 # 7. Operating System & IDE Configs
 .DS_Store

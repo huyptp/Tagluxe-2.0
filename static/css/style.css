@@ -250,7 +250,7 @@ a {
 .nav {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
 }
 .nav a {
     font-size: 0.95rem;
@@ -284,6 +284,90 @@ a {
     transform-origin: left;
 }
 
+/* Products Dropdown in Header Nav */
+.nav-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.nav-dropdown-trigger {
+    gap: 5px;
+    cursor: pointer;
+}
+.nav-caret {
+    transition: transform 0.22s ease;
+    opacity: 0.75;
+}
+.nav-dropdown:hover .nav-caret,
+.nav-dropdown.open .nav-caret {
+    transform: rotate(180deg);
+}
+.nav-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: -14px;
+    min-width: 265px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.nav-dropdown::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 14px;
+}
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.nav-dropdown-menu a {
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+.nav-dropdown-menu a::after {
+    display: none !important;
+}
+.nav-dropdown-menu a svg,
+.nav-dropdown-menu a i {
+    width: 17px;
+    height: 17px;
+    color: #2563eb;
+    flex-shrink: 0;
+}
+.nav-dropdown-menu a:hover {
+    background: #f1f5f9;
+    color: #2563eb;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 /* Mobile hamburger */
 .menu-toggle {
     display: none;
@@ -309,31 +393,92 @@ a {
 .btn-sm { padding: 9px 18px; font-size: 0.9rem; }
 
 @media (max-width: 1100px) and (min-width: 769px) {
-    .nav { gap: 12px; }
-    .nav a { font-size: 0.88rem; }
+    .nav { gap: 16px; }
+    .nav a { font-size: 0.9rem; }
 }
 
 @media (max-width: 768px) {
     .nav {
         display: none;
         flex-direction: column;
+        align-items: stretch;
         position: absolute;
         top: 70px;
         left: 0;
         right: 0;
         background: white;
         border-bottom: 1px solid var(--border-color);
-        padding: 16px 20px;
+        padding: 12px 20px 18px;
         gap: 0;
         z-index: 99;
         box-shadow: var(--shadow-md);
     }
     .nav.nav-open { display: flex; }
-    .nav a { padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 1rem; }
+    .nav > a { padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 1rem; width: 100%; }
     .nav a::after { display: none; }
+    .nav-dropdown {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .nav-dropdown::before { display: none; }
+    .nav-dropdown-trigger {
+        width: 100%;
+        justify-content: space-between;
+        padding: 12px 0;
+        font-size: 1rem;
+    }
+    .nav-dropdown-menu {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        box-shadow: none;
+        border: none;
+        border-left: 3px solid #2563eb;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 6px 10px;
+        margin: 0 0 10px 0;
+        display: none;
+        min-width: 0;
+    }
+    .nav-dropdown.open .nav-dropdown-menu {
+        display: flex;
+    }
+    .nav-dropdown-menu a {
+        padding: 9px 8px;
+        font-size: 0.92rem;
+        border-bottom: 1px dashed #e2e8f0;
+        border-radius: 0;
+    }
+    .nav-dropdown-menu a:last-child {
+        border-bottom: none;
+    }
     .menu-toggle { display: flex; }
     .header-actions .btn span, .header-actions .btn i { display: none; }
-    .header-actions .btn::after { content: 'Zalo'; }
+    .header-actions .btn::after { content: 'Tư vấn Zalo'; }
+}
+
+.section-cta-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+@media (max-width: 576px) {
+    .section-cta-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    .section-cta-group .btn {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0 !important;
+    }
 }
 
 /* Sections */

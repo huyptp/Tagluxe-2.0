@@ -39,7 +39,7 @@
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{{ site_url }}{% block og_url %}/{% endblock %}">
     <meta property="og:title" content="{% block og_title %}TagLuxe - In Dây Đeo Thẻ Theo Yêu Cầu Cao Cấp{% endblock %}">
-    <meta property="og:description" content="{% block og_desc %}Đeo nhận diện, tỏa thương hiệu. Nhận in dây đeo thẻ từ 10 dây, hỗ trợ thiết kế cơ bản, Có VAT. Liên hệ Zalo: 0343 019 097.{% endblock %}">
+    <meta property="og:description" content="{% block og_desc %}Đeo nhận diện, tỏa thương hiệu. Nhận in dây đeo thẻ từ 10 dây, hỗ trợ thiết kế cơ bản, Có VAT. Liên hệ Zalo: 0343 019 097 - 0355 314 012.{% endblock %}">
     <meta property="og:image" content="{{ site_url }}/static/uploads/media_1786037638569.jpg">
     <meta property="og:image:width" content="800">
     <meta property="og:image:height" content="800">
@@ -110,16 +110,28 @@
     "opens": "08:00",
     "closes": "21:00"
   },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "telephone": "+84343019097",
-    "contactType": "customer service",
-    "areaServed": "VN",
-    "availableLanguage": "Vietnamese"
-  },
+  "contactPoint": [
+    {
+      "@type": "ContactPoint",
+      "telephone": "+84343019097",
+      "contactType": "customer service",
+      "name": "Zalo Quốc Huy",
+      "areaServed": "VN",
+      "availableLanguage": "Vietnamese"
+    },
+    {
+      "@type": "ContactPoint",
+      "telephone": "+84355314012",
+      "contactType": "customer service",
+      "name": "Zalo Thanh Thảo",
+      "areaServed": "VN",
+      "availableLanguage": "Vietnamese"
+    }
+  ],
   "sameAs": [
     "https://www.facebook.com/Tagluxe.indaydeothe",
-    "https://zalo.me/0343019097"
+    "https://zalo.me/0343019097",
+    "https://zalo.me/0355314012"
   ]
 }
     </script>
@@ -223,16 +235,28 @@
                 </div>
             </a>
 
-            <!-- Mobile menu toggle -->
-            <button class="menu-toggle" id="menuToggle" aria-label="Mở menu" aria-expanded="false" aria-controls="mainNav">
-                <span></span><span></span><span></span>
-            </button>
-
             <nav class="nav" id="mainNav" role="navigation" aria-label="Menu chính">
                 <a href="/">Trang chủ</a>
-                <a href="/#products">Dây đeo thẻ</a>
-                <a href="/#the-nhua-pvc">Thẻ nhựa PVC</a>
-                <a href="/#vo-dung-the">Vỏ đựng thẻ</a>
+                <div class="nav-dropdown" id="navProductsDropdown">
+                    <a href="/#products" class="nav-dropdown-trigger" id="navProductsTrigger" aria-haspopup="true" aria-expanded="false">
+                        <span>Sản phẩm</span>
+                        <svg class="nav-caret" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </a>
+                    <div class="nav-dropdown-menu" role="menu" aria-label="Danh mục sản phẩm">
+                        <a href="/#products" role="menuitem">
+                            <i data-lucide="tag"></i>
+                            <span>Dây đeo thẻ in theo yêu cầu</span>
+                        </a>
+                        <a href="/#the-nhua-pvc" role="menuitem">
+                            <i data-lucide="credit-card"></i>
+                            <span>Thẻ nhựa PVC in theo yêu cầu</span>
+                        </a>
+                        <a href="/#vo-dung-the" role="menuitem">
+                            <i data-lucide="archive"></i>
+                            <span>Vỏ đựng thẻ (Card holder)</span>
+                        </a>
+                    </div>
+                </div>
                 <a href="/#calculator">Báo giá</a>
                 <a href="/#process">Quy trình</a>
                 <a href="/#faq">FAQ</a>
@@ -241,9 +265,14 @@
 
             <div class="header-actions">
                 <a href="https://zalo.me/0343019097" target="_blank" rel="noopener"
+                   onclick="return openZaloPicker(event)"
                    class="btn btn-primary btn-sm" aria-label="Liên hệ tư vấn qua Zalo">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 50 50" fill="none" style="display:inline-block; vertical-align:middle; width:16px; height:16px; border-radius:3px; flex-shrink:0;"><path fill-rule="evenodd" clip-rule="evenodd" d="M22.782 0.166H27.199C33.265 0.166 36.81 1.057 39.957 2.744C43.104 4.431 45.588 6.896 47.256 10.043C48.943 13.19 49.834 16.735 49.834 22.801V27.199C49.834 33.265 48.943 36.81 47.256 39.957C45.568 43.104 43.104 45.588 39.957 47.256C36.81 48.943 33.265 49.834 27.199 49.834H22.801C16.735 49.834 13.19 48.943 10.043 47.256C6.896 45.569 4.412 43.104 2.744 39.957C1.057 36.81 0.166 33.265 0.166 27.199V22.801C0.166 16.735 1.057 13.19 2.744 10.043C4.431 6.896 6.896 4.412 10.043 2.744C13.171 1.057 16.735 0.166 22.782 0.166Z" fill="#0068FF"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.779 43.589C10.102 43.846 13.006 43.184 15.068 42.182C24.022 47.132 38.02 46.895 46.492 41.473C46.821 40.98 47.128 40.468 47.413 39.936C49.106 36.778 50 33.22 50 27.132V22.718C50 16.629 49.106 13.071 47.413 9.913C45.738 6.754 43.246 4.281 40.088 2.588C36.929 0.894 33.371 0 27.283 0H22.85C17.664 0 14.298 0.653 11.47 1.899C11.315 2.037 11.164 2.178 11.015 2.321C2.717 10.32 2.087 27.659 9.123 37.078C9.131 37.092 9.139 37.106 9.149 37.12C10.233 38.718 9.187 41.515 7.551 43.152C7.284 43.399 7.379 43.551 7.779 43.589Z" fill="white"/><path d="M20.563 17H10.838V19.085H17.587L10.933 27.332C10.724 27.635 10.573 27.919 10.573 28.564V29.095H19.748C20.203 29.095 20.582 28.716 20.582 28.261V27.142H13.492L19.748 19.294C19.843 19.18 20.013 18.972 20.089 18.877L20.127 18.82C20.487 18.289 20.563 17.834 20.563 17.284V17Z" fill="#0068FF"/><path d="M32.942 29.095H34.326V17H32.24V28.393C32.24 28.772 32.544 29.095 32.942 29.095Z" fill="#0068FF"/><path d="M25.814 19.692C23.198 19.692 21.075 21.816 21.075 24.432C21.075 27.048 23.198 29.171 25.814 29.171C28.43 29.171 30.553 27.048 30.553 24.432C30.572 21.816 28.449 19.692 25.814 19.692ZM25.814 27.218C24.278 27.218 23.027 25.967 23.027 24.432C23.027 22.896 24.278 21.645 25.814 21.645C27.35 21.645 28.601 22.896 28.601 24.432C28.601 25.967 27.368 27.218 25.814 27.218Z" fill="#0068FF"/><path d="M40.487 19.616C37.852 19.616 35.71 21.758 35.71 24.393C35.71 27.028 37.852 29.171 40.487 29.171C43.122 29.171 45.264 27.028 45.264 24.393C45.264 21.758 43.122 19.616 40.487 19.616ZM40.487 27.218C38.932 27.218 37.681 25.967 37.681 24.412C37.681 22.858 38.932 21.607 40.487 21.607C42.041 21.607 43.292 22.858 43.292 24.412C43.292 25.967 42.041 27.218 40.487 27.218Z" fill="#0068FF"/><path d="M29.456 29.094H30.575V19.957H28.622V28.279C28.622 28.715 29.001 29.094 29.456 29.094Z" fill="#0068FF"/></svg> Tư vấn Zalo
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 50 50" fill="none" style="display:inline-block; vertical-align:middle; width:16px; height:16px; border-radius:3px; flex-shrink:0;"><path fill-rule="evenodd" clip-rule="evenodd" d="M22.782 0.166H27.199C33.265 0.166 36.81 1.057 39.957 2.744C43.104 4.431 45.588 6.896 47.256 10.043C48.943 13.19 49.834 16.735 49.834 22.801V27.199C49.834 33.265 48.943 36.81 47.256 39.957C45.568 43.104 43.104 45.588 39.957 47.256C36.81 48.943 33.265 49.834 27.199 49.834H22.801C16.735 49.834 13.19 48.943 10.043 47.256C6.896 45.569 4.412 43.104 2.744 39.957C1.057 36.81 0.166 33.265 0.166 27.199V22.801C0.166 16.735 1.057 13.19 2.744 10.043C4.431 6.896 6.896 4.412 10.043 2.744C13.171 1.057 16.735 0.166 22.782 0.166Z" fill="#0068FF"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.779 43.589C10.102 43.846 13.006 43.184 15.068 42.182C24.022 47.132 38.02 46.895 46.492 41.473C46.821 40.98 47.128 40.468 47.413 39.936C49.106 36.778 50 33.22 50 27.132V22.718C50 16.629 49.106 13.071 47.413 9.913C45.738 6.754 43.246 4.281 40.088 2.588C36.929 0.894 33.371 0 27.283 0H22.85C17.664 0 14.298 0.653 11.47 1.899C11.315 2.037 11.164 2.178 11.015 2.321C2.717 10.32 2.087 27.659 9.123 37.078C9.131 37.092 9.139 37.106 9.149 37.12C10.233 38.718 9.187 41.515 7.551 43.152C7.284 43.399 7.379 43.551 7.779 43.589Z" fill="white"/><path d="M20.563 17H10.838V19.085H17.587L10.933 27.332C10.724 27.635 10.573 27.919 10.573 28.564V29.095H19.748C20.203 29.095 20.582 28.716 20.582 28.261V27.142H13.492L19.748 19.294C19.843 19.18 20.013 18.972 20.089 18.877L20.127 18.82C20.487 18.289 20.563 17.834 20.563 17.284V17Z" fill="#0068FF"/><path d="M32.942 29.095H34.326V17H32.24V28.393C32.24 28.772 32.544 29.095 32.942 29.095Z" fill="#0068FF"/><path d="M25.814 19.692C23.198 19.692 21.075 21.816 21.075 24.432C21.075 27.048 23.198 29.171 25.814 29.171C28.43 29.171 30.553 27.048 30.553 24.432C30.572 21.816 28.449 19.692 25.814 19.692ZM25.814 27.218C24.278 27.218 23.027 25.967 23.027 24.432C23.027 22.896 24.278 21.645 25.814 21.645C27.35 21.645 28.601 22.896 28.601 24.432C28.601 25.967 27.368 27.218 25.814 27.218Z" fill="#0068FF"/><path d="M40.487 19.616C37.852 19.616 35.71 21.758 35.71 24.393C35.71 27.028 37.852 29.171 40.487 29.171C43.122 29.171 45.264 27.028 45.264 24.393C45.264 21.758 43.122 19.616 40.487 19.616ZM40.487 27.218C38.932 27.218 37.681 25.967 37.681 24.412C37.681 22.858 38.932 21.607 40.487 21.607C42.041 21.607 43.292 22.858 43.292 24.412C43.292 25.967 42.041 27.218 40.487 27.218Z" fill="#0068FF"/><path d="M29.456 29.094H30.575V19.957H28.622V28.279C28.622 28.715 29.001 29.094 29.456 29.094Z" fill="#0068FF"/></svg> <span>Tư vấn Zalo</span>
                 </a>
+                <!-- Mobile menu toggle -->
+                <button class="menu-toggle" id="menuToggle" aria-label="Mở menu" aria-expanded="false" aria-controls="mainNav">
+                    <span></span><span></span><span></span>
+                </button>
             </div>
         </div>
     </header>
@@ -267,7 +296,8 @@
             </div>
             <div class="footer-links">
                 <h3 style="font-size:1rem; margin-bottom:20px; text-transform:uppercase; letter-spacing:1px;">Liên hệ đặt hàng</h3>
-                <a href="https://zalo.me/0343019097" target="_blank" rel="noopener" aria-label="Chat Zalo TagLuxe"><i data-lucide="phone"></i> Zalo: 0343 019 097</a>
+                <a href="https://zalo.me/0343019097" target="_blank" rel="noopener" aria-label="Chat Zalo Quốc Huy"><i data-lucide="phone"></i> Zalo Quốc Huy: 0343 019 097</a>
+                <a href="https://zalo.me/0355314012" target="_blank" rel="noopener" aria-label="Chat Zalo Thanh Thảo"><i data-lucide="phone"></i> Zalo Thanh Thảo: 0355 314 012</a>
                 <a href="https://www.facebook.com/Tagluxe.indaydeothe" target="_blank" rel="noopener" aria-label="Fanpage TagLuxe"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; width:18px; height:18px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg> Fanpage TagLuxe</a>
                 <a href="https://www.threads.com/@tagluxe2005" target="_blank" rel="noopener"><i data-lucide="at-sign"></i> Threads: @tagluxe2005</a>
                 <a href="https://www.tiktok.com/@shop.in.day.deo" target="_blank" rel="noopener"><i data-lucide="video"></i> TikTok: @shop.in.day.deo</a>
@@ -406,6 +436,67 @@
         </button>
     </div>
 
+    <!-- ===== ZALO SALES PICKER MODAL (Quốc Huy & Thanh Thảo) ===== -->
+    <div id="zaloPickerModal" onclick="if(event.target===this) closeZaloPicker();" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.68); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); z-index:999998; align-items:center; justify-content:center; padding:18px;">
+        <div role="dialog" aria-modal="true" aria-labelledby="zaloPickerTitle" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:20px; max-width:390px; width:100%; padding:22px 20px; box-shadow:0 20px 44px rgba(15,23,42,0.24);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                <div id="zaloPickerTitle" style="font-size:1.02rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                    <span style="width:24px; height:24px; border-radius:6px; background:#0068ff; color:#fff; font-size:0.75rem; font-weight:900; display:inline-flex; align-items:center; justify-content:center;">Z</span>
+                    Chọn chuyên viên tư vấn Zalo
+                </div>
+                <button type="button" onclick="closeZaloPicker()" aria-label="Đóng bảng chọn Zalo" style="width:30px; height:30px; border-radius:50%; border:none; background:#f1f5f9; color:#64748b; font-size:0.95rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+            <p style="font-size:0.84rem; color:#64748b; margin:0 0 14px 0; line-height:1.45;">
+                Đội ngũ TagLuxe luôn sẵn sàng hỗ trợ báo giá &amp; lên mẫu Demo 2D:
+            </p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <a id="zaloPickerQuocHuy" href="https://zalo.me/0343019097" target="_blank" rel="noopener" onclick="closeZaloPicker()" style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1.5px solid #dbeafe; background:#f8fbff; border-radius:14px; text-decoration:none; color:#0f172a; transition:all 0.2s;">
+                    <span style="display:flex; align-items:center; gap:11px;">
+                        <span style="width:38px; height:38px; border-radius:10px; background:#0068ff; color:#fff; font-weight:800; font-size:0.82rem; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">QH</span>
+                        <span>
+                            <strong style="display:block; font-size:0.92rem; color:#0f172a;">Zalo Quốc Huy</strong>
+                            <span style="font-size:0.82rem; color:#0068ff; font-weight:700;">0343 019 097</span>
+                        </span>
+                    </span>
+                    <span style="background:#0068ff; color:#fff; font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:99px; white-space:nowrap;">Chat ngay →</span>
+                </a>
+                <a id="zaloPickerThanhThao" href="https://zalo.me/0355314012" target="_blank" rel="noopener" onclick="closeZaloPicker()" style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1.5px solid #dbeafe; background:#f8fbff; border-radius:14px; text-decoration:none; color:#0f172a; transition:all 0.2s;">
+                    <span style="display:flex; align-items:center; gap:11px;">
+                        <span style="width:38px; height:38px; border-radius:10px; background:#0284c7; color:#fff; font-weight:800; font-size:0.82rem; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">TT</span>
+                        <span>
+                            <strong style="display:block; font-size:0.92rem; color:#0f172a;">Zalo Thanh Thảo</strong>
+                            <span style="font-size:0.82rem; color:#0068ff; font-weight:700;">0355 314 012</span>
+                        </span>
+                    </span>
+                    <span style="background:#0068ff; color:#fff; font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:99px; white-space:nowrap;">Chat ngay →</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.openZaloPicker = function(e, customText) {
+            if (e && e.preventDefault) e.preventDefault();
+            var modal = document.getElementById('zaloPickerModal');
+            var linkHuy = document.getElementById('zaloPickerQuocHuy');
+            var linkThao = document.getElementById('zaloPickerThanhThao');
+            var suffix = customText ? ('?text=' + encodeURIComponent(customText)) : '';
+            if (linkHuy) linkHuy.href = 'https://zalo.me/0343019097' + suffix;
+            if (linkThao) linkThao.href = 'https://zalo.me/0355314012' + suffix;
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+            return false;
+        };
+        window.closeZaloPicker = function() {
+            var modal = document.getElementById('zaloPickerModal');
+            if (modal) modal.style.display = 'none';
+        };
+        document.addEventListener('keydown', function(ev) {
+            if (ev.key === 'Escape') window.closeZaloPicker();
+        });
+    </script>
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- AOS Animation -->
@@ -476,18 +567,39 @@
             });
         }
 
-        // Mobile menu toggle
+        // Mobile menu toggle & Products Dropdown
         const menuToggle = document.getElementById('menuToggle');
         const mainNav = document.getElementById('mainNav');
+        const navProductsDropdown = document.getElementById('navProductsDropdown');
+        const navProductsTrigger = document.getElementById('navProductsTrigger');
+
+        if (navProductsTrigger && navProductsDropdown) {
+            navProductsTrigger.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isOpen = navProductsDropdown.classList.toggle('open');
+                    navProductsTrigger.setAttribute('aria-expanded', isOpen);
+                }
+            });
+        }
+
         if (menuToggle && mainNav) {
             menuToggle.addEventListener('click', function() {
                 const open = mainNav.classList.toggle('nav-open');
                 menuToggle.setAttribute('aria-expanded', open);
                 menuToggle.classList.toggle('active', open);
+                if (open && navProductsDropdown) {
+                    navProductsDropdown.classList.add('open');
+                    if (navProductsTrigger) navProductsTrigger.setAttribute('aria-expanded', 'true');
+                }
             });
-            // Close on nav link click
+            // Close on nav link click (except mobile dropdown trigger)
             mainNav.querySelectorAll('a').forEach(a => {
                 a.addEventListener('click', () => {
+                    if (a.id === 'navProductsTrigger' && window.innerWidth <= 768) {
+                        return;
+                    }
                     mainNav.classList.remove('nav-open');
                     menuToggle.setAttribute('aria-expanded', false);
                     menuToggle.classList.remove('active');

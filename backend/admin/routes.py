@@ -18,7 +18,7 @@ from backend.services.data_service import (
     get_all_accessories, get_accessory_by_id, update_accessory,
     get_all_price_tiers_grouped, update_price_tiers_bulk,
     add_accessory, delete_accessory, toggle_accessory_visibility,
-    get_demo_images_config, save_demo_images_config
+    get_demo_images_config, save_demo_images_config, reset_single_demo_image
 )
 from backend.security import rate_limit, limiter, get_client_ip
 
@@ -143,9 +143,12 @@ def admin_logout():
     return redirect(url_for('admin.admin_login'))
 
 @admin_bp.route('/')
+@admin_bp.route('/dashboard')
 @login_required
 def admin_dashboard():
-    return redirect(url_for('admin.admin_products'))
+    from backend.admin.services import get_admin_dashboard_stats
+    stats = get_admin_dashboard_stats()
+    return render_template('admin/dashboard.html', stats=stats)
 
 @admin_bp.route('/products')
 @login_required
@@ -313,9 +316,15 @@ def admin_edit_product(id):
             'visible': request.form.get('visible') == 'on'
         }
 
+        existing_images = list(product.get('images', []) if isinstance(product, dict) else getattr(product, 'images', []))
+        kept_images_present = request.form.get('kept_images_present') == '1'
+        if kept_images_present:
+            kept_list = [img.strip() for img in request.form.getlist('kept_images[]') if img.strip()]
+            existing_images = [img for img in existing_images if img in kept_list]
+
+        new_images = []
         if 'images' in request.files:
             files = request.files.getlist('images')
-            new_images = []
             for file in files:
                 if file and file.filename != '':
                     if not is_valid_image_file(file):
@@ -325,13 +334,15 @@ def admin_edit_product(id):
                     unique_filename = f"{uuid.uuid4().hex}_{filename}"
                     file.save(os.path.join(UPLOAD_FOLDER, unique_filename))
                     new_images.append(unique_filename)
-            if new_images:
-                keep_existing = request.form.get('keep_existing_images') != '0'
-                existing_images = product.get('images', []) if isinstance(product, dict) else getattr(product, 'images', [])
-                if keep_existing and existing_images:
-                    updated_data['images'] = list(existing_images) + new_images
-                else:
-                    updated_data['images'] = new_images
+
+        if new_images:
+            keep_existing = request.form.get('keep_existing_images') != '0'
+            if keep_existing and existing_images:
+                updated_data['images'] = list(existing_images) + new_images
+            else:
+                updated_data['images'] = new_images
+        elif kept_images_present:
+            updated_data['images'] = existing_images
 
         saved = update_product(id, updated_data)
         if not saved:
@@ -343,6 +354,46 @@ def admin_edit_product(id):
         return redirect(url_for('admin.admin_products'))
 
     return render_template('admin/product_form.html', product=product)
+
+@admin_bp.route('/products/<id>/delete-image', methods=['POST'])
+@login_required
+def admin_delete_product_image(id):
+    if not validate_csrf():
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_edit_product', id=id))
+
+    product = get_product_by_id(id, visible_only=False)
+    if not product:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'Sản phẩm không tồn tại'}, 404
+        flash('Sản phẩm không tồn tại.', 'error')
+        return redirect(url_for('admin.admin_products'))
+
+    body = request.get_json(silent=True) or {}
+    img_to_remove = (request.form.get('image') or body.get('image') or '').strip()
+    existing_images = list(product.get('images', []) if isinstance(product, dict) else getattr(product, 'images', []))
+
+    if not img_to_remove or img_to_remove not in existing_images:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'Không tìm thấy ảnh cần xóa trong sản phẩm'}, 400
+        flash('Không tìm thấy ảnh cần xóa.', 'error')
+        return redirect(url_for('admin.admin_edit_product', id=id))
+
+    remaining = [img for img in existing_images if img != img_to_remove]
+    saved = update_product(id, {'images': remaining})
+    if not saved:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'Lỗi cơ sở dữ liệu khi xóa ảnh'}, 500
+        flash('Không thể xóa ảnh sản phẩm.', 'error')
+        return redirect(url_for('admin.admin_edit_product', id=id))
+
+    record_audit('delete_product_image', 'product', id, f"Removed image {img_to_remove}")
+    if request.is_json or request.headers.get('Accept') == 'application/json':
+        return {'success': True, 'message': 'Đã xóa ảnh khỏi sản phẩm!', 'images': remaining}
+    flash('Đã xóa ảnh khỏi sản phẩm thành công!', 'success')
+    return redirect(url_for('admin.admin_edit_product', id=id))
 
 @admin_bp.route('/products/delete/<id>', methods=['POST'])
 @login_required
@@ -462,10 +513,13 @@ def admin_download_request_file(id):
 @admin_bp.route('/quotes')
 @login_required
 def admin_quotes():
+    from backend.admin.services import get_quotes_summary_stats
     status_filter = request.args.get('status', 'all')
     search_query = request.args.get('q', '').strip()
     page = request.args.get('page', 1, type=int)
     pagination = get_quotes_paginated(status=status_filter, search=search_query, page=page, per_page=20)
+    all_filtered = get_quotes(status=status_filter, search=search_query)
+    summary_stats = get_quotes_summary_stats(all_filtered)
     return render_template(
         'admin/quotes.html',
         quotes=pagination['items'],
@@ -475,8 +529,24 @@ def admin_quotes():
         has_prev=pagination['has_prev'],
         has_next=pagination['has_next'],
         current_status=status_filter,
-        search_query=search_query
+        search_query=search_query,
+        summary_stats=summary_stats
     )
+
+@admin_bp.route('/quotes/export')
+@login_required
+def admin_export_quotes():
+    from flask import Response
+    from backend.admin.services import generate_quotes_csv_bytes
+    status_filter = request.args.get('status', 'all')
+    search_query = request.args.get('q', '').strip()
+    csv_bytes = generate_quotes_csv_bytes(status=status_filter, search=search_query)
+    record_audit('export_quotes_csv', 'quote', status_filter or 'all', f"Xuất CSV báo giá (status={status_filter}, q={search_query})")
+    resp = Response(csv_bytes, mimetype='text/csv; charset=utf-8')
+    resp.headers['Content-Disposition'] = 'attachment; filename="TagLuxe_BaoGia.csv"'
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    resp.headers['Cache-Control'] = 'private, no-cache, no-store, must-revalidate'
+    return resp
 
 @admin_bp.route('/quotes/status/<id>', methods=['POST'])
 @login_required
@@ -741,6 +811,8 @@ def admin_edit_accessory(acc_id):
         min_quantity = acc.get('min_quantity', 0)
 
     new_image_url = None
+    if request.form.get('remove_image') == '1':
+        new_image_url = ''
     if 'image' in request.files:
         file = request.files['image']
         if file and file.filename:
@@ -812,6 +884,36 @@ def admin_upload_accessory_image(acc_id):
         return {'success': True, 'message': 'Đã tải ảnh lên thành công!', 'image_url': new_image_url, 'data': result}
     else:
         return {'success': False, 'message': f'Lỗi lưu ảnh: {result}'}, 500
+
+
+@admin_bp.route('/accessories/delete-image/<acc_id>', methods=['POST'])
+@login_required
+def admin_delete_accessory_image(acc_id):
+    if not validate_csrf():
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_accessories', tab='accessories'))
+
+    acc = get_accessory_by_id(acc_id)
+    if not acc:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'Không tìm thấy phụ kiện'}, 404
+        flash('Không tìm thấy phụ kiện.', 'error')
+        return redirect(url_for('admin.admin_accessories', tab='accessories'))
+
+    ok, result = update_accessory(acc_id, image='')
+    if ok:
+        record_audit('delete_accessory_image', 'accessory', acc_id, f"Xóa ảnh của phụ kiện {acc_id}")
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': True, 'message': 'Đã xóa ảnh phụ kiện thành công!', 'image_url': '/static/images/placeholder.jpg', 'data': result}
+        flash('Đã xóa ảnh phụ kiện thành công!', 'success')
+    else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': f'Lỗi xóa ảnh: {result}'}, 500
+        flash(f'Lỗi xóa ảnh: {result}', 'error')
+
+    return redirect(url_for('admin.admin_accessories', tab='accessories'))
 
 
 # --- QUẢN LÝ BỘ ẢNH DEMO BÁO GIÁ (STOREFRONT LIVE PREVIEW) ---
@@ -926,6 +1028,34 @@ def admin_upload_single_demo_image(key):
         return {'success': True, 'message': 'Đã tải ảnh lên thành công!', 'image_url': img_url, 'key': key}
     else:
         return {'success': False, 'message': f'Lỗi lưu ảnh: {result}'}, 500
+
+
+@admin_bp.route('/demo-images/reset/<key>', methods=['POST'])
+@login_required
+def admin_reset_single_demo_image(key):
+    if not validate_csrf():
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': 'CSRF token không hợp lệ'}, 400
+        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
+        return redirect(url_for('admin.admin_demo_images'))
+
+    ok, default_img = reset_single_demo_image(key)
+    if ok:
+        record_audit('reset_single_demo_image', 'setting', key, f"Xóa ảnh vừa tải và khôi phục ảnh mặc định cho {key}")
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {
+                'success': True,
+                'message': 'Đã xóa ảnh tải nhầm và khôi phục ảnh mặc định thành công!',
+                'image_url': default_img,
+                'key': key
+            }
+        flash('Đã xóa ảnh tải nhầm và khôi phục ảnh mặc định thành công!', 'success')
+    else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return {'success': False, 'message': str(default_img)}, 400
+        flash(f'Lỗi khôi phục ảnh: {default_img}', 'error')
+
+    return redirect(url_for('admin.admin_demo_images'))
 
 
 # ==================== ROUTE QUẢN LÝ BANNER CHIẾN DỊCH (RESPONSIVE) ====================
