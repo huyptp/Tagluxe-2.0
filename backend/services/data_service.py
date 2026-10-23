@@ -205,11 +205,12 @@ def get_showcase_items(lanyards, accessories):
     return showcase_items
 
 def product_schema(product):
+    from backend.storefront.urls import product_path
     origin = site_origin()
     result = {
         '@context': 'https://schema.org', '@type': 'Product',
         'name': product['name'], 'description': product.get('description', ''),
-        'url': origin + '/product/' + quote(product['id'], safe=''),
+        'url': origin + product_path(product),
         'brand': {'@type': 'Brand', 'name': 'TagLuxe'},
         'sku': 'TL-PROD-' + product['id'],
     }

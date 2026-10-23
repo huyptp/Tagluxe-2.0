@@ -42,6 +42,8 @@ class Quote(db.Model):
     sync_error = db.Column(db.Text, nullable=True)
     retry_count = db.Column(db.Integer, nullable=False, default=0)
     idempotency_key = db.Column(db.String(64), nullable=True, unique=True, index=True)
+    admin_state = db.relationship('QuoteAdminState', uselist=False,
+                                  cascade='all, delete-orphan', back_populates='quote')
 
     def to_dict(self):
         accs = []
@@ -80,6 +82,21 @@ class Quote(db.Model):
             'retry_count': self.retry_count,
             'idempotency_key': self.idempotency_key
         }
+
+class QuoteAdminState(db.Model):
+    """Private sales workflow; deliberately excluded from Quote.to_dict/public APIs."""
+    __tablename__ = 'quote_admin_states'
+
+    quote_id = db.Column(db.String(32), db.ForeignKey('quotes.id', ondelete='CASCADE'), primary_key=True)
+    internal_notes = db.Column(db.Text, nullable=False, default='')
+    owner = db.Column(db.String(80), nullable=False, default='')
+    priority = db.Column(db.String(20), nullable=False, default='normal', index=True)
+    follow_up_on = db.Column(db.Date, nullable=True, index=True)
+    version = db.Column(db.Integer, nullable=False, default=1)
+    updated_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    updated_by = db.Column(db.String(80), nullable=False)
+    quote = db.relationship('Quote', back_populates='admin_state')
+
 
 class DemoRequest(db.Model):
     __tablename__ = 'demo_requests'

@@ -340,7 +340,8 @@
     </div>
 
     <!-- ===== TAB 1: DANH SÁCH SẢN PHẨM ===== -->
-    <div id="tabProductsList" style="display: {% if active_tab != 'specs' %}block{% else %}none{% endif %};">
+    <div id="tabProductsList" class="table-scroll" style="display: {% if active_tab != 'specs' %}block{% else %}none{% endif %};">
+        <div class="filter-form"><div><label for="productSearch">Tìm nhanh sản phẩm</label><input id="productSearch" type="search" placeholder="Tên, danh mục, mã sản phẩm..."></div></div>
         <table>
             <thead>
                 <tr>
@@ -354,10 +355,10 @@
             </thead>
             <tbody>
                 {% for product in products %}
-                <tr>
+                <tr data-product-row>
                     <td>
                         {% if product.image %}
-                        <img src="{{ url_for('static', filename='uploads/' + product.image) }}" width="60" style="border-radius: 4px;">
+                        <img alt="{{ product.name }}" loading="lazy" src="{{ url_for('static', filename='uploads/' + product.image) }}" width="60" style="border-radius: 4px;">
                         {% else %}
                         <span style="color: #999;">Không có ảnh</span>
                         {% endif %}
@@ -380,9 +381,9 @@
                     </td>
                     <td>
                         {% if product.visible %}
-                        <span class="badge" style="background: #28a745;">Đang hiện</span>
+                        <span class="badge" style="background:#e4f2e9;color:#246444;">Đang hiện</span>
                         {% else %}
-                        <span class="badge" style="background: #dc3545;">Đang ẩn</span>
+                        <span class="badge" style="background:#f8e9e6;color:#a34138;">Đang ẩn</span>
                         {% endif %}
                     </td>
                     <td>
@@ -395,7 +396,7 @@
                             <a href="/admin/products/edit/{{ product.id }}" class="btn btn-outline" style="padding: 6px 12px;"><i data-lucide="edit"></i> Sửa</a>
                             <form action="/admin/products/delete/{{ product.id }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; background: #dc3545;"><i data-lucide="trash"></i> Xóa</button>
+                                <button type="submit" class="btn btn-secondary" style="padding:6px 12px;background:#fff1ee;color:#a44337;border-color:#efd3cc;"><i data-lucide="trash"></i> Xóa</button>
                             </form>
                         </div>
                     </td>

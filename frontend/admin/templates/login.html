@@ -1,18 +1,2 @@
 {% extends 'admin/base.html' %}
-
-{% block content %}
-<div class="admin-card" style="max-width: 400px; margin: 100px auto;">
-    <h2 class="text-center text-primary" style="margin-bottom: 20px;">Đăng Nhập Quản Trị</h2>
-    <form method="POST">
-        <div class="form-group">
-            <label>Tên đăng nhập</label>
-            <input type="text" name="username" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label>Mật khẩu</label>
-            <input type="password" name="password" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Đăng Nhập</button>
-    </form>
-</div>
-{% endblock %}
+{% block content %}<section class="auth-card"><a class="admin-brand" href="/"><img class="brand-logo" src="{{ url_for('admin.static', filename='tagluxe-logo.jpg') }}" alt="Logo TAGLUXE" width="56" height="56"><span>TAGLUXE<small>Không gian quản trị</small></span></a><h1>Chào mừng trở lại.</h1><p>Đăng nhập để quản lý cửa hàng và yêu cầu khách hàng.</p><form method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><div class="form-group"><label for="username">Tên đăng nhập</label><input id="username" name="username" class="form-control" required autocomplete="username" autofocus></div><div class="form-group"><label for="password">Mật khẩu</label><div class="password-wrap"><input id="password" type="password" name="password" class="form-control" required autocomplete="current-password"><button type="button" class="password-toggle" data-password-toggle aria-controls="password" aria-pressed="false">Hiện</button></div></div><button class="btn btn-primary btn-block" type="submit">Đăng nhập quản trị <span aria-hidden="true">→</span></button></form><a class="auth-back" href="/">← Trở về website TAGLUXE</a></section>{% endblock %}

@@ -90,7 +90,6 @@ def get_admin_dashboard_stats():
     quotes = [q.to_dict() for q in quotes_models]
     quote_dt_pairs = [(q.to_dict(), q.created_at) for q in quotes_models]
 
-    requests = get_demo_requests()
     products = get_all_products()
     accessories = get_all_accessories()
 
@@ -199,12 +198,12 @@ def get_admin_dashboard_stats():
             'revenue': 0
         })
 
-    # 3. 12 months series (last 6 months for clean display)
+    # 3. Full rolling 12 months.
     series_12m = []
     map_12m = {}
     curr_year = today_date.year
     curr_month = today_date.month
-    for m_offset in range(5, -1, -1):
+    for m_offset in range(11, -1, -1):
         m = curr_month - m_offset
         y = curr_year
         while m <= 0:
@@ -239,6 +238,9 @@ def get_admin_dashboard_stats():
             map_12m[m_key]['count'] += 1
             map_12m[m_key]['revenue'] += price
 
+    from backend.admin.workspace_services import filtered_quotes, quote_filters
+    due_count = filtered_quotes(quote_filters({'follow_up': 'due'})).count()
+
     # Clean non-JSON-serializable date objects from series_30d
     clean_30d = [
         {'label': b['label'], 'count': b['count'], 'revenue': b['revenue']}
@@ -248,7 +250,8 @@ def get_admin_dashboard_stats():
     return {
         'total_quotes': total_quotes,
         'pending_quotes': pending_quotes,
-        'total_requests': len(requests),
+        'follow_up_due': due_count,
+        'sync_failures': sync_summary['failed'],
         'total_products': len(products),
         'total_accessories': len(accessories),
         'total_price_tiers': total_price_tiers,
@@ -273,12 +276,12 @@ def get_admin_dashboard_stats():
     }
 
 
-def generate_quotes_csv_bytes(status=None, search=None):
+def generate_quotes_csv_bytes(status=None, search=None, items=None):
     """
     Generates UTF-8 with BOM CSV bytes of quotes matching status & search filters
     so Microsoft Excel opens Vietnamese characters cleanly without garbling.
     """
-    quotes = get_quotes(status=status, search=search)
+    quotes = items if items is not None else get_quotes(status=status, search=search)
     output = io.StringIO()
     writer = csv.writer(output)
 
@@ -316,7 +319,7 @@ def generate_quotes_csv_bytes(status=None, search=None):
         else:
             hole_str = 'Không'
 
-        writer.writerow([
+        writer.writerow([safe_csv_cell(value) for value in [
             q.get('id', ''),
             q.get('created_at', ''),
             q.get('customer_name', ''),
@@ -333,7 +336,13 @@ def generate_quotes_csv_bytes(status=None, search=None):
             q.get('status', ''),
             q.get('sync_status', ''),
             q.get('notes', '')
-        ])
+        ]])
 
     csv_text = output.getvalue()
     return b'\xef\xbb\xbf' + csv_text.encode('utf-8')
+
+
+def safe_csv_cell(value):
+    if isinstance(value, str) and value.lstrip().startswith(('=', '+', '-', '@', '\t', '\r', '\n')):
+        return "'" + value
+    return value

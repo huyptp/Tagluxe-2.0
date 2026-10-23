@@ -11,10 +11,8 @@ from backend.config import (
 )
 from backend.services.data_service import (
     get_all_products, get_product_by_id, add_product, update_product, delete_product,
-    get_demo_requests, update_demo_request_status, delete_demo_request,
     get_quotes, update_quote_status, delete_quote,
-    retry_quote_sync, retry_demo_request_sync,
-    get_quotes_paginated, get_demo_requests_paginated,
+    retry_quote_sync,
     get_all_accessories, get_accessory_by_id, update_accessory,
     get_all_price_tiers_grouped, update_price_tiers_bulk,
     add_accessory, delete_accessory, toggle_accessory_visibility,
@@ -22,7 +20,16 @@ from backend.services.data_service import (
 )
 from backend.security import rate_limit, limiter, get_client_ip
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin',
+                     static_folder='../../frontend/admin/static', static_url_path='/assets')
+QUOTE_STATUSES = ('Mới', 'Đang tư vấn', 'Đã tư vấn', 'Đang chốt', 'Đã chốt', 'Đã xong', 'Đã hủy')
+
+
+@admin_bp.after_request
+def private_admin_response(response):
+    if request.endpoint != 'admin.static':
+        response.headers['Cache-Control'] = 'private, no-store'
+    return response
 
 def is_valid_image_file(file_storage):
     """
@@ -98,6 +105,8 @@ def record_audit(action, target_type, target_id, details=""):
         db.session.add(log)
         db.session.commit()
     except Exception as ex:
+        from backend.database import db
+        db.session.rollback()
         print(f"[AUDIT_LOG_ERROR] {ex}")
 
 def login_required(f):
@@ -114,12 +123,15 @@ def verify_admin_credentials(username, password):
         return False
     if ADMIN_PASSWORD_HASH:
         return check_password_hash(ADMIN_PASSWORD_HASH, password)
-    return secrets.compare_digest(password, ADMIN_PASSWORD)
+    return bool(ADMIN_PASSWORD) and secrets.compare_digest(password, ADMIN_PASSWORD)
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 @rate_limit(limit=5, window_sec=60, error_message='Bạn đã nhập sai quá nhiều lần. Vui lòng chờ 1 phút trước khi thử lại.', is_json=False)
 def admin_login():
     if request.method == 'POST':
+        if not validate_csrf():
+            flash('Phiên đăng nhập đã hết hạn. Vui lòng thử lại.', 'error')
+            return redirect(url_for('admin.admin_login'))
         username = (request.form.get('username') or '').strip()
         password = request.form.get('password') or ''
         if verify_admin_credentials(username, password):
@@ -135,8 +147,12 @@ def admin_login():
             flash('Sai tên đăng nhập hoặc mật khẩu', 'error')
     return render_template('admin/login.html')
 
-@admin_bp.route('/logout')
+@admin_bp.route('/logout', methods=['POST'])
+@login_required
 def admin_logout():
+    if not validate_csrf():
+        flash('Yêu cầu đăng xuất không hợp lệ. Vui lòng thử lại.', 'error')
+        return redirect(url_for('admin.admin_dashboard'))
     user = session.get('admin_username', 'admin')
     record_audit('logout', 'admin_session', user, 'Đăng xuất')
     session.clear()
@@ -149,6 +165,80 @@ def admin_dashboard():
     from backend.admin.services import get_admin_dashboard_stats
     stats = get_admin_dashboard_stats()
     return render_template('admin/dashboard.html', stats=stats)
+
+
+@admin_bp.route('/activity')
+@login_required
+def admin_activity():
+    from sqlalchemy import or_
+    from backend.models import AuditLog
+    search = request.args.get('q', '').strip()[:200]
+    action = request.args.get('action', '').strip()
+    query = AuditLog.query
+    if search:
+        query = query.filter(or_(AuditLog.admin_user.contains(search, autoescape=True),
+            AuditLog.target_id.contains(search, autoescape=True),
+            AuditLog.details.contains(search, autoescape=True)))
+    if action:
+        query = query.filter(AuditLog.action == action)
+    pagination = query.order_by(AuditLog.timestamp.desc(), AuditLog.id.desc()).paginate(
+        page=max(1, request.args.get('page', 1, type=int)), per_page=25, error_out=False)
+    actions = [row[0] for row in AuditLog.query.with_entities(AuditLog.action).distinct().order_by(AuditLog.action)]
+    return render_template('admin/activity.html', pagination=pagination, actions=actions,
+                           search_query=search, current_action=action)
+
+
+@admin_bp.route('/system')
+@login_required
+def admin_system():
+    from sqlalchemy import text
+    from backend.database import db
+    from backend.models import Quote
+    from backend.config import GOOGLE_SHEET_WEBHOOK_URL, GOOGLE_SHEET_SECRET
+    db.session.execute(text('SELECT 1'))
+    counts = {name: {'quotes': Quote.query.filter_by(sync_status=name).count()}
+              for name in ('pending', 'synced', 'failed')}
+    return render_template('admin/system.html', sync_counts=counts,
+        sheets_configured=bool(GOOGLE_SHEET_WEBHOOK_URL),
+        sheets_secret_configured=bool(GOOGLE_SHEET_SECRET),
+        database_type=db.engine.dialect.name)
+
+
+@admin_bp.route('/quotes/bulk-status', methods=['POST'])
+@login_required
+def admin_bulk_quote_status():
+    from backend.database import db
+    from backend.models import Quote
+    if not validate_csrf():
+        flash('Phiên làm việc đã hết hạn. Vui lòng tải lại trang.', 'error')
+        return redirect(url_for('admin.admin_quotes'))
+    ids = list(dict.fromkeys(request.form.getlist('quote_ids')))
+    status = request.form.get('status')
+    if not ids or len(ids) > 100 or status not in QUOTE_STATUSES:
+        flash('Chọn từ 1 đến 100 báo giá và một trạng thái hợp lệ.', 'error')
+        return redirect(url_for('admin.admin_quotes'))
+    from backend.models import AuditLog
+    from backend.admin.workspace_services import quote_filters, page_number, FILTER_KEYS
+    try:
+        filters = quote_filters({key: request.form.get('filter_' + key, '') for key in FILTER_KEYS})
+    except ValueError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('admin.admin_quotes'))
+    rows = Quote.query.filter(Quote.id.in_(ids)).all()
+    try:
+        for row in rows:
+            old_status = row.status
+            row.status = status
+            db.session.add(AuditLog(admin_user=session.get('admin_username', 'admin'),
+                action='bulk_quote_status', target_type='quote', target_id=row.id,
+                details=f'{old_status} → {status}', ip_address=request.remote_addr))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        flash('Không thể cập nhật. Dữ liệu chưa được thay đổi.', 'error')
+        return redirect(url_for('admin.admin_quotes'))
+    flash(f'Đã cập nhật {len(rows)} báo giá sang “{status}”.', 'success')
+    return redirect(url_for('admin.admin_quotes', **dict(filters, page=page_number(request.form))))
 
 @admin_bp.route('/products')
 @login_required
@@ -419,129 +509,45 @@ def admin_delete_product(id):
     flash('Xóa sản phẩm thành công', 'success')
     return redirect(url_for('admin.admin_products'))
 
-# ===== DEMO REQUESTS =====
+# Retired admin area: keep old bookmarks usable without exposing legacy actions.
 @admin_bp.route('/requests')
 @login_required
 def admin_requests():
     return redirect(url_for('admin.admin_quotes'))
 
-@admin_bp.route('/requests/status/<id>', methods=['POST'])
-@login_required
-def admin_update_request_status(id):
-    if not validate_csrf():
-        flash('Yêu cầu không hợp lệ hoặc phiên làm việc đã hết hạn (CSRF error).', 'error')
-        return redirect(url_for('admin.admin_requests'))
-
-    status = request.form.get('status')
-    if status:
-        ok = update_demo_request_status(id, status)
-        if ok:
-            record_audit('update_request_status', 'demo_request', id, f"Changed status to {status}")
-            flash('Cập nhật trạng thái yêu cầu thành công', 'success')
-        else:
-            flash('Lỗi cơ sở dữ liệu: Không thể cập nhật trạng thái yêu cầu.', 'error')
-    return redirect(url_for('admin.admin_requests'))
-
-@admin_bp.route('/requests/delete/<id>', methods=['POST'])
-@login_required
-def admin_delete_request(id):
-    if not validate_csrf():
-        flash('Yêu cầu không hợp lệ hoặc phiên làm việc đã hết hạn (CSRF error).', 'error')
-        return redirect(url_for('admin.admin_requests'))
-
-    deleted_req = delete_demo_request(id)
-    if not deleted_req:
-        flash('Lỗi cơ sở dữ liệu: Không thể xóa yêu cầu demo.', 'error')
-        return redirect(url_for('admin.admin_requests'))
-
-    if deleted_req.get('file_path'):
-        fpath = os.path.join(PRIVATE_STORAGE_FOLDER, deleted_req['file_path'])
-        if os.path.exists(fpath):
-            try:
-                os.remove(fpath)
-            except Exception:
-                pass
-    record_audit('delete_request', 'demo_request', id, f"Deleted request {id}")
-    flash('Đã xóa yêu cầu demo thành công', 'success')
-    return redirect(url_for('admin.admin_requests'))
-
-@admin_bp.route('/requests/retry-sync/<id>', methods=['POST'])
-@login_required
-def admin_retry_request_sync(id):
-    if not validate_csrf():
-        flash('Yêu cầu không hợp lệ (CSRF error).', 'error')
-        return redirect(url_for('admin.admin_requests'))
-
-    from flask import current_app
-    app = current_app._get_current_object()
-    success, msg = retry_demo_request_sync(id, app)
-    if success:
-        record_audit('retry_request_sync', 'demo_request', id, 'Đồng bộ Google Sheets thành công')
-        flash('Đã đồng bộ lại yêu cầu demo lên Google Sheets thành công!', 'success')
-    else:
-        record_audit('retry_request_sync_failed', 'demo_request', id, f"Thất bại: {msg}")
-        flash(f'Đồng bộ thất bại: {msg}', 'error')
-    return redirect(url_for('admin.admin_requests'))
-
-@admin_bp.route('/requests/file/<id>')
-@login_required
-def admin_download_request_file(id):
-    from backend.models import DemoRequest
-    req_record = DemoRequest.query.filter_by(id=id).first()
-    if not req_record or not req_record.file_path:
-        flash('Không tìm thấy file đính kèm cho yêu cầu này.', 'error')
-        return redirect(url_for('admin.admin_requests'))
-
-    clean_filename = os.path.basename(req_record.file_path)
-    full_path = os.path.join(PRIVATE_STORAGE_FOLDER, clean_filename)
-    if not os.path.isfile(full_path):
-        flash('File không tồn tại trên hệ thống lưu trữ.', 'error')
-        return redirect(url_for('admin.admin_requests'))
-
-    record_audit('download_request_file', 'demo_request', id, f"Downloaded {req_record.original_filename or clean_filename}")
-    resp = send_from_directory(
-        PRIVATE_STORAGE_FOLDER,
-        clean_filename,
-        as_attachment=True,
-        download_name=req_record.original_filename or clean_filename
-    )
-    resp.headers['X-Content-Type-Options'] = 'nosniff'
-    resp.headers['Cache-Control'] = 'private, no-cache, no-store, must-revalidate'
-    return resp
-
 # ===== BÁO GIÁ TRỰC TUYẾN (QUOTES) =====
 @admin_bp.route('/quotes')
 @login_required
 def admin_quotes():
-    from backend.admin.services import get_quotes_summary_stats
-    status_filter = request.args.get('status', 'all')
-    search_query = request.args.get('q', '').strip()
-    page = request.args.get('page', 1, type=int)
-    pagination = get_quotes_paginated(status=status_filter, search=search_query, page=page, per_page=20)
-    all_filtered = get_quotes(status=status_filter, search=search_query)
-    summary_stats = get_quotes_summary_stats(all_filtered)
-    return render_template(
-        'admin/quotes.html',
-        quotes=pagination['items'],
-        page=pagination['page'],
-        total_pages=pagination['total_pages'],
-        total_items=pagination['total_items'],
-        has_prev=pagination['has_prev'],
-        has_next=pagination['has_next'],
-        current_status=status_filter,
-        search_query=search_query,
-        summary_stats=summary_stats
-    )
+    from backend.admin.workspace_services import quote_filters, filtered_quotes, quote_summary, page_number
+    from sqlalchemy.orm import selectinload
+    try:
+        filters = quote_filters(request.args)
+    except ValueError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('admin.admin_quotes'))
+    query = filtered_quotes(filters)
+    total = query.count()
+    page = min(page_number(request.args), max(1, (total + 19) // 20))
+    from backend.models import Quote
+    pagination = query.options(selectinload(Quote.admin_state)).paginate(page=page, per_page=20, error_out=False)
+    return render_template('admin/quotes.html', quotes=pagination.items, pagination=pagination,
+        filters=filters, summary=quote_summary(query), statuses=QUOTE_STATUSES,
+        page_url=lambda n: url_for('admin.admin_quotes', **dict(filters, page=n)),
+        export_url=url_for('admin.admin_export_quotes', **filters))
 
 @admin_bp.route('/quotes/export')
 @login_required
 def admin_export_quotes():
     from flask import Response
     from backend.admin.services import generate_quotes_csv_bytes
-    status_filter = request.args.get('status', 'all')
-    search_query = request.args.get('q', '').strip()
-    csv_bytes = generate_quotes_csv_bytes(status=status_filter, search=search_query)
-    record_audit('export_quotes_csv', 'quote', status_filter or 'all', f"Xuất CSV báo giá (status={status_filter}, q={search_query})")
+    from backend.admin.workspace_services import quote_filters, filtered_quotes
+    try:
+        filters = quote_filters(request.args)
+    except ValueError as exc:
+        return str(exc), 400
+    csv_bytes = generate_quotes_csv_bytes(items=[q.to_dict() for q in filtered_quotes(filters).all()])
+    record_audit('export_quotes_csv', 'quote', 'filtered', 'Xuất CSV theo bộ lọc báo giá')
     resp = Response(csv_bytes, mimetype='text/csv; charset=utf-8')
     resp.headers['Content-Disposition'] = 'attachment; filename="TagLuxe_BaoGia.csv"'
     resp.headers['X-Content-Type-Options'] = 'nosniff'
@@ -556,13 +562,15 @@ def admin_update_quote_status(id):
         return redirect(url_for('admin.admin_quotes'))
 
     status = request.form.get('status')
-    if status:
+    if status in QUOTE_STATUSES:
         ok = update_quote_status(id, status)
         if ok:
             record_audit('update_quote_status', 'quote', id, f"Changed status to {status}")
             flash('Cập nhật trạng thái báo giá thành công', 'success')
         else:
             flash('Lỗi cơ sở dữ liệu: Không thể cập nhật trạng thái báo giá.', 'error')
+    if request.form.get('return_detail') == id:
+        return redirect(url_for('admin.admin_quote_detail', id=id))
     return redirect(url_for('admin.admin_quotes'))
 
 @admin_bp.route('/quotes/delete/<id>', methods=['POST'])
@@ -1206,3 +1214,6 @@ def admin_toggle_campaign_banner():
 
 
 
+
+# Register customer and quote-workflow pages after authentication helpers exist.
+from backend.admin import workspace_routes  # noqa: E402,F401

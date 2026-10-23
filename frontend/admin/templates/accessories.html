@@ -1,863 +1,27 @@
 {% extends 'admin/base.html' %}
-
 {% block content %}
-<style>
-    /* Mở rộng container trang admin để tận dụng tối đa chiều ngang màn hình */
-    .admin-container {
-        max-width: 1580px !important;
-        width: 96% !important;
-        margin: 20px auto 40px auto !important;
-        padding: 0 16px !important;
-    }
-
-    .pricing-admin-page {
-        margin-top: 5px;
-    }
-
-    /* Page Header & Top Actions */
-    .page-title-box {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 14px;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .page-title-box h2 {
-        font-size: 1.35rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0 0 2px 0;
-        letter-spacing: -0.3px;
-    }
-    .page-title-box p {
-        font-size: 0.82rem;
-        color: #64748b;
-        margin: 0;
-    }
-
-    .top-actions-group {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-    .btn-action-primary {
-        background: #2563eb;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        border: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        box-shadow: 0 2px 6px rgba(37,99,235,0.2);
-        transition: all 0.15s;
-        text-decoration: none;
-    }
-    .btn-action-primary:hover {
-        background: #1d4ed8;
-        transform: translateY(-1px);
-    }
-    .btn-action-save {
-        background: #16a34a;
-        color: white;
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-size: 0.82rem;
-        font-weight: 800;
-        border: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        box-shadow: 0 2px 8px rgba(22,163,74,0.25);
-        transition: all 0.15s;
-    }
-    .btn-action-save:hover {
-        background: #15803d;
-        transform: translateY(-1px);
-    }
-
-    /* Tab Switcher */
-    .admin-tab-bar {
-        display: flex;
-        gap: 6px;
-        background: #e2e8f0;
-        padding: 4px;
-        border-radius: 8px;
-        margin-bottom: 16px;
-        width: fit-content;
-    }
-    .tab-nav-btn {
-        padding: 7px 15px;
-        border-radius: 6px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        border: none;
-        cursor: pointer;
-        background: transparent;
-        color: #64748b;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.15s;
-        text-decoration: none;
-    }
-    .tab-nav-btn.active {
-        background: white;
-        color: #0f172a;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-
-    /* BỐ CỤC 3 CỘT NGANG VỪA KHÍT MÀN HÌNH */
-    .pricing-grid-3cols {
-        display: grid;
-        grid-template-columns: 1.15fr 1fr 1fr;
-        gap: 16px;
-        align-items: start;
-    }
-    @media (max-width: 1200px) {
-        .pricing-grid-3cols {
-            grid-template-columns: 1fr 1fr;
-        }
-    }
-    @media (max-width: 800px) {
-        .pricing-grid-3cols {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .matrix-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 14px 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        margin-bottom: 14px;
-    }
-    .matrix-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #f1f5f9;
-    }
-    .matrix-card-header h3 {
-        font-size: 0.95rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .tag-badge {
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 12px;
-    }
-    .tag-blue { background: #eff6ff; color: #2563eb; }
-    .tag-purple { background: #faf5ff; color: #9333ea; }
-    .tag-green { background: #f0fdf4; color: #166534; }
-
-    /* Tables siêu tinh gọn */
-    .admin-table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        font-size: 0.82rem;
-        display: table !important;
-    }
-    .admin-table thead {
-        display: table-header-group !important;
-    }
-    .admin-table tbody {
-        display: table-row-group !important;
-    }
-    .admin-table tr {
-        display: table-row !important;
-    }
-    .admin-table th {
-        display: table-cell !important;
-        text-align: left;
-        background: #f8fafc;
-        padding: 6px 8px;
-        font-weight: 700;
-        color: #64748b;
-        font-size: 0.74rem;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        border-bottom: 1px solid #e2e8f0;
-        vertical-align: middle;
-    }
-    .admin-table td {
-        display: table-cell !important;
-        padding: 5px 8px;
-        border-bottom: 1px solid #f1f5f9;
-        vertical-align: middle;
-    }
-    .admin-table tr:hover td {
-        background: #fbfcfe;
-    }
-
-    .input-compact-price {
-        width: 90px;
-        padding: 4px 6px;
-        border: 1.5px solid #cbd5e1;
-        border-radius: 5px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: #0f172a;
-        text-align: right;
-        outline: none;
-        transition: border 0.15s, background 0.15s;
-    }
-    .input-compact-price:focus {
-        border-color: #2563eb;
-        background: #eff6ff;
-    }
-    .current-price-tag {
-        color: #94a3b8;
-        font-size: 0.76rem;
-        text-align: right;
-        white-space: nowrap;
-    }
-    .status-dot {
-        font-size: 0.74rem;
-        font-weight: 600;
-        color: #16a34a;
-        white-space: nowrap;
-    }
-
-    /* Style Ô nhập Mốc Số Lượng [Từ] – [Đến] */
-    .qty-range-box {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .qty-input {
-        width: 48px;
-        padding: 3px 4px;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: #0f172a;
-        text-align: center;
-        background: #ffffff;
-        outline: none;
-        transition: border-color 0.15s, background 0.15s;
-    }
-    .qty-input:focus {
-        border-color: #2563eb;
-        background: #eff6ff;
-    }
-    .qty-sep {
-        color: #94a3b8;
-        font-weight: 600;
-        font-size: 0.75rem;
-    }
-    .qty-unit {
-        color: #64748b;
-        font-size: 0.74rem;
-        font-weight: 600;
-        margin-left: 2px;
-        white-space: nowrap;
-    }
-    .price-input {
-        width: 82px;
-        padding: 3px 6px;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: #0f172a;
-        text-align: right;
-        background: #ffffff;
-        outline: none;
-        transition: border-color 0.15s, background 0.15s;
-    }
-    .price-input:focus {
-        border-color: #10b981;
-        background: #f0fdf4;
-    }
-    .btn-del-tier {
-        background: transparent;
-        border: none;
-        color: #94a3b8;
-        cursor: pointer;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        transition: all 0.15s;
-    }
-    .btn-del-tier:hover {
-        background: #fee2e2;
-        color: #ef4444;
-    }
-    .card-table-footer {
-        padding: 6px 12px;
-        background: #f8fafc;
-        border-top: 1px dashed #e2e8f0;
-        display: flex;
-        justify-content: flex-end;
-    }
-    .btn-add-tier {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.74rem;
-        font-weight: 700;
-        color: #2563eb;
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        padding: 3px 10px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.15s;
-    }
-    .btn-add-tier:hover {
-        background: #dbeafe;
-        border-color: #93c5fd;
-    }
-
-    /* Stats for Accessories */
-    .acc-stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 14px;
-        margin-bottom: 18px;
-    }
-    .acc-stat-card {
-        background: white;
-        padding: 14px 18px;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .acc-stat-info .num {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: #0f172a;
-        line-height: 1.2;
-    }
-    .acc-stat-info .lbl {
-        font-size: 0.78rem;
-        color: #64748b;
-        font-weight: 500;
-    }
-    .acc-stat-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .acc-stat-icon.blue { background: #eff6ff; color: #2563eb; }
-    .acc-stat-icon.indigo { background: #eef2ff; color: #4f46e5; }
-    .acc-stat-icon.purple { background: #faf5ff; color: #9333ea; }
-    .acc-stat-icon.amber { background: #fffbeb; color: #d97706; }
-
-    /* Thumbnails & Badges */
-    .thumb-preview-wrap {
-        position: relative;
-        width: 52px;
-        height: 52px;
-        border-radius: 7px;
-        border: 1.5px solid #e2e8f0;
-        overflow: hidden;
-        background: #f8fafc;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-    .thumb-preview-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.2s;
-    }
-    .thumb-preview-wrap:hover img {
-        transform: scale(1.1);
-    }
-    .badge-cat {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 3px 8px;
-        border-radius: 5px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-    .badge-cat.lanyard_acc { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
-    .badge-cat.holder_orientation { background: #faf5ff; color: #7e22ce; border: 1px solid #f3e8ff; }
-    .badge-cat.holder_material { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
-
-    .code-pill {
-        font-family: monospace;
-        background: #f1f5f9;
-        color: #475569;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        border: 1px solid #e2e8f0;
-        white-space: nowrap;
-    }
-
-    /* Modal Popup */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(15,23,42,0.6);
-        backdrop-filter: blur(4px);
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-    }
-    .modal-overlay.active {
-        display: flex;
-    }
-    .modal-card {
-        background: white;
-        border-radius: 14px;
-        width: 100%;
-        max-width: 560px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-        overflow: hidden;
-        animation: modalSlide 0.2s ease-out;
-    }
-    @keyframes modalSlide {
-        from { opacity: 0; transform: translateY(16px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .modal-header {
-        padding: 16px 20px;
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .modal-header h3 {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .modal-close-btn {
-        background: none;
-        border: none;
-        font-size: 1.4rem;
-        color: #94a3b8;
-        cursor: pointer;
-        line-height: 1;
-    }
-    .modal-close-btn:hover { color: #0f172a; }
-    .modal-body {
-        padding: 20px;
-        max-height: 75vh;
-        overflow-y: auto;
-    }
-    .modal-footer {
-        padding: 14px 20px;
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-    .form-group-custom {
-        margin-bottom: 14px;
-    }
-    .form-group-custom label {
-        display: block;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #334155;
-        margin-bottom: 5px;
-    }
-    .form-group-custom input[type="text"],
-    .form-group-custom input[type="number"],
-    .form-group-custom select,
-    .form-group-custom textarea {
-        width: 100%;
-        padding: 8px 11px;
-        border: 1.5px solid #cbd5e1;
-        border-radius: 7px;
-        font-size: 0.84rem;
-        font-family: inherit;
-        outline: none;
-        transition: border 0.15s;
-    }
-    .form-group-custom input:focus,
-    .form-group-custom select:focus,
-    .form-group-custom textarea:focus {
-        border-color: #2563eb;
-    }
-    .dropzone-upload {
-        border: 2px dashed #cbd5e1;
-        border-radius: 8px;
-        padding: 16px;
-        text-align: center;
-        background: #f8fafc;
-        cursor: pointer;
-        position: relative;
-        transition: all 0.2s;
-    }
-    .dropzone-upload:hover {
-        border-color: #2563eb;
-        background: #eff6ff;
-    }
-    .img-preview-box {
-        max-width: 110px;
-        max-height: 110px;
-        margin: 10px auto 0 auto;
-        display: none;
-        border-radius: 7px;
-        overflow: hidden;
-        border: 1px solid #cbd5e1;
-    }
-    .img-preview-box img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-</style>
-
-<div class="pricing-admin-page">
-    <!-- Page Header & Action Buttons -->
-    <div class="page-title-box">
-        <div>
-            <h2>Bảng Setup Biểu Giá Bán & Quản Lý Phụ Kiện</h2>
-            <p>Ma trận 3 cột tối ưu vừa vặn màn hình - Điều chỉnh giá theo số lượng cho Dây đeo, Thẻ PVC, Vỏ thẻ và mở rộng phụ kiện mới</p>
-        </div>
-        <div class="top-actions-group">
-            <button type="button" class="btn-action-primary" onclick="openAddAccessoryModal()">
-                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> Thêm Mẫu Phụ Kiện Mới
-            </button>
-            {% if active_tab == 'pricing' or not active_tab %}
-            <button type="button" class="btn-action-save" onclick="submitPricingForm()">
-                <i data-lucide="save" style="width: 16px; height: 16px;"></i> Lưu Toàn Bộ Biểu Giá Mới
-            </button>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Tab Bar -->
-    <div class="admin-tab-bar">
-        <a href="/admin/accessories?tab=pricing" class="tab-nav-btn {% if active_tab == 'pricing' or not active_tab %}active{% endif %}">
-            <i data-lucide="bar-chart-2" style="width: 15px; height: 15px;"></i> Biểu Giá Theo Số Lượng (Toàn Bộ 3 Nhóm)
-        </a>
-        <a href="/admin/accessories?tab=accessories" class="tab-nav-btn {% if active_tab == 'accessories' %}active{% endif %}">
-            <i data-lucide="layers" style="width: 15px; height: 15px;"></i> Danh Mục Phụ Kiện & Vỏ Thẻ ({{ accessories|length }} mẫu)
-        </a>
-    </div>
-
-    <!-- ==================== TAB 1: BIỂU GIÁ THEO SỐ LƯỢNG (3 CỘT FIT-TO-SCREEN) ==================== -->
-    {% if active_tab == 'pricing' or not active_tab %}
-    <form id="pricingMatrixForm" method="POST" action="/admin/pricing/update">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-
-        <div class="pricing-grid-3cols">
-
-            <!-- CỘT 1: BẢNG GIÁ DÂY ĐEO THẺ (14 BẬC) -->
-            <div class="matrix-card">
-                <div class="matrix-card-header">
-                    <h3><i data-lucide="award" style="color: #2563eb; width: 18px; height: 18px;"></i> Dây Đeo Thẻ (Lanyard)</h3>
-                    <span class="tag-badge tag-blue">{{ price_tiers.lanyard|length }} Mốc Tự Do</span>
-                </div>
-                <table class="admin-table" id="lanyardTable">
-                    <thead>
-                        <tr>
-                            <th style="width: 145px;">Mốc SL (Từ – Đến)</th>
-                            <th style="text-align: right; width: 65px;">Giá Cũ</th>
-                            <th style="text-align: right;">Giá Mới (VNĐ)</th>
-                            <th style="width: 28px; text-align: center;">Xóa</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for t in price_tiers.lanyard %}
-                        <tr id="tier_row_{{ t.id }}">
-                            <td>
-                                <input type="hidden" name="tier_cat_{{ t.id }}" value="lanyard">
-                                <div class="qty-range-box">
-                                    <input type="number" name="tier_min_{{ t.id }}" class="qty-input" value="{{ t.min_qty }}" min="1">
-                                    <span class="qty-sep">–</span>
-                                    <input type="number" name="tier_max_{{ t.id }}" class="qty-input" value="{{ t.max_qty }}" min="1">
-                                    <span class="qty-unit">dây</span>
-                                </div>
-                            </td>
-                            <td class="current-price-tag">
-                                {{ "{:,.0f}".format(t.unit_price).replace(',', '.') }} đ
-                            </td>
-                            <td style="text-align: right;">
-                                <input type="number" 
-                                       name="tier_price_{{ t.id }}" 
-                                       class="price-input" 
-                                       value="{{ t.unit_price }}" 
-                                       step="500" 
-                                       min="1000">
-                            </td>
-                            <td style="text-align: center;">
-                                <button type="button" class="btn-del-tier" onclick="deleteTierRow(this, {{ t.id }})" title="Xóa mốc này">✕</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <div class="card-table-footer">
-                    <button type="button" class="btn-add-tier" onclick="addNewTierRow('lanyardTable', 'lanyard', 'dây')">
-                        <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Thêm Mốc Dây Đeo
-                    </button>
-                </div>
-            </div>
-
-            <!-- CỘT 2: THẺ NHỰA PVC (7 MỐC CHUẨN + SIZE LỚN) -->
-            <div>
-                <!-- Bảng Thẻ PVC 5.4x8.6cm (ĐÃ LOẠI BỎ LẶP DỮ LIỆU) -->
-                <div class="matrix-card">
-                    <div class="matrix-card-header">
-                        <h3><i data-lucide="credit-card" style="color: #7e22ce; width: 18px; height: 18px;"></i> Thẻ PVC Chuẩn (5.4 x 8.6cm)</h3>
-                        <span class="tag-badge tag-purple">7 Mốc Tự Do</span>
-                    </div>
-                    <table class="admin-table" id="pvcTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 145px;">Mốc SL (Từ – Đến)</th>
-                                <th style="text-align: right; width: 65px;">Giá Cũ</th>
-                                <th style="text-align: right;">Giá Mới (VNĐ)</th>
-                                <th style="width: 28px; text-align: center;">Xóa</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for t in price_tiers.pvc_5_4x8_6 %}
-                            <tr id="tier_row_{{ t.id }}">
-                                <td>
-                                    <input type="hidden" name="tier_cat_{{ t.id }}" value="pvc_5.4x8.6">
-                                    <div class="qty-range-box">
-                                        <input type="number" name="tier_min_{{ t.id }}" class="qty-input" value="{{ t.min_qty }}" min="1">
-                                        <span class="qty-sep">–</span>
-                                        <input type="number" name="tier_max_{{ t.id }}" class="qty-input" value="{{ t.max_qty }}" min="1">
-                                        <span class="qty-unit">thẻ</span>
-                                    </div>
-                                </td>
-                                <td class="current-price-tag">
-                                    {{ "{:,.0f}".format(t.unit_price).replace(',', '.') }} đ
-                                </td>
-                                <td style="text-align: right;">
-                                    <input type="number" 
-                                           name="tier_price_{{ t.id }}" 
-                                           class="price-input" 
-                                           value="{{ t.unit_price }}" 
-                                           step="500" 
-                                           min="1000">
-                                </td>
-                                <td style="text-align: center;">
-                                    <button type="button" class="btn-del-tier" onclick="deleteTierRow(this, {{ t.id }})" title="Xóa mốc này">✕</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <div class="card-table-footer">
-                        <button type="button" class="btn-add-tier" onclick="addNewTierRow('pvcTable', 'pvc_5.4x8.6', 'thẻ')">
-                            <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Thêm Mốc Thẻ PVC
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Bảng Thẻ PVC Size Lớn 7x11 & 9x12cm -->
-                <div class="matrix-card">
-                    <div class="matrix-card-header">
-                        <h3><i data-lucide="file-text" style="color: #0284c7; width: 18px; height: 18px;"></i> Thẻ PVC Size Lớn (7x11 & 9x12)</h3>
-                        <span class="tag-badge tag-blue">Sự Kiện</span>
-                    </div>
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Kích Thước</th>
-                                <th>Mốc SL</th>
-                                <th style="text-align: right;">Giá Cũ</th>
-                                <th style="text-align: right;">Giá Mới (VNĐ)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for t in price_tiers.pvc_7x11[:4] %}
-                            <tr id="tier_row_{{ t.id }}">
-                                <td><span class="code-pill">7 x 11 cm</span></td>
-                                <td>
-                                    <input type="hidden" name="tier_cat_{{ t.id }}" value="pvc_7x11">
-                                    <div class="qty-range-box">
-                                        <input type="number" name="tier_min_{{ t.id }}" class="qty-input" style="width:38px;" value="{{ t.min_qty }}">
-                                        <span class="qty-sep">–</span>
-                                        <input type="number" name="tier_max_{{ t.id }}" class="qty-input" style="width:38px;" value="{{ t.max_qty }}">
-                                    </div>
-                                </td>
-                                <td class="current-price-tag">{{ "{:,.0f}".format(t.unit_price).replace(',', '.') }} đ</td>
-                                <td style="text-align: right;">
-                                    <input type="number" name="tier_price_{{ t.id }}" class="price-input" value="{{ t.unit_price }}" step="500">
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% for t in price_tiers.pvc_9x12[:4] %}
-                            <tr id="tier_row_{{ t.id }}">
-                                <td><span class="code-pill">9 x 12 cm</span></td>
-                                <td>
-                                    <input type="hidden" name="tier_cat_{{ t.id }}" value="pvc_9x12">
-                                    <div class="qty-range-box">
-                                        <input type="number" name="tier_min_{{ t.id }}" class="qty-input" style="width:38px;" value="{{ t.min_qty }}">
-                                        <span class="qty-sep">–</span>
-                                        <input type="number" name="tier_max_{{ t.id }}" class="qty-input" style="width:38px;" value="{{ t.max_qty }}">
-                                    </div>
-                                </td>
-                                <td class="current-price-tag">{{ "{:,.0f}".format(t.unit_price).replace(',', '.') }} đ</td>
-                                <td style="text-align: right;">
-                                    <input type="number" name="tier_price_{{ t.id }}" class="price-input" value="{{ t.unit_price }}" step="500">
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- CỘT 3: VỎ ĐỰNG THẺ (HOLDER) & BỘ COMBO -->
-            <div>
-                <!-- Bảng Vỏ Đựng Thẻ -->
-                <div class="matrix-card">
-                    <div class="matrix-card-header">
-                        <h3><i data-lucide="box" style="color: #16a34a; width: 18px; height: 18px;"></i> Vỏ Đựng Thẻ (Holder)</h3>
-                        <span class="tag-badge tag-green">Tự Động Tính Giá</span>
-                    </div>
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Chủng Loại</th>
-                                <th>Mốc SL</th>
-                                <th style="text-align: right;">Giá Cũ</th>
-                                <th style="text-align: right;">Giá Mới (VNĐ)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for t in price_tiers.holder_silicone %}
-                            <tr id="tier_row_{{ t.id }}">
-                                <td><strong>Vỏ silicon dẻo</strong></td>
-                                <td><span style="color:#64748b; font-size:0.75rem;">Mọi SL</span></td>
-                                <td class="current-price-tag">{{ "{:,.0f}".format(t.unit_price).replace(',', '.') }} đ</td>
-                                <td style="text-align: right;">
-                                    <input type="hidden" name="tier_cat_{{ t.id }}" value="holder_silicone">
-                                    <input type="number" name="tier_price_{{ t.id }}" class="price-input" value="{{ t.unit_price }}" step="500">
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% for t in price_tiers.holder_plain %}
-                            <tr id="tier_row_{{ t.id }}">
-                                <td><strong>Vỏ nhựa ABS trơn</strong></td>
-                                <td><span style="color:#64748b; font-size:0.75rem;">Mọi SL</span></td>
-                                <td class="current-price-tag">{{ "{:,.0f}".format(t.unit_price).replace(',', '.') }} đ</td>
-                                <td style="text-align: right;">
-                                    <input type="hidden" name="tier_cat_{{ t.id }}" value="holder_plain">
-                                    <input type="number" name="tier_price_{{ t.id }}" class="price-input" value="{{ t.unit_price }}" step="500">
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% for t in price_tiers.holder[:5] %}
-                            <tr id="tier_row_{{ t.id }}">
-                                <td><strong>Vỏ ABS in UV</strong></td>
-                                <td>
-                                    <input type="hidden" name="tier_cat_{{ t.id }}" value="holder">
-                                    <div class="qty-range-box">
-                                        <input type="number" name="tier_min_{{ t.id }}" class="qty-input" style="width:38px;" value="{{ t.min_qty }}">
-                                        <span class="qty-sep">–</span>
-                                        <input type="number" name="tier_max_{{ t.id }}" class="qty-input" style="width:38px;" value="{{ t.max_qty }}">
-                                    </div>
-                                </td>
-                                <td class="current-price-tag">{{ "{:,.0f}".format(t.unit_price).replace(',', '.') }} đ</td>
-                                <td style="text-align: right;">
-                                    <input type="number" name="tier_price_{{ t.id }}" class="price-input" value="{{ t.unit_price }}" step="500">
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Bảng Bộ Combo (Dây + Thẻ + Vỏ) -->
-                <div class="matrix-card">
-                    <div class="matrix-card-header">
-                        <h3><i data-lucide="package-check" style="color: #9333ea; width: 18px; height: 18px;"></i> Bộ Combo (Dây + Thẻ + Vỏ)</h3>
-                        <span class="tag-badge tag-purple">Giá Ưu Đãi</span>
-                    </div>
-                    <table class="admin-table" id="comboTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 145px;">Mốc SL (Từ – Đến)</th>
-                                <th style="text-align: right; width: 65px;">Giá Cũ</th>
-                                <th style="text-align: right;">Giá Mới (VNĐ)</th>
-                                <th style="width: 28px; text-align: center;">Xóa</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for t in price_tiers.combo %}
-                            <tr id="tier_row_{{ t.id }}">
-                                <td>
-                                    <input type="hidden" name="tier_cat_{{ t.id }}" value="combo">
-                                    <div class="qty-range-box">
-                                        <input type="number" name="tier_min_{{ t.id }}" class="qty-input" value="{{ t.min_qty }}" min="1">
-                                        <span class="qty-sep">–</span>
-                                        <input type="number" name="tier_max_{{ t.id }}" class="qty-input" value="{{ t.max_qty }}" min="1">
-                                        <span class="qty-unit">bộ</span>
-                                    </div>
-                                </td>
-                                <td class="current-price-tag">{{ "{:,.0f}".format(t.unit_price).replace(',', '.') }} đ</td>
-                                <td style="text-align: right;">
-                                    <input type="number" name="tier_price_{{ t.id }}" class="price-input" value="{{ t.unit_price }}" step="500" min="500">
-                                </td>
-                                <td style="text-align: center;">
-                                    <button type="button" class="btn-del-tier" onclick="deleteTierRow(this, {{ t.id }})" title="Xóa mốc này">✕</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <div class="card-table-footer">
-                        <button type="button" class="btn-add-tier" onclick="addNewTierRow('comboTable', 'combo', 'bộ')">
-                            <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Thêm Mốc Combo
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div style="text-align: right; margin-top: 10px; margin-bottom: 25px;">
-            <button type="submit" class="btn-action-save" style="font-size: 0.95rem; padding: 10px 24px;">
-                <i data-lucide="save" style="width: 18px; height: 18px;"></i> Lưu & Cập Nhật Toàn Bộ Biểu Giá Mới
-            </button>
-        </div>
-    </form>
-    {% endif %}
-
-    <!-- ==================== TAB 2: QUẢN LÝ DANH MỤC PHỤ KIỆN ==================== -->
-    {% if active_tab == 'accessories' %}
+<link rel="stylesheet" href="{{ url_for('admin.static',filename='accessories.css',v='20261023b') }}">
+<script defer src="{{ url_for('admin.static',filename='accessories.js',v='20261023b') }}"></script>
+<div class="pricing-admin-page" data-csrf="{{ csrf_token }}">
+<div class="page-heading"><div><div class="eyebrow">GIÁ BÁN & DANH MỤC</div><h1>Bảng giá & phụ kiện</h1><p>Quản lý giá theo số lượng và các lựa chọn đi kèm sản phẩm.</p></div><button type="button" class="btn btn-primary" onclick="openAddAccessoryModal()"><i data-lucide="plus" style="width:16px"></i> Thêm phụ kiện</button></div>
+<nav class="pricing-page-tabs" aria-label="Bảng giá và phụ kiện"><a href="{{ url_for('admin.admin_accessories',tab='pricing') }}" {% if active_tab!='accessories' %}aria-current="page"{% endif %}>Biểu giá theo số lượng</a><a href="{{ url_for('admin.admin_accessories',tab='accessories') }}" {% if active_tab=='accessories' %}aria-current="page"{% endif %}>Danh mục phụ kiện <span>{{ accessories|length }}</span></a></nav>
+{% if active_tab!='accessories' %}
+{% macro tier_table(title,key,category,unit='cái',editable=true) %}
+<section class="price-sheet" data-price-category="{{ category }}"><div class="price-sheet-heading"><div><h2>{{ title }}</h2><p>{{ price_tiers[key]|length }} bậc giá · Đơn giá tính theo {{ unit }}</p></div><span class="badge">VNĐ / {{ unit }}</span></div>
+<div class="price-table-scroll"><table class="price-editor" id="table_{{ key }}"><thead><tr><th>Số lượng từ</th><th>Đến số lượng</th><th class="numeric">Đang áp dụng</th><th class="numeric">Giá điều chỉnh</th><th class="numeric">Thay đổi</th><th></th></tr></thead><tbody>
+{% for t in price_tiers[key] %}<tr id="tier_row_{{ t.id }}" data-tier-id="{{ t.id }}"><td><input type="hidden" name="tier_cat_{{ t.id }}" value="{{ category }}"><input type="number" name="tier_min_{{ t.id }}" value="{{ t.min_qty }}" min="0" step="1" required aria-label="{{ title }}: số lượng từ bậc {{ loop.index }}" {% if not editable %}readonly{% endif %}></td><td><input type="number" name="tier_max_{{ t.id }}" value="{{ t.max_qty }}" min="0" step="1" required aria-label="{{ title }}: số lượng đến bậc {{ loop.index }}" {% if not editable %}readonly{% endif %}></td><td class="numeric current-price-tag">{{ '{:,.0f}'.format(t.unit_price).replace(',','.') }} đ</td><td><div class="price-input-wrap"><input type="number" name="tier_price_{{ t.id }}" value="{{ t.unit_price }}" min="0" step="1" required aria-label="{{ title }}: giá bậc {{ loop.index }}"><span>đ</span></div></td><td class="numeric price-delta">—</td><td>{% if editable %}<button class="remove-tier" type="button" onclick="deleteTierRow(this,'{{ t.id }}')" aria-label="Bỏ bậc {{ loop.index }} của {{ title }}">×</button>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+{% if editable %}<button class="add-price-tier" type="button" onclick="addNewTierRow('table_{{ key }}','{{ category }}','{{ unit }}')">+ Thêm bậc số lượng</button>{% endif %}
+</section>{% endmacro %}
+<div class="pricing-workspace"><aside class="price-groups" aria-label="Nhóm bảng giá"><div class="eyebrow">CHỌN NHÓM SẢN PHẨM</div>{% for key,label,icon,count in [('lanyard','Dây đeo thẻ','ribbon',price_tiers.lanyard|length),('pvc','Thẻ nhựa PVC','credit-card',price_tiers.pvc_5_4x8_6|length+price_tiers.pvc_7x11|length+price_tiers.pvc_9x12|length),('holder','Vỏ đựng thẻ','box',price_tiers.holder|length+price_tiers.holder_plain|length+price_tiers.holder_silicone|length)] %}<button type="button" data-price-group="{{ key }}" aria-pressed="{{ 'true' if loop.first else 'false' }}"><i data-lucide="{{ icon }}"></i><span>{{ label }}<small>{{ count }} bậc giá</small></span><span aria-hidden="true">›</span></button>{% endfor %}<p>Thay đổi chỉ được áp dụng sau khi bạn bấm <strong>Lưu bảng giá</strong>.</p></aside>
+<form id="pricingMatrixForm" method="POST" action="{{ url_for('admin.admin_update_pricing') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div data-price-panel="lanyard">{{ tier_table('Dây đeo thẻ','lanyard','lanyard','dây') }}</div>
+<div data-price-panel="pvc" hidden>{{ tier_table('Thẻ PVC chuẩn · 5,4 × 8,6 cm','pvc_5_4x8_6','pvc_5.4x8.6','thẻ') }}{{ tier_table('Thẻ PVC · 7 × 11 cm','pvc_7x11','pvc_7x11','thẻ') }}{{ tier_table('Thẻ PVC · 9 × 12 cm','pvc_9x12','pvc_9x12','thẻ') }}</div>
+<div data-price-panel="holder" hidden>{{ tier_table('Vỏ ABS in UV','holder','holder','vỏ') }}{{ tier_table('Vỏ ABS trơn','holder_plain','holder_plain','vỏ',false) }}{{ tier_table('Vỏ silicon dẻo','holder_silicone','holder_silicone','vỏ',false) }}</div>
+<div class="pricing-savebar"><div><strong id="pricingChangeCount" role="status" aria-live="polite">Chưa có thay đổi</strong><small>Áp dụng cho tất cả nhóm đã chỉnh sửa.</small></div><div><button type="button" id="resetPricing" class="btn btn-secondary" disabled>Hoàn tác tất cả</button><button type="submit" class="btn btn-primary" id="savePricing" disabled>Lưu bảng giá</button></div></div>
+<p id="pricingValidation" class="text-danger" role="alert"></p>
+</form></div>
+{% else %}
     <!-- Stats Bar -->
     <div class="acc-stats-grid">
         <div class="acc-stat-card">
@@ -890,21 +54,9 @@
         </div>
     </div>
 
-    <!-- Filter Buttons -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; gap: 6px; background: #e2e8f0; padding: 4px; border-radius: 8px;">
-            <button type="button" class="filter-btn active" onclick="filterCategory('all', this)">Tất cả ({{ stats.total }})</button>
-            <button type="button" class="filter-btn" onclick="filterCategory('lanyard_acc', this)">Dây đeo ({{ stats.lanyard }})</button>
-            <button type="button" class="filter-btn" onclick="filterCategory('holder_orientation', this)">Kiểu dáng ({{ stats.holder_ori }})</button>
-            <button type="button" class="filter-btn" onclick="filterCategory('holder_material', this)">Chất liệu ({{ stats.holder_mat }})</button>
-        </div>
-        <div style="font-size: 0.8rem; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 5px 10px; border-radius: 6px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-            <i data-lucide="check-circle" style="width: 15px; height: 15px;"></i> Tự động đồng bộ ra công cụ tính giá storefront
-        </div>
-    </div>
-
+<section class="catalog-toolbar"><div><label for="accessorySearch">Tìm phụ kiện</label><input id="accessorySearch" type="search" placeholder="Tên, mã hoặc mô tả..."></div><div><label for="accessoryCategory">Nhóm phụ kiện</label><select id="accessoryCategory"><option value="all">Tất cả nhóm</option><option value="lanyard_acc">Phụ kiện dây đeo</option><option value="holder_orientation">Kiểu dáng vỏ thẻ</option><option value="holder_material">Chất liệu vỏ thẻ</option></select></div><div><label for="accessoryVisibility">Hiển thị</label><select id="accessoryVisibility"><option value="all">Tất cả</option><option value="1">Đang bật</option><option value="0">Đang ẩn</option></select></div><span id="accessoryResultCount" role="status" aria-live="polite"></span></section>
     <!-- Accessories Table -->
-    <div class="matrix-card" style="padding: 0; overflow: hidden;">
+    <div class="matrix-card" style="padding:0;overflow:auto">
         <table class="admin-table">
             <thead>
                 <tr>
@@ -920,9 +72,9 @@
             </thead>
             <tbody>
                 {% for acc in accessories %}
-                <tr class="acc-row" data-category="{{ acc.category }}">
+                <tr class="acc-row" data-category="{{ acc.category }}" data-visible="{{ 1 if acc.visible else 0 }}">
                     <td style="text-align: center;">
-                        <div class="thumb-preview-wrap" onclick="triggerUpload('{{ acc.id }}')" title="Bấm để đổi ảnh" style="margin: 0 auto;">
+                        <div role="button" tabindex="0" aria-label="Đổi ảnh {{ acc.name }}" class="thumb-preview-wrap" onclick="triggerUpload('{{ acc.id }}')" title="Bấm để đổi ảnh" style="margin: 0 auto;">
                             {% if acc.image %}
                                 <img src="{{ acc.image_url }}" alt="{{ acc.name }}" id="thumb_{{ acc.id }}">
                             {% else %}
@@ -975,8 +127,8 @@
                         </strong>
                     </td>
                     <td style="text-align: center; white-space: nowrap;">
-                        <button type="button" 
-                                onclick="toggleVisibility('{{ acc.id }}', this)" 
+                        <button type="button"
+                                onclick="toggleVisibility('{{ acc.id }}', this)"
                                 style="border: none; background: none; cursor: pointer; font-size: 0.8rem; font-weight: 700; white-space: nowrap; color: {% if acc.visible %}#16a34a{% else %}#94a3b8{% endif %};">
                             {% if acc.visible %}
                                 <span style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 9px; border-radius: 6px; white-space: nowrap;">● Đang bật</span>
@@ -987,9 +139,9 @@
                     </td>
                     <td style="text-align: center;">
                         <div style="display: flex; gap: 5px; justify-content: center;">
-                            <button type="button" 
-                                    class="btn-action-primary" 
-                                    style="padding: 4px 9px; font-size: 0.75rem; background: #0f172a;" 
+                            <button type="button"
+                                    class="btn-action-primary"
+                                    style="padding: 4px 9px; font-size: 0.75rem; background: #0f172a;"
                                     data-id="{{ acc.id }}"
                                     data-name="{{ acc.name }}"
                                     data-price="{{ acc.price }}"
@@ -1001,61 +153,60 @@
                                     onclick="openEditModalFromBtn(this)">
                                 Sửa
                             </button>
-                            <button type="button" 
-                                    onclick="confirmDelete('{{ acc.id }}', '{{ acc.name }}')" 
+                            <button type="button"
+                                    data-id="{{ acc.id }}" data-name="{{ acc.name }}" onclick="confirmDelete(this.dataset.id,this.dataset.name)"
                                     style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 4px 9px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
                                 Xóa
                             </button>
                         </div>
                     </td>
                 </tr>
-                {% endfor %}
+                {% endfor %}<tr id="accessoryEmptyRow" hidden><td colspan="8" class="empty-state">Không có phụ kiện phù hợp bộ lọc.</td></tr>
             </tbody>
         </table>
-    </div>
-    {% endif %}
-</div>
 
+{% endif %}
+</div>
 <!-- ==================== MODAL 1: THÊM MẪU PHỤ KIỆN MỚI ==================== -->
-<div class="modal-overlay" id="addAccessoryModal">
+<div class="modal-overlay" id="addAccessoryModal" role="dialog" aria-modal="true" aria-label="Thêm phụ kiện" tabindex="-1">
     <div class="modal-card">
         <form method="POST" action="/admin/accessories/add" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="modal-header">
                 <h3><i data-lucide="plus-circle" style="color: #2563eb; width: 20px; height: 20px;"></i> Thêm Mẫu Phụ Kiện Mới</h3>
-                <button type="button" class="modal-close-btn" onclick="closeAddAccessoryModal()">&times;</button>
+                <button type="button" class="modal-close-btn" aria-label="Đóng cửa sổ" onclick="closeAddAccessoryModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group-custom">
-                    <label>Tên Phụ Kiện / Tên Mẫu Mới (*)</label>
-                    <input type="text" name="name" placeholder="Ví dụ: Móc xoay kim loại cao cấp 360°, Khóa carabiner..." required>
+                    <label for="accField1">Tên Phụ Kiện / Tên Mẫu Mới (*)</label>
+                    <input id="accField1" type="text" name="name" placeholder="Ví dụ: Móc xoay kim loại cao cấp 360°, Khóa carabiner..." required>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group-custom">
-                        <label>Phân Loại Nhóm (*)</label>
-                        <select name="category" required>
+                        <label for="accField2">Phân Loại Nhóm (*)</label>
+                        <select id="accField2" name="category" required>
                             <option value="lanyard_acc">🎗️ Phụ kiện dây đeo</option>
                             <option value="holder_orientation">📐 Kiểu dáng vỏ thẻ</option>
                             <option value="holder_material">📦 Chất liệu vỏ thẻ</option>
                         </select>
                     </div>
                     <div class="form-group-custom">
-                        <label>Đơn Giá Cộng Thêm (VNĐ) (*)</label>
-                        <input type="number" name="price" value="0" step="500" min="0" required placeholder="0 nếu không cộng">
+                        <label for="accField3">Đơn Giá Cộng Thêm (VNĐ) (*)</label>
+                        <input id="accField3" type="number" name="price" value="0" step="500" min="0" required placeholder="0 nếu không cộng">
                     </div>
                 </div>
 
                 <div class="form-group-custom">
-                    <label>SL Dây Tối Thiểu Để Chọn Phụ Kiện (dây)</label>
-                    <input type="number" name="min_quantity" value="0" min="0" placeholder="0 nếu không giới hạn">
+                    <label for="accField4">SL Dây Tối Thiểu Để Chọn Phụ Kiện (dây)</label>
+                    <input id="accField4" type="number" name="min_quantity" value="0" min="0" placeholder="0 nếu không giới hạn">
                     <div style="font-size: 0.74rem; color: #64748b; margin-top: 3px;">
                         🎯 Nhập 0 hoặc để trống nếu nhận in từ số lượng thông thường (10 dây). Nhập ví dụ: 50 hoặc 100 nếu yêu cầu đơn đạt từ mốc đó mới cho phép chọn.
                     </div>
                 </div>
 
                 <div class="form-group-custom">
-                    <label>Ảnh Minh Họa Sản Phẩm</label>
+                    <label for="new_acc_img_input">Ảnh Minh Họa Sản Phẩm</label>
                     <div class="dropzone-upload" onclick="document.getElementById('new_acc_img_input').click()">
                         <div style="color: #64748b; font-size: 0.82rem;">
                             📸 Bấm để chọn ảnh từ máy tính (JPG, PNG, WEBP)
@@ -1095,28 +246,28 @@
 </div>
 
 <!-- ==================== MODAL 2: CHỈNH SỬA PHỤ KIỆN ==================== -->
-<div class="modal-overlay" id="editAccessoryModal">
+<div class="modal-overlay" id="editAccessoryModal" role="dialog" aria-modal="true" aria-label="Chỉnh sửa phụ kiện" tabindex="-1">
     <div class="modal-card">
         <form id="editAccessoryForm" method="POST" action="" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="remove_image" id="edit_remove_image_flag" value="0">
             <div class="modal-header">
                 <h3><i data-lucide="edit" style="color: #0f172a; width: 20px; height: 20px;"></i> Chỉnh Sửa Phụ Kiện</h3>
-                <button type="button" class="modal-close-btn" onclick="closeEditModal()">&times;</button>
+                <button type="button" class="modal-close-btn" aria-label="Đóng cửa sổ" onclick="closeEditModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group-custom">
-                    <label>Tên Phụ Kiện (*)</label>
+                    <label for="edit_name">Tên Phụ Kiện (*)</label>
                     <input type="text" id="edit_name" name="name" required>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group-custom">
-                        <label>Đơn Giá Cộng Thêm (VNĐ)</label>
+                        <label for="edit_price">Đơn Giá Cộng Thêm (VNĐ)</label>
                         <input type="number" id="edit_price" name="price" step="500" min="0" required>
                     </div>
                     <div class="form-group-custom">
-                        <label>SL Dây Tối Thiểu (dây)</label>
+                        <label for="edit_min_quantity">SL Dây Tối Thiểu (dây)</label>
                         <input type="number" id="edit_min_quantity" name="min_quantity" value="0" min="0">
                     </div>
                 </div>
@@ -1125,7 +276,7 @@
                 </div>
 
                 <div class="form-group-custom">
-                    <label>Mô Tả / Phụ Đề</label>
+                    <label for="edit_description">Mô Tả / Phụ Đề</label>
                     <textarea id="edit_description" name="description" rows="2"></textarea>
                 </div>
 
@@ -1169,269 +320,5 @@
     </div>
 </div>
 
-<script>
-    let newTierCounter = 0;
 
-    function deleteTierRow(btn, tierId) {
-        if (!confirm('Bạn có chắc chắn muốn xóa mốc số lượng này? Mốc sẽ được xóa hoàn toàn khi bạn nhấn "Lưu Toàn Bộ Biểu Giá Mới".')) {
-            return;
-        }
-        const row = btn.closest('tr');
-        if (tierId && !String(tierId).startsWith('new_')) {
-            const hiddenDel = document.createElement('input');
-            hiddenDel.type = 'hidden';
-            hiddenDel.name = 'tier_deleted_' + tierId;
-            hiddenDel.value = '1';
-            document.getElementById('pricingMatrixForm').appendChild(hiddenDel);
-        }
-        row.style.opacity = '0.3';
-        row.style.background = '#fee2e2';
-        btn.disabled = true;
-        setTimeout(() => {
-            row.style.display = 'none';
-        }, 200);
-    }
-
-    function addNewTierRow(tableId, category, unit) {
-        newTierCounter++;
-        const table = document.getElementById(tableId);
-        const tbody = table.querySelector('tbody');
-        const rows = tbody.querySelectorAll('tr:not([style*="display: none"])');
-        
-        let lastMax = 100;
-        if (rows.length > 0) {
-            const lastRow = rows[rows.length - 1];
-            const maxInput = lastRow.querySelector('input[name^="tier_max_"]');
-            if (maxInput && parseInt(maxInput.value)) {
-                lastMax = parseInt(maxInput.value);
-            }
-        }
-        
-        const newMin = lastMax + 1;
-        const newMax = newMin + 100;
-        const tempId = 'new_' + newTierCounter;
-
-        const tr = document.createElement('tr');
-        tr.id = 'tier_row_' + tempId;
-        tr.style.backgroundColor = '#ecfdf5';
-        tr.innerHTML = `
-            <td>
-                <input type="hidden" name="tier_cat_${tempId}" value="${category}">
-                <div class="qty-range-box">
-                    <input type="number" name="tier_min_${tempId}" class="qty-input" value="${newMin}" min="1">
-                    <span class="qty-sep">–</span>
-                    <input type="number" name="tier_max_${tempId}" class="qty-input" value="${newMax}" min="1">
-                    <span class="qty-unit">${unit}</span>
-                </div>
-            </td>
-            <td class="current-price-tag" style="color: #059669; font-weight:700;">Mới</td>
-            <td style="text-align: right;">
-                <input type="number" name="tier_price_${tempId}" class="price-input" value="15000" step="500" min="500">
-            </td>
-            <td style="text-align: center;">
-                <button type="button" class="btn-del-tier" onclick="deleteTierRow(this, '${tempId}')" title="Hủy mốc này">✕</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-        if (window.lucide) { lucide.createIcons(); }
-    }
-
-    function submitPricingForm() {
-        const form = document.getElementById('pricingMatrixForm');
-        if (form) form.submit();
-    }
-
-    function openAddAccessoryModal() {
-        document.getElementById('addAccessoryModal').classList.add('active');
-    }
-    function closeAddAccessoryModal() {
-        document.getElementById('addAccessoryModal').classList.remove('active');
-    }
-
-    function previewNewImage(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('new_img_preview').src = e.target.result;
-                document.getElementById('new_img_preview_box').style.display = 'block';
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    function clearNewAccessoryImage(ev) {
-        if (ev) ev.stopPropagation();
-        const input = document.getElementById('new_acc_img_input');
-        if (input) input.value = '';
-        const preview = document.getElementById('new_img_preview');
-        if (preview) preview.src = '';
-        const box = document.getElementById('new_img_preview_box');
-        if (box) box.style.display = 'none';
-    }
-
-    function previewEditAccessoryImage(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('edit_new_img_preview').src = e.target.result;
-                document.getElementById('edit_new_img_filename').textContent = 'Đã chọn: ' + file.name;
-                document.getElementById('edit_new_img_preview_box').style.display = 'flex';
-                document.getElementById('edit_remove_image_flag').value = '0';
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function clearEditAccessoryImage() {
-        const input = document.getElementById('edit_acc_img_input');
-        if (input) input.value = '';
-        const preview = document.getElementById('edit_new_img_preview');
-        if (preview) preview.src = '';
-        const box = document.getElementById('edit_new_img_preview_box');
-        if (box) box.style.display = 'none';
-    }
-
-    function markRemoveCurrentAccessoryImage() {
-        if (!confirm('Bạn có chắc muốn xóa ảnh hiện tại của phụ kiện này không?')) {
-            return;
-        }
-        document.getElementById('edit_remove_image_flag').value = '1';
-        const wrap = document.getElementById('edit_current_img_wrap');
-        if (wrap) wrap.style.display = 'none';
-    }
-
-    function deleteAccessoryImage(accId) {
-        if (!confirm('Bạn có chắc muốn xóa ảnh của phụ kiện này không?')) {
-            return;
-        }
-        const formData = new FormData();
-        formData.append('csrf_token', '{{ csrf_token }}');
-
-        fetch('/admin/accessories/delete-image/' + encodeURIComponent(accId), {
-            method: 'POST',
-            headers: { 'Accept': 'application/json' },
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.success) {
-                window.location.reload();
-            } else {
-                alert('Lỗi: ' + (data.message || 'Không thể xóa ảnh'));
-            }
-        })
-        .catch(() => alert('Lỗi kết nối máy chủ'));
-    }
-
-    function filterCategory(cat, btn) {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll('.acc-row').forEach(row => {
-            if (cat === 'all' || row.getAttribute('data-category') === cat) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    function openEditModalFromBtn(btn) {
-        const form = document.getElementById('editAccessoryForm');
-        const id = btn.getAttribute('data-id');
-        form.action = '/admin/accessories/edit/' + id;
-        document.getElementById('edit_name').value = btn.getAttribute('data-name') || '';
-        document.getElementById('edit_price').value = btn.getAttribute('data-price') || 0;
-        document.getElementById('edit_min_quantity').value = btn.getAttribute('data-min-qty') || 0;
-        document.getElementById('edit_description').value = btn.getAttribute('data-desc') || '';
-        document.getElementById('edit_visible').checked = btn.getAttribute('data-visible') === '1';
-        document.getElementById('edit_remove_image_flag').value = '0';
-        clearEditAccessoryImage();
-
-        const rawImage = btn.getAttribute('data-image') || '';
-        const imageUrl = btn.getAttribute('data-image-url') || '';
-        const currentWrap = document.getElementById('edit_current_img_wrap');
-        const currentThumb = document.getElementById('edit_current_img_thumb');
-        if (rawImage && imageUrl && currentWrap && currentThumb) {
-            currentThumb.src = imageUrl;
-            currentWrap.style.display = 'flex';
-        } else if (currentWrap) {
-            currentWrap.style.display = 'none';
-        }
-
-        document.getElementById('editAccessoryModal').classList.add('active');
-    }
-    function closeEditModal() {
-        document.getElementById('editAccessoryModal').classList.remove('active');
-    }
-
-    function triggerUpload(accId) {
-        const fileInput = document.getElementById('file_' + accId);
-        if (fileInput) fileInput.click();
-    }
-    function uploadImage(accId, input) {
-        if (!input.files || !input.files[0]) return;
-        const formData = new FormData();
-        formData.append('image', input.files[0]);
-        formData.append('csrf_token', '{{ csrf_token }}');
-
-        fetch('/admin/accessories/upload/' + accId, {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert('Lỗi: ' + (data.message || 'Không thể tải ảnh'));
-            }
-        })
-        .catch(err => alert('Lỗi kết nối máy chủ'));
-    }
-
-    function toggleVisibility(accId, btn) {
-        const formData = new FormData();
-        formData.append('csrf_token', '{{ csrf_token }}');
-
-        fetch('/admin/accessories/toggle/' + accId, {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                if (data.visible) {
-                    btn.innerHTML = '<span style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 9px; border-radius: 6px; white-space: nowrap;">● Đang bật</span>';
-                    btn.style.color = '#16a34a';
-                } else {
-                    btn.innerHTML = '<span style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 9px; border-radius: 6px; white-space: nowrap;">○ Đang ẩn</span>';
-                    btn.style.color = '#94a3b8';
-                }
-            } else {
-                alert('Lỗi: ' + (data.message || 'Không thể đổi trạng thái'));
-            }
-        })
-        .catch(err => alert('Lỗi kết nối'));
-    }
-
-    function confirmDelete(accId, accName) {
-        if (confirm('Bạn có chắc chắn muốn xóa phụ kiện "' + accName + '" không?')) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/admin/accessories/delete/' + accId;
-            const csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = 'csrf_token';
-            csrf.value = '{{ csrf_token }}';
-            form.appendChild(csrf);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-
-    if (window.lucide) {
-        lucide.createIcons();
-    }
-</script>
 {% endblock %}

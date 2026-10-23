@@ -9,7 +9,7 @@
 
     <form method="POST" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+        <div class="product-form-grid" style="display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 30px;">
             <div>
                 <div class="form-group">
                     <label>Tên sản phẩm *</label>

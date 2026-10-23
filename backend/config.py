@@ -53,30 +53,18 @@ FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
 RENDER = os.environ.get('RENDER', '')
 IS_PRODUCTION = bool(RENDER or FLASK_ENV == 'production')
 
-INSECURE_SECRET_KEYS = {
-    'tagluxe_super_secret_key',
-    'tagluxe_default_insecure_secret_key',
-    'tagluxe_local_dev_key_2026',
-    ''
-}
-INSECURE_PASSWORDS = {'admin123', 'admin', 'password', '123456', ''}
-
-SECRET_KEY = os.environ.get('SECRET_KEY', 'tagluxe_super_secret_key')
+# Credentials are supplied by local .env or hosting environment variables.
+# A temporary session key keeps the storefront available if SECRET_KEY is missing.
+SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 ADMIN_PASSWORD_HASH = os.environ.get('ADMIN_PASSWORD_HASH', '')
 
-# Production Guard: auto-generate a secure random SECRET_KEY if not configured in environment
 if IS_PRODUCTION:
-    if SECRET_KEY in INSECURE_SECRET_KEYS:
-        SECRET_KEY = secrets.token_hex(32)
-        logging.info(
-            "[CONFIG INFO] Auto-generated a secure 256-bit random key for session encryption."
-        )
-    if not ADMIN_PASSWORD_HASH and ADMIN_PASSWORD in INSECURE_PASSWORDS:
-        logging.info(
-            "[CONFIG INFO] Default ADMIN_PASSWORD active (admin123). Can be configured via ADMIN_PASSWORD env var."
-        )
+    if not os.environ.get('SECRET_KEY'):
+        logging.warning('SECRET_KEY is not configured; sessions reset when the process restarts.')
+    if not ADMIN_PASSWORD and not ADMIN_PASSWORD_HASH:
+        logging.warning('Admin login is disabled until ADMIN_PASSWORD or ADMIN_PASSWORD_HASH is configured.')
 
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB limit
 

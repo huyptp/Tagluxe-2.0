@@ -1,15 +1,21 @@
 {% extends 'base.html' %}
 
-{% block title %}TagLuxe - In Dây Đeo Thẻ Theo Yêu Cầu | Thẻ Nhựa PVC, Vỏ Thẻ TP.HCM{% endblock %}
-{% block meta_desc %}TagLuxe chuyên in dây đeo thẻ theo yêu cầu, thẻ nhựa PVC, vỏ đựng thẻ cho doanh nghiệp, trường học, câu lạc bộ và fandom. Nhận từ 10 dây, hỗ trợ thiết kế cơ bản, giao toàn quốc, Có VAT.{% endblock %}
+{% block title %}{% if page_title %}{{ page_title }} | TAGLUXE{% else %}TagLuxe - In Dây Đeo Thẻ Theo Yêu Cầu | Thẻ Nhựa PVC, Vỏ Thẻ TP.HCM{% endif %}{% endblock %}
+{% block meta_desc %}{% if page_description %}{{ page_description }}{% else %}TagLuxe chuyên in dây đeo thẻ theo yêu cầu, thẻ nhựa PVC, vỏ đựng thẻ cho doanh nghiệp, trường học, câu lạc bộ và fandom. Nhận từ 10 dây, hỗ trợ thiết kế cơ bản, giao toàn quốc, Có VAT.{% endif %}{% endblock %}
 
+{% block canonical_path %}{{ page_path }}{% endblock %}
+{% block og_url %}{{ page_path }}{% endblock %}
+{% block og_title %}{{ page_title or 'TAGLUXE — In dây đeo thẻ theo yêu cầu' }}{% endblock %}
+{% block og_desc %}{{ page_description or 'Dây đeo thẻ, thẻ nhựa PVC và vỏ đựng thẻ in theo yêu cầu.' }}{% endblock %}
 {% block preload_image %}
+{% if page_section == 'home' %}
 <link rel="preload" as="image"
       href="{{ url_for('static', filename='uploads/media_1789662028575.jpg') }}"
       fetchpriority="high">
+{% endif %}
 {% endblock %}
 
-{% block faq_schema %}
+{% block faq_schema %}{% if page_section in ['home','faq'] %}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -98,27 +104,18 @@
   ]
 }
 </script>
-{% endblock %}
+{% endif %}{% endblock %}
 
 {% block breadcrumb_schema %}
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {
-      "@type": "ListItem",
-      "position": 1,
-      "name": "Trang chủ TagLuxe",
-      "item": "{{ site_url }}/"
-    }
-  ]
-}
-</script>
+<script type="application/ld+json">{{ {'@context':'https://schema.org','@type':'BreadcrumbList','itemListElement':([{'@type':'ListItem','position':1,'name':'Trang chủ','item':site_url+'/'}] + ([{'@type':'ListItem','position':2,'name':page_title,'item':site_url+page_path}] if page_title else []))}|tojson }}</script>
 {% endblock %}
 
 {% block content %}
+{% if page_section != 'home' %}
+<section class="section" style="padding:40px 20px 24px"><div class="container"><a href="/" style="font-size:13px;color:#777">Trang chủ</a><span aria-hidden="true"> / </span><span>{{ page_title }}</span><h1 style="font-size:clamp(26px,4vw,38px);margin:16px 0 10px">{{ page_title }}</h1><p style="color:#666;max-width:760px">{{ page_description }}</p></div></section>
+{% endif %}
 <!-- ===== HERO SECTION ===== -->
+{% if page_section in ['home','home'] %}
 <section class="hero" aria-label="Giới thiệu TagLuxe">
     <div class="container hero-inner">
         <div class="hero-content" data-aos="fade-right">
@@ -132,7 +129,7 @@
                 <a href="https://zalo.me/0343019097" target="_blank" rel="noopener" onclick="return openZaloPicker(event)" class="btn btn-primary" aria-label="Tư vấn đặt in dây đeo thẻ qua Zalo">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 50 50" fill="none" style="display:inline-block; vertical-align:middle; width:18px; height:18px; border-radius:4px; flex-shrink:0;"><path fill-rule="evenodd" clip-rule="evenodd" d="M22.782 0.166H27.199C33.265 0.166 36.81 1.057 39.957 2.744C43.104 4.431 45.588 6.896 47.256 10.043C48.943 13.19 49.834 16.735 49.834 22.801V27.199C49.834 33.265 48.943 36.81 47.256 39.957C45.568 43.104 43.104 45.588 39.957 47.256C36.81 48.943 33.265 49.834 27.199 49.834H22.801C16.735 49.834 13.19 48.943 10.043 47.256C6.896 45.569 4.412 43.104 2.744 39.957C1.057 36.81 0.166 33.265 0.166 27.199V22.801C0.166 16.735 1.057 13.19 2.744 10.043C4.431 6.896 6.896 4.412 10.043 2.744C13.171 1.057 16.735 0.166 22.782 0.166Z" fill="#0068FF"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.779 43.589C10.102 43.846 13.006 43.184 15.068 42.182C24.022 47.132 38.02 46.895 46.492 41.473C46.821 40.98 47.128 40.468 47.413 39.936C49.106 36.778 50 33.22 50 27.132V22.718C50 16.629 49.106 13.071 47.413 9.913C45.738 6.754 43.246 4.281 40.088 2.588C36.929 0.894 33.371 0 27.283 0H22.85C17.664 0 14.298 0.653 11.47 1.899C11.315 2.037 11.164 2.178 11.015 2.321C2.717 10.32 2.087 27.659 9.123 37.078C9.131 37.092 9.139 37.106 9.149 37.12C10.233 38.718 9.187 41.515 7.551 43.152C7.284 43.399 7.379 43.551 7.779 43.589Z" fill="white"/><path d="M20.563 17H10.838V19.085H17.587L10.933 27.332C10.724 27.635 10.573 27.919 10.573 28.564V29.095H19.748C20.203 29.095 20.582 28.716 20.582 28.261V27.142H13.492L19.748 19.294C19.843 19.18 20.013 18.972 20.089 18.877L20.127 18.82C20.487 18.289 20.563 17.834 20.563 17.284V17Z" fill="#0068FF"/><path d="M32.942 29.095H34.326V17H32.24V28.393C32.24 28.772 32.544 29.095 32.942 29.095Z" fill="#0068FF"/><path d="M25.814 19.692C23.198 19.692 21.075 21.816 21.075 24.432C21.075 27.048 23.198 29.171 25.814 29.171C28.43 29.171 30.553 27.048 30.553 24.432C30.572 21.816 28.449 19.692 25.814 19.692ZM25.814 27.218C24.278 27.218 23.027 25.967 23.027 24.432C23.027 22.896 24.278 21.645 25.814 21.645C27.35 21.645 28.601 22.896 28.601 24.432C28.601 25.967 27.368 27.218 25.814 27.218Z" fill="#0068FF"/><path d="M40.487 19.616C37.852 19.616 35.71 21.758 35.71 24.393C35.71 27.028 37.852 29.171 40.487 29.171C43.122 29.171 45.264 27.028 45.264 24.393C45.264 21.758 43.122 19.616 40.487 19.616ZM40.487 27.218C38.932 27.218 37.681 25.967 37.681 24.412C37.681 22.858 38.932 21.607 40.487 21.607C42.041 21.607 43.292 22.858 43.292 24.412C43.292 25.967 42.041 27.218 40.487 27.218Z" fill="#0068FF"/><path d="M29.456 29.094H30.575V19.957H28.622V28.279C28.622 28.715 29.001 29.094 29.456 29.094Z" fill="#0068FF"/></svg> Tư vấn qua Zalo
                 </a>
-                <a href="#calculator" class="btn btn-outline" aria-label="Tính giá nhanh">
+                <a href="/bao-gia" class="btn btn-outline" aria-label="Tính giá nhanh">
                     <i data-lucide="calculator"></i> Tính giá nhanh
                 </a>
                 <a href="https://www.facebook.com/Tagluxe.indaydeothe" target="_blank" rel="noopener" class="btn btn-secondary" aria-label="Fanpage TagLuxe">
@@ -182,7 +179,9 @@
         </div>
     </div>
 </section>
+{% endif %}
 
+{% if page_section == 'home' %}
 <!-- ===== USP STRIP ===== -->
 <div class="usp-strip" aria-label="Điểm nổi bật của TagLuxe">
     <div class="container usp-inner">
@@ -194,7 +193,9 @@
     </div>
 </div>
 
+{% endif %}
 <!-- ===== LANYARD PRODUCTS ===== -->
+{% if page_section in ['home','products'] %}
 <section id="products" class="section bg-light" aria-label="Dây đeo thẻ in theo yêu cầu">
     <style>
         .lanyard-marquee-container {
@@ -286,7 +287,7 @@
                 <div class="lanyard-marquee-wrapper">
                     <div class="lanyard-marquee-track marquee-track-forward">
                         {% for photo in lan_row1 %}
-                        <a href="/product/{{ photo.product_id }}" class="lanyard-marquee-card" aria-label="{{ photo.product_name }}">
+                        <a href="{{ product_path(photo.product_id) }}" class="lanyard-marquee-card" aria-label="{{ photo.product_name }}">
                             <div class="lanyard-card-img">
                                 <img src="{{ url_for('static', filename='uploads/' + photo.img) }}?v={{ asset_v }}"
                                      alt="{{ photo.product_name }} - TagLuxe" loading="lazy">
@@ -298,7 +299,7 @@
                         </a>
                         {% endfor %}
                         {% for photo in lan_row1 %}
-                        <a href="/product/{{ photo.product_id }}" class="lanyard-marquee-card" aria-label="{{ photo.product_name }}">
+                        <a href="{{ product_path(photo.product_id) }}" class="lanyard-marquee-card" aria-label="{{ photo.product_name }}">
                             <div class="lanyard-card-img">
                                 <img src="{{ url_for('static', filename='uploads/' + photo.img) }}?v={{ asset_v }}"
                                      alt="{{ photo.product_name }} - TagLuxe" loading="lazy">
@@ -316,7 +317,7 @@
                 <div class="lanyard-marquee-wrapper">
                     <div class="lanyard-marquee-track marquee-track-reverse">
                         {% for photo in lan_row2 %}
-                        <a href="/product/{{ photo.product_id }}" class="lanyard-marquee-card" aria-label="{{ photo.product_name }}">
+                        <a href="{{ product_path(photo.product_id) }}" class="lanyard-marquee-card" aria-label="{{ photo.product_name }}">
                             <div class="lanyard-card-img">
                                 <img src="{{ url_for('static', filename='uploads/' + photo.img) }}?v={{ asset_v }}"
                                      alt="{{ photo.product_name }} - TagLuxe" loading="lazy">
@@ -328,7 +329,7 @@
                         </a>
                         {% endfor %}
                         {% for photo in lan_row2 %}
-                        <a href="/product/{{ photo.product_id }}" class="lanyard-marquee-card" aria-label="{{ photo.product_name }}">
+                        <a href="{{ product_path(photo.product_id) }}" class="lanyard-marquee-card" aria-label="{{ photo.product_name }}">
                             <div class="lanyard-card-img">
                                 <img src="{{ url_for('static', filename='uploads/' + photo.img) }}?v={{ asset_v }}"
                                      alt="{{ photo.product_name }} - TagLuxe" loading="lazy">
@@ -348,14 +349,16 @@
             <a href="https://zalo.me/0343019097" target="_blank" rel="noopener" onclick="return openZaloPicker(event)" class="btn btn-primary" style="font-size:1.05rem; padding:14px 32px;">
                 <i data-lucide="message-circle"></i> Tư vấn & Đặt hàng ngay
             </a>
-            <a href="#calculator" class="btn btn-outline" style="font-size:1.05rem; padding:14px 28px;">
+            <a href="/bao-gia" class="btn btn-outline" style="font-size:1.05rem; padding:14px 28px;">
                 <i data-lucide="calculator"></i> Bảng tính giá dây đeo
             </a>
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- ===== THẺ NHỰA PVC ===== -->
+{% if page_section in ['home','products'] %}
 <section id="the-nhua-pvc" class="section" aria-label="Thẻ nhựa PVC in theo yêu cầu">
     <div id="accessories" style="position:relative; top:-80px;"></div>
     <div class="container">
@@ -369,7 +372,7 @@
             <div class="gallery-scroll-box" id="pvcGalleryBox">
                 <div class="gallery-scroll-row">
                     {% for img in pvc_imgs %}
-                    <a href="/product/{{ pvc_product.id if pvc_product else 'acc-1' }}" class="lanyard-marquee-card" aria-label="{{ pvc_product.name if pvc_product else 'Thẻ nhựa PVC' }}">
+                    <a href="{{ product_path(pvc_product.id if pvc_product else 'acc-1') }}" class="lanyard-marquee-card" aria-label="{{ pvc_product.name if pvc_product else 'Thẻ nhựa PVC' }}">
                         <div class="lanyard-card-img">
                             <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
                                  alt="Mẫu thẻ nhựa PVC {{ loop.index }} - TagLuxe" loading="lazy">
@@ -389,14 +392,16 @@
             <a href="https://zalo.me/0343019097" target="_blank" rel="noopener" onclick="return openZaloPicker(event)" class="btn btn-primary" style="font-size:1.05rem; padding:14px 32px;">
                 <i data-lucide="message-circle"></i> Tư vấn & Đặt hàng ngay
             </a>
-            <a href="#calculator" onclick="if(window.switchCategory) switchCategory('pvc');" class="btn btn-outline" style="font-size:1.05rem; padding:14px 28px;">
+            <a href="/bao-gia?cat=pvc" class="btn btn-outline" style="font-size:1.05rem; padding:14px 28px;">
                 <i data-lucide="calculator"></i> Bảng tính giá thẻ PVC
             </a>
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- ===== VỎ ĐỰNG THẺ ===== -->
+{% if page_section in ['home','products'] %}
 <section id="vo-dung-the" class="section bg-light" aria-label="Vỏ đựng thẻ in theo yêu cầu">
     <div class="container">
         <div class="section-header" data-aos="fade-up">
@@ -412,7 +417,7 @@
                 <div class="gallery-scroll-row">
                     {% if holder_demo_cards %}
                     {% for card in holder_demo_cards %}
-                    <a href="/product/{{ holder_product.id if holder_product else 'acc-2' }}" class="lanyard-marquee-card" aria-label="{{ card.name }}">
+                    <a href="{{ product_path(holder_product.id if holder_product else 'acc-2') }}" class="lanyard-marquee-card" aria-label="{{ card.name }}">
                         <div class="lanyard-card-img">
                             <img src="{{ card.image_url }}?v={{ asset_v }}"
                                  alt="{{ card.name }} - TagLuxe" loading="lazy">
@@ -425,7 +430,7 @@
                     {% endfor %}
                     {% endif %}
                     {% for img in holder_imgs %}
-                    <a href="/product/{{ holder_product.id if holder_product else 'acc-2' }}" class="lanyard-marquee-card" aria-label="{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}">
+                    <a href="{{ product_path(holder_product.id if holder_product else 'acc-2') }}" class="lanyard-marquee-card" aria-label="{{ holder_product.name if holder_product else 'Vỏ đựng thẻ' }}">
                         <div class="lanyard-card-img">
                             <img src="{{ url_for('static', filename='uploads/' + img) }}?v={{ asset_v }}"
                                  alt="Mẫu vỏ đựng thẻ {{ loop.index }} - TagLuxe" loading="lazy">
@@ -445,14 +450,16 @@
             <a href="https://zalo.me/0343019097" target="_blank" rel="noopener" onclick="return openZaloPicker(event)" class="btn btn-primary" style="font-size:1.05rem; padding:14px 32px;">
                 <i data-lucide="message-circle"></i> Tư vấn & Đặt hàng ngay
             </a>
-            <a href="#calculator" onclick="if(window.switchCategory) switchCategory('holder');" class="btn btn-outline" style="font-size:1.05rem; padding:14px 28px;">
+            <a href="/bao-gia?cat=holder" class="btn btn-outline" style="font-size:1.05rem; padding:14px 28px;">
                 <i data-lucide="calculator"></i> Bảng tính giá vỏ thẻ
             </a>
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- ===== PROCESS ===== -->
+{% if page_section in ['home','process'] %}
 <section id="process" class="section bg-light" style="padding: 90px 20px; position: relative; overflow: hidden;" aria-label="Quy trình đặt in dây đeo thẻ">
     <style>
         .process-header-badge {
@@ -612,8 +619,10 @@
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- ===== TESTIMONIALS (social proof + SEO) ===== -->
+{% if page_section in ['home','home'] %}
 <section id="danh-gia" class="section" aria-label="Đánh giá khách hàng TagLuxe">
     <div class="container">
         <div class="section-header" data-aos="fade-up">
@@ -648,11 +657,13 @@
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- ===== BÁO GIÁ NHANH & TÍNH PHÍ TỰ ĐỘNG ===== -->
-{% include 'components/price_calculator.html' %}
+{% if page_section in ['home','calculator'] %}{% include 'components/price_calculator.html' %}{% endif %}
 
 <!-- ===== FAQ SECTION (giúp lên top Google) ===== -->
+{% if page_section in ['home','faq'] %}
 <section id="faq" class="section bg-light" aria-label="Câu hỏi thường gặp về in dây đeo thẻ">
     <div class="container">
         <div class="section-header" data-aos="fade-up">
@@ -687,6 +698,7 @@
         </div>
     </div>
 </section>
+{% endif %}
 
 {% endblock %}
 
