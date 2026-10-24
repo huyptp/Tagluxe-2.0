@@ -82,7 +82,7 @@ def create_app(test_config=None):
         from backend.services.data_service import get_campaign_banner_config
         return {
             'site_url': site_origin(),
-            'asset_v': '20261019_v7',
+            'asset_v': '20261024_v9',
             'campaign_banner': get_campaign_banner_config()
         }
 

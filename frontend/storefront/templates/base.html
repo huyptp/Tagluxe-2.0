@@ -305,7 +305,7 @@
     </script>
     {% endif %}
 </head>
-<body>
+<body class="page-{{ page_section|default('product') }}">
     {% if config.get('GOOGLE_TAG_MANAGER_ID') %}
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ config['GOOGLE_TAG_MANAGER_ID'] }}"

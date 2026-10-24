@@ -61,6 +61,41 @@ function onOpen() {
 // CẤU HÌNH BẢO MẬT WEBHOOK SECRET (Khớp với GOOGLE_SHEET_SECRET trên server)
 var WEBHOOK_SECRET = ""; 
 
+// Capability discovery only. Customer data is never returned by an unauthenticated GET.
+function doGet() {
+  return ContentService.createTextOutput(JSON.stringify({protocol: "tagluxe-quotes-read-v1"}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function exportQuoteRows(ss, data) {
+  var sheet = ss.getSheetByName("📋 QUẢN LÝ BÁO GIÁ");
+  if (!sheet) throw new Error("Quotes sheet not found");
+  var cursor = Number(data.cursor || 2);
+  if (!Number.isInteger(cursor) || cursor < 2) throw new Error("Invalid cursor");
+  var count = Math.min(200, Math.max(0, sheet.getLastRow() - cursor + 1));
+  var width = Math.min(14, sheet.getMaxColumns());
+  var values = count ? sheet.getRange(cursor, 1, count, width).getValues() : [];
+  var quotes = values.filter(function(row) { return String(row[1] || "").trim(); }).map(function(row) {
+    var created = row[0] instanceof Date
+      ? Utilities.formatDate(row[0], "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm:ss") : String(row[0]);
+    var meta = {};
+    try { meta = JSON.parse(row[13] || "{}"); } catch (ignore) {}
+    if (!meta || typeof meta !== "object") meta = {};
+    return {id: String(row[1]), created_at: created, category: String(row[2]),
+      customer_name: String(row[3]), phone: String(row[4]).replace(/^'/, ""),
+      quantity: row[6], specs: String(row[7]), accessories: String(row[8]),
+      total_price: row[9], notes: String(row[10]),
+      unit_price: meta.unit_price, include_vat: meta.include_vat,
+      vat_amount: meta.vat_amount, punched_hole: meta.punched_hole,
+      status: String(row[12] || (row[11] === true ? "Đã xong" : "Mới"))};
+  });
+  var next = cursor + count;
+  return ContentService.createTextOutput(JSON.stringify({status: "success",
+    protocol: "tagluxe-quotes-read-v1", quotes: quotes,
+    next_cursor: next <= sheet.getLastRow() ? next : null}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function doPost(e) {
   var lock = LockService.getScriptLock();
   var hasLock = false;
@@ -86,6 +121,10 @@ function doPost(e) {
 
     // 2. Kiểm tra Secret key bảo mật bắt buộc
     var scriptSecret = WEBHOOK_SECRET || PropertiesService.getScriptProperties().getProperty("WEBHOOK_SECRET");
+    if (!scriptSecret) {
+      return ContentService.createTextOutput(JSON.stringify({status: "error", message: "Webhook secret is not configured"}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
     if (scriptSecret) {
       var incomingSecret = data.secret || (e.parameter && e.parameter.secret);
       if (!incomingSecret || incomingSecret !== scriptSecret) {
@@ -96,6 +135,10 @@ function doPost(e) {
     }
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (data.action === "export_quotes") {
+      return exportQuoteRows(ss, data);
+    }
+    if (data.action) throw new Error("Unknown action");
     ensureSheetsExist(ss);
 
     var isDemo = (data.category && data.category.indexOf("Demo") !== -1) || data.record_type === "demo";
@@ -497,6 +540,13 @@ function saveQuoteOrder(ss, data) {
 
   var recordId = String(data.id || data.quote_id || data.record_id || ("TL-" + Math.floor(1000 + Math.random() * 9000)));
 
+  // Keep exact pricing fields for subsequent restores without changing columns A-M.
+  var restoreMetadata = JSON.stringify({unit_price: data.unit_price || 0,
+    include_vat: !!data.include_vat, vat_amount: data.vat_amount || 0,
+    punched_hole: data.punched_hole || "none"});
+  if (sheet.getMaxColumns() < 14) sheet.insertColumnsAfter(sheet.getMaxColumns(), 14 - sheet.getMaxColumns());
+  sheet.getRange(1, 14).setValue("Dữ liệu khôi phục (tự động)");
+
   // Chống ghi trùng: Tìm xem Mã báo giá đã có trong Cột B (col 2) chưa
   var existingRow = findRowByRecordId(sheet, recordId, 2);
 
@@ -516,6 +566,7 @@ function saveQuoteOrder(ss, data) {
       sanitizeForSheet(data.notes || "")
     ];
     sheet.getRange(existingRow, 1, 1, updateCols.length).setValues([updateCols]);
+    sheet.getRange(existingRow, 14).setValue(restoreMetadata);
     sheet.getRange(existingRow, 10).setNumberFormat("#,##0 \"đ\"").setFontWeight("bold").setFontColor("#b45309");
     return { record_id: recordId, action: "updated" };
   } else {
@@ -532,7 +583,8 @@ function saveQuoteOrder(ss, data) {
       data.total_price || 0,
       sanitizeForSheet(data.notes || ""),
       false, // Checkbox mặc định chưa xong
-      "Mới"
+      "Mới",
+      restoreMetadata
     ];
 
     var targetRow = getFirstEmptyRow(sheet);

@@ -141,6 +141,13 @@ def admin_login():
             session['_admin_csrf_token'] = secrets.token_hex(24)
             limiter.reset_key(f"admin.admin_login:{get_client_ip()}")
             record_audit('login', 'admin_session', username, 'Đăng nhập thành công')
+            # Sheets is the shop's existing archive. Rebuild an empty local cache
+            # after a host restart, while preserving all existing admin records.
+            from backend.config import GOOGLE_SHEET_WEBHOOK_URL
+            from backend.models import Quote
+            if (GOOGLE_SHEET_WEBHOOK_URL and os.environ.get('GOOGLE_SHEET_RESTORE_ON_LOGIN', 'true').lower() == 'true'
+                    and Quote.query.first() is None):
+                restore_quotes_from_sheets()
             return redirect(url_for('admin.admin_dashboard'))
         else:
             record_audit('failed_login', 'admin_session', username, 'Đăng nhập thất bại')
@@ -202,6 +209,28 @@ def admin_system():
         sheets_configured=bool(GOOGLE_SHEET_WEBHOOK_URL),
         sheets_secret_configured=bool(GOOGLE_SHEET_SECRET),
         database_type=db.engine.dialect.name)
+
+
+def restore_quotes_from_sheets():
+    from backend.services.sheets_restore import restore_missing_quotes, SheetsRestoreError
+    try:
+        result = restore_missing_quotes()
+        flash(f"Đã lấy lại {result['inserted']} báo giá từ Google Sheets; giữ nguyên {result['skipped']} báo giá đang có."
+              + (f" Bỏ qua {result['invalid']} dòng thiếu hoặc sai dữ liệu." if result['invalid'] else ''), 'success')
+        record_audit('restore_sheet_quotes', 'quote', 'google-sheets',
+                     f"Added {result['inserted']}; skipped {result['skipped']}; invalid {result['invalid']}")
+    except SheetsRestoreError as error:
+        flash(str(error), 'error')
+
+
+@admin_bp.route('/system/restore-quotes', methods=['POST'])
+@login_required
+def admin_restore_sheet_quotes():
+    if not validate_csrf():
+        flash('Yêu cầu không hợp lệ. Vui lòng tải lại trang.', 'error')
+    else:
+        restore_quotes_from_sheets()
+    return redirect(url_for('admin.admin_system'))
 
 
 @admin_bp.route('/quotes/bulk-status', methods=['POST'])

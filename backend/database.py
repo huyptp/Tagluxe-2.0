@@ -5,16 +5,24 @@ from backend.config import BASE_DIR
 db = SQLAlchemy()
 
 def get_database_uri():
-    db_url = os.environ.get('DATABASE_URL', '')
+    db_url = os.environ.get('DATABASE_URL', '').strip()
     if db_url:
         # Render specifies postgres:// which SQLAlchemy 2.0 requires as postgresql://
         if db_url.startswith('postgres://'):
             db_url = db_url.replace('postgres://', 'postgresql://', 1)
         return db_url
-    
+
+    if os.environ.get('RENDER'):
+        import logging
+        logging.getLogger(__name__).warning(
+            'Using local SQLite on Render: quotes synced to Google Sheets can be restored, '
+            'but unsynced records and private admin data require durable storage.'
+        )
+
     # Local fallback SQLite database
     sqlite_path = os.path.join(BASE_DIR, 'tagluxe.db')
     return f"sqlite:///{sqlite_path}"
+
 
 def seed_initial_data():
     from backend.models import PriceTier, Product, Quote, DemoRequest, SchemaMigration
@@ -293,7 +301,8 @@ def seed_initial_data():
             print(f"[DB_SEED_ERROR] {ex}")
 
 def init_db(app):
-    app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
+    uri = app.config.get('SQLALCHEMY_DATABASE_URI') or get_database_uri()
+    app.config['SQLALCHEMY_DATABASE_URI'] = uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['BASE_DIR'] = BASE_DIR
     db.init_app(app)

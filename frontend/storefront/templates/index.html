@@ -112,7 +112,7 @@
 
 {% block content %}
 {% if page_section != 'home' %}
-<section class="section" style="padding:40px 20px 24px"><div class="container"><a href="/" style="font-size:13px;color:#777">Trang chủ</a><span aria-hidden="true"> / </span><span>{{ page_title }}</span><h1 style="font-size:clamp(26px,4vw,38px);margin:16px 0 10px">{{ page_title }}</h1><p style="color:#666;max-width:760px">{{ page_description }}</p></div></section>
+<section class="section page-intro"><div class="container"><a href="/" style="font-size:13px;color:#777">Trang chủ</a><span aria-hidden="true"> / </span><span>{{ page_title }}</span><h1 style="font-size:clamp(26px,4vw,38px);margin:16px 0 10px">{{ page_title }}</h1><p style="color:#666;max-width:760px">{{ page_description }}</p></div></section>
 {% endif %}
 <!-- ===== HERO SECTION ===== -->
 {% if page_section in ['home','home'] %}

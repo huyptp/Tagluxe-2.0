@@ -490,6 +490,9 @@ a {
 .section {
     padding: 80px 20px;
 }
+.page-intro {
+    padding: 40px 0 24px;
+}
 .section-header {
     text-align: center;
     margin-bottom: 50px;
@@ -2384,6 +2387,49 @@ a {
     .slider-viewport {
         aspect-ratio: 1 / 1;
     }
+}
+
+/* One shared mobile gutter; child containers own the horizontal spacing. */
+@media (max-width: 768px) {
+    body:not(.admin-app):not(.admin-auth) { --mobile-gutter: 16px; }
+    body:not(.admin-app):not(.admin-auth) .container {
+        padding-left: var(--mobile-gutter);
+        padding-right: var(--mobile-gutter);
+    }
+    body:not(.admin-app):not(.admin-auth) section.section {
+        padding: 44px 0;
+    }
+    body:not(.admin-app):not(.admin-auth) #process {
+        padding: 44px 0 !important;
+    }
+    body:not(.admin-app):not(.admin-auth) .page-intro {
+        padding: 28px 0 24px;
+    }
+    .hero-inner > *, .footer-inner > * { min-width: 0; }
+    .hero-inner { gap: 28px; }
+    .hero-marquee-wrapper { width: 100%; max-width: 100%; height: 300px; }
+    .hero-marquee-item { width: min(300px, 82vw); }
+    .hero-features { gap: 10px 16px; }
+    .hero-content p, .section-header p { font-size: 0.98rem; line-height: 1.7; }
+    .section-header { margin-bottom: 26px; }
+    .section-header h2 { font-size: clamp(1.45rem, 6vw, 1.85rem); line-height: 1.35; }
+    .section-cta-group .btn { padding: 12px 16px !important; font-size: 0.94rem !important; }
+    .usp-inner { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .usp-item { align-items: flex-start; font-size: 0.78rem; }
+    .usp-item svg, .footer-links svg { flex-shrink: 0; }
+    .product-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .testimonial-grid { gap: 16px; }
+    .testimonial-card { padding: 20px; }
+    .faq-item summary { padding: 16px; gap: 10px; }
+    .faq-item summary h3 { min-width: 0; font-size: 0.94rem; line-height: 1.55; }
+    .faq-item p { padding: 0 16px 16px; }
+    .footer { padding-top: 40px; }
+    .footer-inner { gap: 28px; margin-bottom: 28px; }
+    .footer-links a { align-items: flex-start; overflow-wrap: anywhere; }
+    .footer-bottom { padding: 20px 16px 0; font-size: 0.8rem; }
+    .product-detail-info h1 { font-size: 1.5rem; }
+    .product-detail-info .cta-box { padding: 16px; }
+    .page-calculator .floating-calc-btn { display: none; }
 }
 
 

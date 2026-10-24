@@ -101,12 +101,13 @@
         /* 2-Column Main Layout */
         .calc-main-grid {
             display: grid;
-            grid-template-columns: 1.35fr 1fr;
+            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
             gap: 32px;
             align-items: start;
         }
 
         .calc-config-card {
+            min-width: 0;
             background: #ffffff;
             border-radius: 14px;
             padding: 28px;
@@ -1048,13 +1049,38 @@
 
         /* Responsive */
         @media (max-width: 992px) {
-            .calc-main-grid { grid-template-columns: 1fr; }
+            .calc-main-grid { grid-template-columns: minmax(0, 1fr); }
             .calc-ticket-sticky { position: static; }
         }
 
         @media (max-width: 640px) {
+            .price-calc-section { padding: 40px 0 48px; }
+            .calc-main-grid { gap: 20px; }
+            .calc-header-wrap { margin-bottom: 24px; }
+            .calc-title { font-size: clamp(1.5rem, 6.5vw, 1.85rem); line-height: 1.35; }
             .calc-config-card { padding: 18px 14px; }
-            .category-tab-bar { width: 100%; justify-content: flex-start; }
+            .category-tab-bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+            .cat-tab-btn { justify-content: center; white-space: normal; padding: 10px 5px; font-size: 0.78rem; line-height: 1.4; min-height: 44px; }
+            .step-heading { flex-wrap: wrap; gap: 8px; }
+            .step-heading h3 { flex: 1; min-width: 0; font-size: 0.98rem; }
+            .step-heading-hint { flex-basis: 100%; margin-left: 34px; }
+            .qty-interactive-box { padding: 14px 12px; }
+            .qty-main-control-row { gap: 10px; }
+            .qty-input-wrapper { min-width: 0; width: 100%; }
+            .qty-direct-number-input { flex: 1; min-width: 0; width: 100%; }
+            .qty-stepper-btns { width: 100%; }
+            .btn-stepper { flex: 1; min-height: 44px; }
+            .addon-info { min-width: 0; }
+            #vatToggleCard { flex-wrap: wrap; gap: 10px; }
+            .calc-ticket-sticky { min-width: 0; }
+            .cost-summary-card { padding: 20px 16px; }
+            .summary-header-bar, .calc-preview-title-row { flex-wrap: wrap; gap: 8px; }
+            .calc-preview-spec-title { white-space: normal; }
+            .summary-row { align-items: flex-start; gap: 12px; }
+            .s-label { flex: 0 0 34%; }
+            .s-val { min-width: 0; overflow-wrap: anywhere; }
+            .btn-corporate-submit { height: auto; min-height: 50px; padding: 12px; font-size: 0.88rem; }
+            .calc-txt-input, .calc-txt-area { font-size: 16px; }
             .options-grid-3 { grid-template-columns: 1fr; }
             .options-grid-2 { grid-template-columns: 1fr; }
             .contact-grid-2 { grid-template-columns: 1fr; }
