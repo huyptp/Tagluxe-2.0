@@ -10,7 +10,7 @@ có lệnh xóa báo giá. Chưa kiểm tra cấu hình Render thực tế.
 
 - Giữ kết nối bảng tính hiện có, không bắt đổi sang PostgreSQL.
 - Sau đăng nhập, nếu database chưa có báo giá và đã cấu hình Sheets, thử lấy lại
-  các dòng từ tab `📋 QUẢN LÝ BÁO GIÁ`.
+  các dòng từ tab `📋 QUẢN LÝ BÁO GIÁ` bằng tác vụ nền, không giữ lượt tải trang đăng nhập.
 - Nút **Lấy lại báo giá & khách hàng** tại Admin → Tình trạng hệ thống để lấy thủ công.
 - Chỉ thêm mã chưa có, không ghi đè trạng thái/ghi chú của hồ sơ đang có.
   Khách hàng tự hiện lại từ báo giá. Dòng sai/thiếu bị bỏ qua và có thống kê.
@@ -18,6 +18,14 @@ có lệnh xóa báo giá. Chưa kiểm tra cấu hình Render thực tế.
   thành báo giá mới. GET chỉ trả phiên bản giao thức, không trả dữ liệu khách.
 - POST đọc/ghi đều yêu cầu khóa xác thực. Nút admin yêu cầu đăng nhập và CSRF.
 - Lỗi kết nối không xóa dữ liệu hiện có; lỗi phân trang hủy toàn bộ lần nhập đó.
+- Trạng thái lấy lại dữ liệu hiển thị ở trang Hệ thống. Tải lại để xem kết quả.
+  Mỗi tiến trình chỉ chạy một tác vụ lấy lại cùng lúc; trạng thái tác vụ nằm trong
+  bộ nhớ và mất khi tiến trình restart, có thể thử lại an toàn nhờ kiểm tra mã trùng.
+- Nút thử đồng bộ báo giá đưa công việc vào hàng đợi hiện có, không gọi Google
+  ngay trong lượt HTTP. Thông báo xếp hàng không có nghĩa là đã ghi vào Sheets;
+  cần xem trạng thái đồng bộ sau đó. Không chiếm lại công việc đang có lease hợp lệ.
+- Việc đọc các trang từ Google hoàn tất trước khi bắt đầu ghi database, tránh giữ
+  khóa ghi SQLite trong lúc chờ mạng.
 
 ## Cần thực hiện sau khi duyệt code
 

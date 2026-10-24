@@ -1508,14 +1508,30 @@ def send_quote_to_google_sheet(quote_data, app=None):
 
 def retry_quote_sync(quote_id, app=None):
     from backend.database import db
-    from backend.models import Quote
+    from backend.models import Quote, SyncTask
     q = Quote.query.filter_by(id=quote_id).first()
     if not q:
         return False, "Quote not found"
+    now = datetime.utcnow()
+    event_key = f"quote_sync_{quote_id}"
+    task = SyncTask.query.filter_by(event_key=event_key).first()
+    if task and task.status == 'processing' and task.lease_until and task.lease_until > now:
+        return True, 'Báo giá đang được đồng bộ. Vui lòng tải lại sau ít giây để xem kết quả.'
     q.retry_count = (q.retry_count or 0) + 1
     q.sync_status = 'pending'
+    q.sync_error = None
+    if task is None:
+        task = SyncTask(event_key=event_key, record_type='quote', record_id=quote_id)
+        db.session.add(task)
+    task.payload = json.dumps(q.to_dict(), ensure_ascii=False)
+    task.status = 'pending'
+    task.attempt_count = 0
+    task.next_retry_at = now
+    task.worker_id = None
+    task.lease_until = None
+    task.last_error = None
     db.session.commit()
-    return send_quote_to_google_sheet(q.to_dict(), app)
+    return True, 'Đã đưa báo giá vào hàng đợi đồng bộ. Vui lòng tải lại sau ít giây để xem kết quả.'
 
 def retry_demo_request_sync(req_id, app=None):
     from backend.database import db

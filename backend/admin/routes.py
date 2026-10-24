@@ -199,6 +199,8 @@ def admin_activity():
 @login_required
 def admin_system():
     from sqlalchemy import text
+    from flask import current_app
+    from backend.services.sheets_restore import restore_job_status
     from backend.database import db
     from backend.models import Quote
     from backend.config import GOOGLE_SHEET_WEBHOOK_URL, GOOGLE_SHEET_SECRET
@@ -208,17 +210,19 @@ def admin_system():
     return render_template('admin/system.html', sync_counts=counts,
         sheets_configured=bool(GOOGLE_SHEET_WEBHOOK_URL),
         sheets_secret_configured=bool(GOOGLE_SHEET_SECRET),
-        database_type=db.engine.dialect.name)
+        database_type=db.engine.dialect.name,
+        restore_job=restore_job_status(current_app))
 
 
 def restore_quotes_from_sheets():
-    from backend.services.sheets_restore import restore_missing_quotes, SheetsRestoreError
+    from flask import current_app
+    from backend.services.sheets_restore import start_restore_job, SheetsRestoreError
     try:
-        result = restore_missing_quotes()
-        flash(f"Đã lấy lại {result['inserted']} báo giá từ Google Sheets; giữ nguyên {result['skipped']} báo giá đang có."
-              + (f" Bỏ qua {result['invalid']} dòng thiếu hoặc sai dữ liệu." if result['invalid'] else ''), 'success')
-        record_audit('restore_sheet_quotes', 'quote', 'google-sheets',
-                     f"Added {result['inserted']}; skipped {result['skipped']}; invalid {result['invalid']}")
+        started = start_restore_job(current_app._get_current_object())
+        flash('Đã bắt đầu lấy lại báo giá trong nền. Xem tiến độ tại Tình trạng hệ thống.'
+              if started else 'Đang có một tác vụ lấy lại báo giá. Xem tiến độ tại Tình trạng hệ thống.', 'success')
+        if started:
+            record_audit('restore_sheet_quotes', 'quote', 'google-sheets', 'Queued background restore')
     except SheetsRestoreError as error:
         flash(str(error), 'error')
 
@@ -628,8 +632,8 @@ def admin_retry_quote_sync(id):
     app = current_app._get_current_object()
     success, msg = retry_quote_sync(id, app)
     if success:
-        record_audit('retry_quote_sync', 'quote', id, 'Đồng bộ Google Sheets thành công')
-        flash('Đã đồng bộ lại báo giá lên Google Sheets thành công!', 'success')
+        record_audit('retry_quote_sync', 'quote', id, 'Đưa vào hàng đợi đồng bộ Google Sheets')
+        flash(msg, 'success')
     else:
         record_audit('retry_quote_sync_failed', 'quote', id, f"Thất bại: {msg}")
         flash(f'Đồng bộ thất bại: {msg}', 'error')

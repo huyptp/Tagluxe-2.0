@@ -1,6 +1,7 @@
 """Read missing quotes from the shop's authenticated Sheets bridge; never overwrite local work."""
 import json
 import re
+import threading
 from datetime import datetime
 import requests
 from sqlalchemy.exc import IntegrityError
@@ -10,6 +11,48 @@ from backend.models import Quote
 
 class SheetsRestoreError(Exception):
     pass
+
+
+_restore_lock = threading.Lock()
+
+
+def restore_job_status(app):
+    with _restore_lock:
+        return dict(app.extensions.get('sheets_restore_job', {'state': 'idle', 'message': ''}))
+
+
+def start_restore_job(app):
+    """Return immediately; Google requests must never block an admin HTTP request."""
+    from backend.config import GOOGLE_SHEET_WEBHOOK_URL, GOOGLE_SHEET_SECRET
+    if not GOOGLE_SHEET_WEBHOOK_URL or not GOOGLE_SHEET_SECRET:
+        raise SheetsRestoreError('Cần cấu hình kết nối và khóa xác thực Google Sheets để lấy lại báo giá.')
+    with _restore_lock:
+        if app.extensions.get('sheets_restore_job', {}).get('state') == 'running':
+            return False
+        app.extensions['sheets_restore_job'] = {'state': 'running', 'message': 'Đang lấy lại báo giá từ Google Sheets. Bạn vẫn có thể sử dụng admin.'}
+
+    def run():
+        with app.app_context():
+            try:
+                result = restore_missing_quotes()
+                status = {'state': 'succeeded', 'message':
+                    f"Đã lấy lại {result['inserted']} báo giá; giữ nguyên {result['skipped']} báo giá đang có; bỏ qua {result['invalid']} dòng không hợp lệ."}
+            except SheetsRestoreError as error:
+                status = {'state': 'failed', 'message': str(error)}
+            except Exception:
+                db.session.rollback()
+                status = {'state': 'failed', 'message': 'Chưa lấy lại được báo giá. Vui lòng thử lại sau.'}
+            finally:
+                db.session.remove()
+            with _restore_lock:
+                app.extensions['sheets_restore_job'] = status
+    try:
+        threading.Thread(target=run, daemon=True, name='TagLuxe-SheetsRestore').start()
+    except Exception:
+        with _restore_lock:
+            app.extensions['sheets_restore_job'] = {'state': 'failed', 'message': 'Chưa khởi động được tác vụ. Vui lòng thử lại.'}
+        raise SheetsRestoreError('Chưa khởi động được tác vụ. Vui lòng thử lại.') from None
+    return True
 
 
 def parse_sheet_quote(row):
@@ -67,10 +110,9 @@ def restore_missing_quotes():
         probe.raise_for_status()
         if probe.json().get('protocol') != 'tagluxe-quotes-read-v1':
             raise SheetsRestoreError('Cần cập nhật Apps Script để bật chức năng đọc lại báo giá từ Google Sheets.')
-        if db.engine.dialect.name == 'sqlite':
-            connection = db.session.connection()
-            if not connection.connection.driver_connection.in_transaction:
-                connection.exec_driver_sql('BEGIN')
+        # Fetch all pages before beginning a write transaction. A slow Google
+        # response must not hold SQLite's write lock and stall other requests.
+        rows = []
         cursor = 2
         for _ in range(25):
             response = requests.post(GOOGLE_SHEET_WEBHOOK_URL, json={
@@ -79,30 +121,39 @@ def restore_missing_quotes():
             data = response.json()
             if not isinstance(data, dict) or data.get('status') != 'success' or data.get('protocol') != 'tagluxe-quotes-read-v1' or not isinstance(data.get('quotes'), list):
                 raise SheetsRestoreError('Bảng tính chưa hỗ trợ đọc dữ liệu hoặc khóa xác thực chưa khớp.')
-            for row in data['quotes']:
-                try:
-                    quote = parse_sheet_quote(row)
-                except (ValueError, TypeError, KeyError, OverflowError):
-                    invalid += 1
-                    continue
-                if db.session.get(Quote, quote.id):
-                    skipped += 1
-                    continue
-                try:
-                    with db.session.begin_nested():
-                        db.session.add(quote)
-                        db.session.flush()
-                    inserted += 1
-                except IntegrityError:
-                    skipped += 1
+            if len(data['quotes']) > 200:
+                raise SheetsRestoreError('Bảng tính trả về trang dữ liệu quá lớn.')
+            rows.extend(data['quotes'])
             next_cursor = data.get('next_cursor')
             if next_cursor is None:
-                db.session.commit()
-                return {'inserted': inserted, 'skipped': skipped, 'invalid': invalid}
+                break
             if type(next_cursor) is not int or next_cursor <= cursor:
                 raise SheetsRestoreError('Bảng tính trả về phân trang không hợp lệ.')
             cursor = next_cursor
-        raise SheetsRestoreError('Bảng tính quá lớn để lấy lại trong một lần. Cần chia nhỏ dữ liệu trước khi thử lại.')
+        else:
+            raise SheetsRestoreError('Bảng tính quá lớn để lấy lại trong một lần. Cần chia nhỏ dữ liệu trước khi thử lại.')
+        if db.engine.dialect.name == 'sqlite':
+            connection = db.session.connection()
+            if not connection.connection.driver_connection.in_transaction:
+                connection.exec_driver_sql('BEGIN')
+        for row in rows:
+            try:
+                quote = parse_sheet_quote(row)
+            except (ValueError, TypeError, KeyError, OverflowError):
+                invalid += 1
+                continue
+            if db.session.get(Quote, quote.id):
+                skipped += 1
+                continue
+            try:
+                with db.session.begin_nested():
+                    db.session.add(quote)
+                    db.session.flush()
+                inserted += 1
+            except IntegrityError:
+                skipped += 1
+        db.session.commit()
+        return {'inserted': inserted, 'skipped': skipped, 'invalid': invalid}
     except SheetsRestoreError:
         db.session.rollback()
         raise

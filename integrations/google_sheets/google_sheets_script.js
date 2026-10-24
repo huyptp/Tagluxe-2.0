@@ -49,6 +49,7 @@ var THEME = {
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu("🚀 TagLuxe Admin")
+    .addItem("👤 Bật / Cập nhật quản lý khách hàng", "setupCustomerManagement")
     .addItem("📊 Khởi tạo / Làm mới Giao diện Dashboard", "setupFullSystem")
     .addItem("🎨 Dọn dẹp Hộp kiểm & Cài đặt Menu Trạng thái", "setupStatusDropdownsAndColors")
     .addItem("💬 Sửa lỗi toàn bộ Link Nhắn Zalo", "fixAllZaloLinks")
@@ -304,6 +305,7 @@ function setupFullSystem() {
   setupQuotesSheet(ss);
   setupDemoSheet(ss);
   setupStatusDropdownsAndColors();
+  setupCustomerManagement();
   SpreadsheetApp.flush();
 }
 
@@ -589,6 +591,7 @@ function saveQuoteOrder(ss, data) {
 
     var targetRow = getFirstEmptyRow(sheet);
     sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
+    initializeCustomerFields(sheet, targetRow, ss);
     sheet.setRowHeight(targetRow, 30);
     sheet.getRange(targetRow, 1, 1, 2).setHorizontalAlignment("center");
     sheet.getRange(targetRow, 5, 1, 3).setHorizontalAlignment("center");
@@ -713,6 +716,124 @@ function setupStatusDropdownsAndColors() {
   rules.push(doneRowRule);
 
   quotesSheet.setConditionalFormatRules(rules);
+  if (quotesSheet.getMaxColumns() >= 29 && quotesSheet.getRange(1, 15).getValue() === CUSTOMER_HEADERS[0]) {
+    applyCustomerReminderRules(quotesSheet, ss);
+  }
+}
+
+// O:AC belong to the shop. Webhook retries never overwrite these manual fields.
+var CUSTOMER_HEADERS = [
+  "Công ty / Tổ chức", "Địa chỉ giao hàng", "Người nhận hàng", "SĐT người nhận",
+  "Ngày khách cần nhận", "Giờ / Khung giờ nhận", "Hình thức giao hàng", "Người phụ trách",
+  "Ngày liên hệ lại", "Mức ưu tiên", "Tiến độ sản xuất / giao", "Đã thu (VNĐ)",
+  "Còn phải thu (VNĐ)", "Mã vận đơn", "Ghi chú nội bộ / Yêu cầu đặc biệt"
+];
+
+function customerBalanceFormula(row, ss) {
+  var sep = getFormulaSep(ss);
+  return '=IF($B' + row + '=""' + sep + '""' + sep + 'MAX(0' + sep + '$J' + row + '-N($Z' + row + ')))';
+}
+
+function initializeCustomerFields(sheet, row, ss) {
+  // Only initialize when the owner has explicitly enabled the CRM columns.
+  if (sheet.getMaxColumns() < 29 || sheet.getRange(1, 15).getValue() !== CUSTOMER_HEADERS[0]) return;
+  sheet.getRange(row, 24).setValue("Bình thường");
+  sheet.getRange(row, 25).setValue("Chưa sản xuất");
+  sheet.getRange(row, 27).setFormula(customerBalanceFormula(row, ss));
+}
+
+function setupCustomerManagement() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) throw new Error("Đang có yêu cầu ghi dữ liệu. Vui lòng thử lại sau.");
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("📋 QUẢN LÝ BÁO GIÁ");
+    if (!sheet) throw new Error("Chưa tìm thấy tab QUẢN LÝ BÁO GIÁ.");
+    // Validate all existing headers before writing anything, including inserted columns.
+    var available = Math.min(CUSTOMER_HEADERS.length, Math.max(0, sheet.getMaxColumns() - 14));
+    var headers = available ? sheet.getRange(1, 15, 1, available).getValues()[0] : [];
+    for (var i = 0; i < available; i++) {
+      if (headers[i] && String(headers[i]) !== CUSTOMER_HEADERS[i]) {
+        throw new Error("Cột " + (15 + i) + " đang có dữ liệu riêng. Hãy chuyển dữ liệu đó sang cột khác trước khi bật quản lý khách.");
+      }
+      if (!headers[i] && sheet.getLastRow() > 1) {
+        var existing = sheet.getRange(2, 15 + i, sheet.getLastRow() - 1, 1).getValues();
+        var existingFormulas = sheet.getRange(2, 15 + i, sheet.getLastRow() - 1, 1).getFormulas();
+        if (existing.some(function(cell) { return cell[0] !== "" && cell[0] !== null; }) || existingFormulas.some(function(cell) { return !!cell[0]; })) {
+          throw new Error("Cột " + (15 + i) + " chưa có tiêu đề nhưng đang chứa dữ liệu. Không thay đổi để tránh ghi đè.");
+        }
+      }
+    }
+    if (sheet.getMaxColumns() < 29) sheet.insertColumnsAfter(sheet.getMaxColumns(), 29 - sheet.getMaxColumns());
+    sheet.getRange(1, 15, 1, 15).setValues([CUSTOMER_HEADERS]).setBackground("#0f766e")
+      .setFontColor("#ffffff").setFontWeight("bold").setWrap(true);
+    sheet.getRange(1, 14).setValue("Dữ liệu khôi phục (tự động)");
+    sheet.setFrozenRows(1);
+    sheet.setFrozenColumns(2);
+    sheet.setRowHeight(1, 48);
+    for (var col = 15; col <= 29; col++) sheet.setColumnWidth(col, col === 16 || col === 29 ? 280 : 170);
+    var count = sheet.getMaxRows() - 1;
+    if (count < 1) return;
+    var dateRule = SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false)
+      .setHelpText("Chọn ngày hợp lệ bằng lịch của bảng tính.").build();
+    [19, 23].forEach(function(col) { sheet.getRange(2, col, count, 1).setDataValidation(dateRule).setNumberFormat("dd/MM/yyyy"); });
+    sheet.getRange(2, 18, count, 1).setNumberFormat("@");
+    sheet.getRange(2, 20, count, 1).setNumberFormat("@");
+    sheet.getRange(2, 28, count, 1).setNumberFormat("@");
+    sheet.getRange(2, 16, count, 1).setWrap(true);
+    sheet.getRange(2, 29, count, 1).setWrap(true);
+    applyDropdownToCell(sheet.getRange(2, 21, count, 1), ["Giao tận nơi", "Nhận tại shop", "Chành xe", "Khác"]);
+    applyDropdownToCell(sheet.getRange(2, 24, count, 1), ["Bình thường", "Ưu tiên", "Gấp"]);
+    applyDropdownToCell(sheet.getRange(2, 25, count, 1), ["Chưa sản xuất", "Chờ duyệt mẫu", "Đang sản xuất", "Đóng gói", "Đang giao", "Đã giao", "Tạm dừng"]);
+    sheet.getRange(2, 26, count, 1).setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false).build());
+    sheet.getRange(2, 26, count, 2).setNumberFormat('#,##0 "đ"');
+    sheet.getRange(1, 27).setNote("Tự tính = Tổng tiền báo giá - Đã thu; không nhỏ hơn 0. Chưa bao gồm phí giao hàng nếu chưa cộng vào tổng tiền.");
+    var last = sheet.getLastRow();
+    if (last > 1) {
+      var ids = sheet.getRange(2, 2, last - 1, 1).getValues();
+      var balances = sheet.getRange(2, 27, last - 1, 1).getValues();
+      var formulas = sheet.getRange(2, 27, last - 1, 1).getFormulas();
+      for (var r = 0; r < ids.length; r++) {
+        if (ids[r][0] && balances[r][0] === "" && !formulas[r][0]) {
+          sheet.getRange(r + 2, 27).setFormula(customerBalanceFormula(r + 2, ss));
+        }
+      }
+    }
+    var filter = sheet.getFilter();
+    if (!filter) sheet.getRange(1, 1, sheet.getMaxRows(), 29).createFilter();
+    else {
+      var filterRange = filter.getRange();
+      if (filterRange.getRow() === 1 && filterRange.getColumn() === 1 && filterRange.getNumColumns() < 29) {
+        var criteria = [];
+        for (var f = 1; f <= filterRange.getNumColumns(); f++) criteria[f] = filter.getColumnFilterCriteria(f);
+        filter.remove();
+        var expanded = sheet.getRange(1, 1, sheet.getMaxRows(), 29).createFilter();
+        for (var c = 1; c < criteria.length; c++) if (criteria[c]) expanded.setColumnFilterCriteria(c, criteria[c]);
+      }
+    }
+    applyCustomerReminderRules(sheet, ss);
+    ss.toast("Đã thêm quản lý khách tại cột O–AC. Nhập địa chỉ, ngày cần nhận, lịch liên hệ và tiền đã thu ngay trên từng báo giá.", "TagLuxe", 10);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function applyCustomerReminderRules(sheet, ss) {
+  var sep = getFormulaSep(ss);
+  var rules = sheet.getConditionalFormatRules().filter(function(rule) {
+    var condition = rule.getBooleanCondition();
+    return !condition || condition.getCriteriaValues().join("").indexOf("TAGLUXE_CRM_") === -1;
+  });
+  function reminder(column, marker, color) {
+    var formula = '=AND(' + ['$B2<>""', 'ISNUMBER($' + column + '2)', '$' + column + '2<=TODAY()',
+      '$M2<>"Đã xong"', '$M2<>"Đã hủy"', '$Y2<>"Đã giao"', 'N("TAGLUXE_CRM_' + marker + '")=0'].join(sep) + ')';
+    return SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(formula)
+      .setBackground(color).setFontColor("#991b1b").setBold(true)
+      .setRanges([sheet.getRange(column + '2:' + column + sheet.getMaxRows())]).build();
+  }
+  rules.unshift(reminder('S', 'DELIVERY', '#fee2e2'), reminder('W', 'FOLLOWUP', '#fef3c7'));
+  sheet.setConditionalFormatRules(rules);
 }
 
 function addSampleQuoteRow() {
