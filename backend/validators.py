@@ -118,6 +118,25 @@ def validate_quote_input(data, is_submission=False):
     else:
         accessories = []
 
+    from flask import has_app_context
+    if category == 'lanyard' and accessories and has_app_context():
+        from backend.models import Accessory
+        available = Accessory.query.filter_by(category='lanyard_acc', visible=True).all()
+        lookup = {}
+        for accessory in available:
+            lookup[accessory.id.lower()] = accessory
+            lookup[accessory.name.lower()] = accessory
+        normalized = []
+        for value in accessories:
+            accessory = lookup.get(value.lower())
+            if accessory is None:
+                return False, 'Phụ kiện đã thay đổi hoặc ngừng hiển thị. Vui lòng tải lại trang và chọn lại.', 400, None
+            if quantity < (accessory.min_quantity or 0):
+                return False, f'Phụ kiện này chỉ áp dụng từ {accessory.min_quantity} dây. Vui lòng tăng số lượng hoặc bỏ chọn.', 400, None
+            if accessory.id not in normalized:
+                normalized.append(accessory.id)
+        accessories = normalized
+
     punched_hole = normalize_hole_type(data.get('punched_hole'))
     include_vat = parse_bool(data.get('include_vat') or data.get('vat'))
     

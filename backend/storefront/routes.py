@@ -3,7 +3,7 @@ from urllib.parse import quote
 from flask import Blueprint, render_template, Response, redirect, url_for, request, abort
 from backend.services.data_service import (
     get_visible_products, get_product_by_id, get_lanyard_photos,
-    get_showcase_items, product_schema, get_demo_images_config
+    get_showcase_items, product_schema, get_demo_images_config, get_accessories_catalog
 )
 from backend.config import site_origin
 
@@ -39,6 +39,7 @@ def index(page='home'):
     pvc_product = next((p for p in accessories if 'pvc' in (p.get('name') or '').lower() or p.get('id') == 'acc-1'), None)
     holder_product = next((p for p in accessories if 'vỏ' in (p.get('name') or '').lower() or 'holder' in (p.get('name') or '').lower() or p.get('id') == 'acc-2'), None)
     lanyard_photos = get_lanyard_photos(lanyards)
+    hero_images = [photo['img'] for photo in lanyard_photos[:12]]
     showcase_items = get_showcase_items(lanyards, accessories)
 
     demo_cfg = get_demo_images_config()
@@ -58,11 +59,13 @@ def index(page='home'):
 
     path, title, description = PAGES.get(page, ('/', None, None))
     return render_template('index.html', page_section=page, page_path=path, page_title=title, page_description=description,
+                           accessory_catalog=get_accessories_catalog() if page in ('home', 'calculator') else {},
                            lanyards=lanyards,
                            accessories=accessories,
                            pvc_product=pvc_product,
                            holder_product=holder_product,
                            lanyard_photos=lanyard_photos,
+                           hero_images=hero_images,
                            showcase_items=showcase_items,
                            holder_demo_cards=holder_demo_cards)
 

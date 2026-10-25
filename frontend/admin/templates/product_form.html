@@ -221,23 +221,28 @@ function removeExistingProductImage(btn, productId, imageName) {
     const formData = new FormData();
     formData.append('csrf_token', '{{ csrf_token }}');
     formData.append('image', imageName);
+    btn.disabled = true;
 
     fetch('/admin/products/' + encodeURIComponent(productId) + '/delete-image', {
         method: 'POST',
         headers: { 'Accept': 'application/json' },
         body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data && data.success) {
-            if (item) item.remove();
-        } else {
-            // Fallback: gỡ khỏi form để khi bấm Lưu vẫn xóa được
-            if (item) item.remove();
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok || !data || !data.success) {
+            throw new Error((data && data.message) || 'Máy chủ chưa xóa được ảnh.');
         }
+        return data;
+    })
+    .then(data => {
+        if (item) item.remove();
     })
     .catch(() => {
-        if (item) item.remove();
+        alert('Chưa xóa được ảnh. Ảnh vẫn được giữ nguyên; vui lòng tải lại trang và thử lại.');
+    })
+    .finally(() => {
+        btn.disabled = false;
     });
 }
 </script>

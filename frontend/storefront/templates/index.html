@@ -8,9 +8,9 @@
 {% block og_title %}{{ page_title or 'TAGLUXE — In dây đeo thẻ theo yêu cầu' }}{% endblock %}
 {% block og_desc %}{{ page_description or 'Dây đeo thẻ, thẻ nhựa PVC và vỏ đựng thẻ in theo yêu cầu.' }}{% endblock %}
 {% block preload_image %}
-{% if page_section == 'home' %}
+{% if page_section == 'home' and hero_images %}
 <link rel="preload" as="image"
-      href="{{ url_for('static', filename='uploads/media_1789662028575.jpg') }}"
+      href="{{ url_for('static', filename='uploads/' + hero_images[0]) }}"
       fetchpriority="high">
 {% endif %}
 {% endblock %}
@@ -117,7 +117,7 @@
 <!-- ===== HERO SECTION ===== -->
 {% if page_section in ['home','home'] %}
 <section class="hero" aria-label="Giới thiệu TagLuxe">
-    <div class="container hero-inner">
+    <div class="container hero-inner{% if not hero_images %} hero-inner-no-images{% endif %}">
         <div class="hero-content" data-aos="fade-right">
             <div class="badge" role="text">TagLuxe — In Dây Đeo Thẻ Theo Yêu Cầu</div>
             <h1>In dây đeo thẻ theo yêu cầu — <span class="text-primary">Đeo nhận diện, tỏa thương hiệu</span></h1>
@@ -144,23 +144,10 @@
                 <div class="feature"><i data-lucide="check-circle"></i> Giao hàng toàn quốc</div>
             </div>
         </div>
+        {% if hero_images %}
         <div class="hero-image hero-marquee-wrapper" data-aos="fade-left">
             <div class="hero-marquee-track">
-                {% set hero_imgs = [
-                    'media_1789662028575.jpg',
-                    'media_1789320576594.jpg',
-                    'media_1789662086201.jpg',
-                    'media_1789662028590.jpg',
-                    'media_1789662086215.jpg',
-                    'media_1789662064859.jpg',
-                    'media_1789662064871.jpg',
-                    'media_1789662064894.jpg',
-                    'media_1789662086196.jpg',
-                    'media_1789662086207.jpg',
-                    'media_1789662028598.jpg',
-                    'media_1789662028605.jpg'
-                ] %}
-                {% for img in hero_imgs %}
+                {% for img in hero_images %}
                 <div class="hero-marquee-item">
                     <img src="{{ url_for('static', filename='uploads/' + img) }}"
                          alt="Dây đeo thẻ in theo yêu cầu TagLuxe - Mẫu {{ loop.index }}"
@@ -168,7 +155,7 @@
                          width="400" height="400">
                 </div>
                 {% endfor %}
-                {% for img in hero_imgs %}
+                {% for img in hero_images %}
                 <div class="hero-marquee-item">
                     <img src="{{ url_for('static', filename='uploads/' + img) }}"
                          alt="Dây đeo thẻ in theo yêu cầu TagLuxe - Mẫu {{ loop.index }}"
@@ -177,6 +164,7 @@
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
     </div>
 </section>
 {% endif %}

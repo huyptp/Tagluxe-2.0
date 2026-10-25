@@ -125,10 +125,12 @@ def api_submit_quote():
 def api_get_accessories():
     """Trả về toàn bộ danh mục phụ kiện và vỏ thẻ kèm hình ảnh từ CSDL"""
     from backend.services.data_service import get_accessories_catalog
-    return jsonify({
+    response = jsonify({
         'success': True,
         'data': get_accessories_catalog()
     })
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @api_bp.route('/demo-images', methods=['GET'])

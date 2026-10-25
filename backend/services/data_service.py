@@ -468,6 +468,11 @@ def calculate_lanyard_price(quantity, width='2.0', accessories=None):
         ('adjuster', 'Tăng đơ tăng giảm độ dài', 2500),
         ('black_hook', 'Móc khóa màu đen', 2500)
     ]
+    from flask import has_app_context
+    if has_app_context():
+        from backend.models import Accessory
+        acc_defs = [(a.id, a.name, a.price) for a in Accessory.query.filter_by(
+            category='lanyard_acc', visible=True).all() if (a.min_quantity or 0) <= qty]
 
     selected_acc_labels = []
     acc_cost_total = 0
@@ -478,7 +483,7 @@ def calculate_lanyard_price(quantity, width='2.0', accessories=None):
     for item in accessories:
         item_clean = str(item).strip().lower()
         for key, label, cost in acc_defs:
-            if key in item_clean or label.lower() in item_clean:
+            if item_clean in (key.lower(), label.lower()):
                 if label not in selected_acc_labels:
                     selected_acc_labels.append(label)
                     acc_cost_total += cost

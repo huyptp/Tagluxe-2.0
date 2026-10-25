@@ -522,6 +522,10 @@ a {
     gap: 50px;
     align-items: center;
 }
+.hero-inner.hero-inner-no-images {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 820px;
+}
 .hero-content h1 {
     font-size: 3.2rem;
     line-height: 1.2;
