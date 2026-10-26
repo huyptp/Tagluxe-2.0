@@ -5,6 +5,7 @@ import time
 import urllib.request
 import threading
 from datetime import datetime
+from backend.time_utils import vietnam_now
 from urllib.parse import quote
 from backend.config import DATA_FILE, BASE_DIR, site_origin, GOOGLE_SHEET_WEBHOOK_URL
 
@@ -281,7 +282,7 @@ def get_demo_requests_paginated(status=None, search=None, page=1, per_page=20):
 
 def add_demo_request(phone, customer_name='', product_category='lanyard', quantity_range='10-20', notes='', file_path=None, original_filename=None):
     req_id = uuid.uuid4().hex[:6].upper()
-    now_str = datetime.now().strftime('%d/%m/%Y %H:%M')
+    now_str = vietnam_now().strftime('%d/%m/%Y %H:%M')
     new_req = {
         'id': req_id,
         'created_at': now_str,
@@ -1044,8 +1045,8 @@ def delete_quote(quote_id):
 
 def add_quote(customer_name, phone, quantity, width='2.0', accessories=None, notes='', category='lanyard', **kwargs):
     pricing = calculate_product_price(category=category, quantity=quantity, width=width, accessories=accessories, **kwargs)
-    quote_id = f"Q{datetime.now().strftime('%y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
-    now = datetime.now()
+    now = vietnam_now()
+    quote_id = f"Q{now.strftime('%y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
     now_str = now.strftime('%d/%m/%Y %H:%M:%S')
 
     include_vat = pricing.get('include_vat', False)
@@ -1175,8 +1176,8 @@ def create_quote_with_idempotency(clean_data, idemp_key, request_id, content_has
             punched_hole=clean_data.get('punched_hole')
         )
 
-        quote_id = f"Q{datetime.now().strftime('%y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
-        now = datetime.utcnow()
+        now = vietnam_now()
+        quote_id = f"Q{now.strftime('%y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
         now_str = now.strftime('%d/%m/%Y %H:%M:%S')
         include_vat = pricing.get('include_vat', False)
         vat_amount = pricing.get('vat_amount', 0)
@@ -1224,8 +1225,8 @@ def create_quote_with_idempotency(clean_data, idemp_key, request_id, content_has
             payload=json.dumps(quote_dict, ensure_ascii=False),
             status='pending',
             attempt_count=0,
-            created_at=now,
-            updated_at=now
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
         )
         db.session.add(sync_task)
         db.session.flush()
@@ -1312,7 +1313,7 @@ def create_demo_with_idempotency(clean_data, idemp_key, request_id, content_hash
         db.session.flush()
 
         req_id = uuid.uuid4().hex[:6].upper()
-        now = datetime.utcnow()
+        now = vietnam_now()
         now_str = now.strftime('%d/%m/%Y %H:%M:%S')
 
         demo_obj = DemoRequest(
@@ -1343,8 +1344,8 @@ def create_demo_with_idempotency(clean_data, idemp_key, request_id, content_hash
             payload=json.dumps(demo_dict, ensure_ascii=False),
             status='pending',
             attempt_count=0,
-            created_at=now,
-            updated_at=now
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
         )
         db.session.add(sync_task)
         db.session.flush()
@@ -2200,7 +2201,7 @@ def save_campaign_banner_config(data):
         current['enabled'] = False
         current['image'] = ''
 
-    current['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    current['updated_at'] = vietnam_now().strftime('%Y-%m-%d %H:%M:%S')
     try:
         from backend.services.settings_storage import write_setting
         write_setting('campaign_banner', current)

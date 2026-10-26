@@ -4,6 +4,7 @@ Handles administrative operations, reporting, analytics, and synchronization.
 """
 import io
 import csv
+from backend.time_utils import vietnam_now
 from datetime import datetime, timedelta
 from backend.services.data_service import (
     get_all_products, get_product_by_id, add_product, update_product, delete_product,
@@ -171,7 +172,7 @@ def get_admin_dashboard_stats():
     conversion_rate = round((completed_quotes_count / total_quotes) * 100, 1) if total_quotes > 0 else 0.0
 
     # Time-series chart construction (7 days, 30 days, 12 months)
-    now = datetime.now()
+    now = vietnam_now()
     today_date = now.date()
 
     # 1. 7 days series (daily)

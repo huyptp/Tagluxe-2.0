@@ -1,5 +1,6 @@
 """Private CRM and per-quote follow-up workflow."""
-from datetime import date, datetime
+from backend.time_utils import vietnam_now
+from datetime import date
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from sqlalchemy import or_, func, case
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -38,7 +39,7 @@ def admin_quote_detail(id):
             error_code = 400
         else:
             values = dict(internal_notes=notes, owner=owner, priority=priority, follow_up_on=day,
-                          updated_at=datetime.now(), updated_by=session['admin_username'])
+                          updated_at=vietnam_now(), updated_by=session['admin_username'])
             try:
                 if workflow:
                     changed = QuoteAdminState.query.filter_by(quote_id=id, version=version).update(

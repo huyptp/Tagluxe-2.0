@@ -1,5 +1,6 @@
 """Queries shared by the admin list, exports and follow-up dashboard."""
-from datetime import date, datetime, time, timedelta, timezone
+from backend.time_utils import vietnam_now
+from datetime import date, datetime, time, timedelta
 from sqlalchemy import or_, func, case
 from backend.models import Quote, QuoteAdminState
 
@@ -9,7 +10,7 @@ FILTER_KEYS = ('q', 'phone', 'status', 'sync', 'priority', 'follow_up', 'from_da
 
 
 def local_today():
-    return datetime.now(timezone(timedelta(hours=7))).date()
+    return vietnam_now().date()
 
 
 def page_number(values):

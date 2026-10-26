@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from backend.time_utils import vietnam_now
 from backend.database import db
 
 class SiteSetting(db.Model):
@@ -30,7 +31,7 @@ class Quote(db.Model):
     __tablename__ = 'quotes'
 
     id = db.Column(db.String(32), primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=vietnam_now)
     customer_name = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(20), nullable=False, index=True)
     category = db.Column(db.String(80), nullable=False, default='Dây đeo thẻ')
@@ -99,7 +100,7 @@ class QuoteAdminState(db.Model):
     priority = db.Column(db.String(20), nullable=False, default='normal', index=True)
     follow_up_on = db.Column(db.Date, nullable=True, index=True)
     version = db.Column(db.Integer, nullable=False, default=1)
-    updated_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=vietnam_now, nullable=False)
     updated_by = db.Column(db.String(80), nullable=False)
     quote = db.relationship('Quote', back_populates='admin_state')
 
@@ -109,7 +110,7 @@ class DemoRequest(db.Model):
 
     id = db.Column(db.String(32), primary_key=True)
     created_at = db.Column(db.String(50), nullable=False)
-    created_at_dt = db.Column(db.DateTime, default=datetime.utcnow, nullable=True, index=True)
+    created_at_dt = db.Column(db.DateTime, default=vietnam_now, nullable=True, index=True)
     phone = db.Column(db.String(20), nullable=False)
     customer_name = db.Column(db.String(120), nullable=True)
     product_category = db.Column(db.String(50), nullable=False, default='lanyard')
@@ -203,7 +204,7 @@ class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    timestamp = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
+    timestamp = db.Column(db.DateTime, default=vietnam_now, nullable=False, index=True)
     admin_user = db.Column(db.String(80), nullable=False)
     action = db.Column(db.String(80), nullable=False) # e.g. update_status, update_price, delete_product, delete_request
     target_type = db.Column(db.String(50), nullable=False) # quote, product, demo_request
