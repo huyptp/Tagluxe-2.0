@@ -1,5 +1,6 @@
 import os
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.engine import make_url
 from backend.config import BASE_DIR
 
 db = SQLAlchemy()
@@ -10,6 +11,8 @@ def get_database_uri():
         # Render specifies postgres:// which SQLAlchemy 2.0 requires as postgresql://
         if db_url.startswith('postgres://'):
             db_url = db_url.replace('postgres://', 'postgresql://', 1)
+        if db_url.startswith('postgresql://'):
+            db_url = make_url(db_url).set(drivername='postgresql+psycopg2').render_as_string(hide_password=False)
         return db_url
 
     if os.environ.get('RENDER'):
@@ -29,8 +32,10 @@ def seed_initial_data():
     from backend.config import DATA_FILE
     import json
 
+    seed_flag = SchemaMigration.query.filter_by(version='seed_initial_data_v1').first()
+
     # 1. Seed Price Tiers if empty
-    if PriceTier.query.count() == 0:
+    if PriceTier.query.count() == 0 and not seed_flag:
         tiers_data = [
             # Lanyard: 13 tiers + above 5k
             ('lanyard', 10, 21, 28000),
@@ -113,7 +118,7 @@ def seed_initial_data():
 
     # 2. Seed Accessories & Holders if empty
     from backend.models import Accessory
-    if Accessory.query.count() == 0:
+    if Accessory.query.count() == 0 and not seed_flag:
         accessories_data = [
             {
                 'id': 'breakaway',
@@ -303,16 +308,32 @@ def seed_initial_data():
 def init_db(app):
     uri = app.config.get('SQLALCHEMY_DATABASE_URI') or get_database_uri()
     app.config['SQLALCHEMY_DATABASE_URI'] = uri
+    if str(uri).startswith(('postgresql', 'postgres://')):
+        app.config.setdefault('SQLALCHEMY_ENGINE_OPTIONS', {
+            'pool_pre_ping': True, 'pool_size': 3, 'max_overflow': 2,
+            'connect_args': {'connect_timeout': 10, 'sslmode': 'require'}})
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['BASE_DIR'] = BASE_DIR
     db.init_app(app)
     with app.app_context():
         from backend import models  # noqa
         db.create_all()
+        # App-owned customer tables must never be readable through Supabase's anon API.
+        if db.engine.dialect.name == 'postgresql' and os.environ.get('SUPABASE_URL'):
+            from sqlalchemy import text
+            with db.engine.begin() as connection:
+                quote_identifier = db.engine.dialect.identifier_preparer.quote
+                for table in db.metadata.tables.values():
+                    if table.schema not in (None, 'public'):
+                        continue
+                    name = 'public.' + quote_identifier(table.name)
+                    connection.execute(text('ALTER TABLE ' + name + ' ENABLE ROW LEVEL SECURITY'))
 
         # Nâng cấp cấu trúc dữ liệu có phiên bản an toàn (Versioned Migrations)
         from backend.migrations import run_migrations
         run_migrations(app, db)
 
         seed_initial_data()
+        from backend.services.settings_storage import import_legacy_settings
+        import_legacy_settings(BASE_DIR)
 

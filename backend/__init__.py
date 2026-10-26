@@ -68,6 +68,14 @@ def create_app(test_config=None):
         app.config.update(test_config)
 
     # Khởi tạo Database (SQLite cục bộ hoặc PostgreSQL trên Render)
+    from backend.services.media_storage import media_bp, storage_config
+    from backend.config import MEDIA_STORAGE
+    if MEDIA_STORAGE == 'supabase':
+        storage_config()
+        if RENDER and not os.environ.get('DATABASE_URL', '').startswith(('postgres://', 'postgresql://', 'postgresql+psycopg2://')):
+            raise RuntimeError('External persistence requires PostgreSQL DATABASE_URL on Render.')
+    elif MEDIA_STORAGE != 'local':
+        raise RuntimeError('Unknown MEDIA_STORAGE provider.')
     from backend.database import init_db
     init_db(app)
 
@@ -75,6 +83,7 @@ def create_app(test_config=None):
     app.register_blueprint(storefront_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(media_bp)
 
     # Context processors & middleware
     @app.context_processor

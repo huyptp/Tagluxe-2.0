@@ -75,6 +75,10 @@ GOOGLE_TAG_MANAGER_ID = os.environ.get('GOOGLE_TAG_MANAGER_ID', 'GTM-T22MFFG9')
 
 GOOGLE_SHEET_WEBHOOK_URL = os.environ.get('GOOGLE_SHEET_WEBHOOK_URL', '')
 GOOGLE_SHEET_SECRET = os.environ.get('GOOGLE_SHEET_SECRET', '')
+MEDIA_STORAGE = os.environ.get('MEDIA_STORAGE', 'local').strip().lower()
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
+SUPABASE_SECRET_KEY = os.environ.get('SUPABASE_SECRET_KEY', '')
+SUPABASE_STORAGE_BUCKET = os.environ.get('SUPABASE_STORAGE_BUCKET', 'tagluxe-media')
 ADMIN_NOTIFICATION_EMAIL = os.environ.get('ADMIN_NOTIFICATION_EMAIL', 'Dhuy5585@gmail.com')
 
 # Session & Cookie Security Hardening

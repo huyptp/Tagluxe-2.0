@@ -2101,25 +2101,15 @@ def get_demo_images_config():
     """Lấy cấu hình ảnh demo báo giá đầy đủ từ storage hoặc mặc định"""
     import copy
     cfg = copy.deepcopy(DEFAULT_DEMO_IMAGES)
-    path = get_demo_images_storage_path()
-    if os.path.exists(path):
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                saved = json.load(f)
-                if isinstance(saved, dict):
-                    for k, v in saved.items():
-                        if k in cfg and isinstance(v, dict):
-                            cfg[k].update(v)
-                        elif isinstance(v, dict):
-                            cfg[k] = v
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning(f"[LOAD_DEMO_IMAGES_ERROR] {e}")
+    from backend.services.settings_storage import read_setting
+    saved = read_setting('demo_images')
+    for key, value in saved.items():
+        if isinstance(value, dict):
+            cfg.setdefault(key, {}).update(value)
     return cfg
 
 def save_demo_images_config(data):
     """Lưu cấu hình ảnh demo báo giá vào storage/demo_images.json"""
-    path = get_demo_images_storage_path()
     current = get_demo_images_config()
     for k, v in data.items():
         if k in current and isinstance(v, dict):
@@ -2127,8 +2117,8 @@ def save_demo_images_config(data):
         elif isinstance(v, dict):
             current[k] = v
     try:
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump(current, f, ensure_ascii=False, indent=2)
+        from backend.services.settings_storage import write_setting
+        write_setting('demo_images', current)
         return True, current
     except Exception as e:
         import logging
@@ -2171,16 +2161,8 @@ def get_campaign_banner_config():
     """Lấy cấu hình banner chiến dịch. Tự động kiểm tra: nếu chưa có ảnh hoặc ảnh rỗng thì ép enabled = False."""
     import copy
     cfg = copy.deepcopy(DEFAULT_CAMPAIGN_BANNER)
-    path = get_campaign_banner_storage_path()
-    if os.path.exists(path):
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                saved = json.load(f)
-                if isinstance(saved, dict):
-                    cfg.update(saved)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning(f"[LOAD_CAMPAIGN_BANNER_ERROR] {e}")
+    from backend.services.settings_storage import read_setting
+    cfg.update(read_setting('campaign_banner'))
 
     # Đồng bộ tương thích ngược giữa các trường
     desk = str(cfg.get('image_desktop') or '').strip()
@@ -2203,7 +2185,6 @@ def get_campaign_banner_config():
 
 def save_campaign_banner_config(data):
     """Lưu cấu hình banner chiến dịch (hỗ trợ cả ảnh Desktop và Mobile)."""
-    path = get_campaign_banner_storage_path()
     current = get_campaign_banner_config()
     if isinstance(data, dict):
         current.update(data)
@@ -2221,8 +2202,8 @@ def save_campaign_banner_config(data):
 
     current['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     try:
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump(current, f, ensure_ascii=False, indent=2)
+        from backend.services.settings_storage import write_setting
+        write_setting('campaign_banner', current)
         return True, current
     except Exception as e:
         import logging

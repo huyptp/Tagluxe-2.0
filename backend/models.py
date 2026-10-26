@@ -2,6 +2,12 @@ import json
 from datetime import datetime
 from backend.database import db
 
+class SiteSetting(db.Model):
+    __tablename__ = 'site_settings'
+    key = db.Column(db.String(80), primary_key=True)
+    value_json = db.Column(db.Text, nullable=False, default='{}')
+
+
 class PriceTier(db.Model):
     __tablename__ = 'price_tiers'
 

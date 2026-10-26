@@ -19,6 +19,7 @@ from backend.services.data_service import (
     get_demo_images_config, save_demo_images_config, reset_single_demo_image
 )
 from backend.security import rate_limit, limiter, get_client_ip
+from backend.services.media_storage import save_public_image
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin',
                      static_folder='../../frontend/admin/static', static_url_path='/assets')
@@ -203,7 +204,7 @@ def admin_system():
     from backend.services.sheets_restore import restore_job_status
     from backend.database import db
     from backend.models import Quote
-    from backend.config import GOOGLE_SHEET_WEBHOOK_URL, GOOGLE_SHEET_SECRET
+    from backend.config import GOOGLE_SHEET_WEBHOOK_URL, GOOGLE_SHEET_SECRET, MEDIA_STORAGE
     db.session.execute(text('SELECT 1'))
     counts = {name: {'quotes': Quote.query.filter_by(sync_status=name).count()}
               for name in ('pending', 'synced', 'failed')}
@@ -211,7 +212,16 @@ def admin_system():
         sheets_configured=bool(GOOGLE_SHEET_WEBHOOK_URL),
         sheets_secret_configured=bool(GOOGLE_SHEET_SECRET),
         database_type=db.engine.dialect.name,
+        persistent_database=db.engine.dialect.name == 'postgresql',
+        external_images=MEDIA_STORAGE == 'supabase',
         restore_job=restore_job_status(current_app))
+
+
+@admin_bp.route('/system/migration-backup', methods=['GET'])
+@login_required
+def admin_migration_backup():
+    from backend.services.backup_service import migration_backup_response
+    return migration_backup_response()
 
 
 def restore_quotes_from_sheets():
@@ -387,7 +397,7 @@ def admin_add_product():
                         return render_template('admin/product_form.html', product=None)
                     filename = secure_filename(file.filename)
                     unique_filename = f"{uuid.uuid4().hex}_{filename}"
-                    file.save(os.path.join(UPLOAD_FOLDER, unique_filename))
+                    save_public_image(file, os.path.join(UPLOAD_FOLDER, unique_filename))
                     image_filenames.append(unique_filename)
 
         new_product = {
@@ -455,7 +465,7 @@ def admin_edit_product(id):
                         return render_template('admin/product_form.html', product=product)
                     filename = secure_filename(file.filename)
                     unique_filename = f"{uuid.uuid4().hex}_{filename}"
-                    file.save(os.path.join(UPLOAD_FOLDER, unique_filename))
+                    save_public_image(file, os.path.join(UPLOAD_FOLDER, unique_filename))
                     new_images.append(unique_filename)
 
         if new_images:
@@ -757,7 +767,7 @@ def admin_add_accessory():
             ext = file.filename.rsplit('.', 1)[-1].lower()
             safe_name = f"acc_{uuid.uuid4().hex[:10]}.{ext}"
             file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-            file.save(file_path)
+            save_public_image(file, file_path)
             image_url = f"/static/uploads/{safe_name}"
 
     ok, res = add_accessory({
@@ -866,7 +876,7 @@ def admin_edit_accessory(acc_id):
             ext = file.filename.rsplit('.', 1)[-1].lower()
             safe_name = f"acc_{acc_id}_{uuid.uuid4().hex[:8]}.{ext}"
             file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-            file.save(file_path)
+            save_public_image(file, file_path)
             new_image_url = f"/static/uploads/{safe_name}"
 
     ok, result = update_accessory(
@@ -916,7 +926,7 @@ def admin_upload_accessory_image(acc_id):
     ext = file.filename.rsplit('.', 1)[-1].lower()
     safe_name = f"acc_{acc_id}_{uuid.uuid4().hex[:8]}.{ext}"
     file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-    file.save(file_path)
+    save_public_image(file, file_path)
     new_image_url = f"/static/uploads/{safe_name}"
 
     ok, result = update_accessory(acc_id, image=new_image_url)
@@ -1002,7 +1012,7 @@ def admin_update_demo_images():
                     ext = f.filename.rsplit('.', 1)[-1].lower()
                     safe_filename = f"demo_{k}_{uuid.uuid4().hex[:8]}.{ext}"
                     save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-                    f.save(save_path)
+                    save_public_image(f, save_path)
                     updates[k]['image'] = f"/static/uploads/{safe_filename}"
                 else:
                     if request.is_json or request.headers.get('Accept') == 'application/json':
@@ -1057,7 +1067,7 @@ def admin_upload_single_demo_image(key):
     ext = f.filename.rsplit('.', 1)[-1].lower()
     safe_filename = f"demo_{key}_{uuid.uuid4().hex[:8]}.{ext}"
     save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-    f.save(save_path)
+    save_public_image(f, save_path)
     img_url = f"/static/uploads/{safe_filename}"
 
     payload = {key: {'image': img_url}}
@@ -1146,7 +1156,7 @@ def admin_update_campaign_banner():
             ext = f_desk.filename.rsplit('.', 1)[-1].lower()
             safe_filename = f"campaign_banner_desk_{uuid.uuid4().hex[:8]}.{ext}"
             save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-            f_desk.save(save_path)
+            save_public_image(f_desk, save_path)
             img_desk = f"/static/uploads/{safe_filename}"
 
     # 2. Xử lý upload ảnh Mobile (4:5 hoặc 1:1)
@@ -1163,7 +1173,7 @@ def admin_update_campaign_banner():
             ext = f_mob.filename.rsplit('.', 1)[-1].lower()
             safe_filename = f"campaign_banner_mob_{uuid.uuid4().hex[:8]}.{ext}"
             save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-            f_mob.save(save_path)
+            save_public_image(f_mob, save_path)
             img_mob = f"/static/uploads/{safe_filename}"
 
     # 3. Hỗ trợ trường banner_image cũ tương thích ngược
@@ -1174,7 +1184,7 @@ def admin_update_campaign_banner():
                 ext = f_legacy.filename.rsplit('.', 1)[-1].lower()
                 safe_filename = f"campaign_banner_desk_{uuid.uuid4().hex[:8]}.{ext}"
                 save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-                f_legacy.save(save_path)
+                save_public_image(f_legacy, save_path)
                 img_desk = f"/static/uploads/{safe_filename}"
 
     # Ràng buộc an toàn: Nếu chưa có bất kỳ ảnh nào thì KHÔNG THỂ BẬT
