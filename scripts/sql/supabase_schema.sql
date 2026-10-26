@@ -4,16 +4,16 @@ BEGIN;
 
 
 CREATE TABLE IF NOT EXISTS accessories (
-	id VARCHAR(50) NOT NULL, 
-	name VARCHAR(255) NOT NULL, 
-	category VARCHAR(50) NOT NULL, 
-	price INTEGER NOT NULL, 
-	image VARCHAR(255), 
-	description TEXT, 
-	title VARCHAR(255), 
-	sort_order INTEGER, 
-	visible BOOLEAN, 
-	min_quantity INTEGER NOT NULL, 
+	id VARCHAR(50) NOT NULL,
+	name VARCHAR(255) NOT NULL,
+	category VARCHAR(50) NOT NULL,
+	price INTEGER NOT NULL,
+	image VARCHAR(255),
+	description TEXT,
+	title VARCHAR(255),
+	sort_order INTEGER,
+	visible BOOLEAN,
+	min_quantity INTEGER NOT NULL,
 	PRIMARY KEY (id)
 )
 
@@ -23,14 +23,14 @@ ALTER TABLE public.accessories ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-	id SERIAL NOT NULL, 
-	timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
-	admin_user VARCHAR(80) NOT NULL, 
-	action VARCHAR(80) NOT NULL, 
-	target_type VARCHAR(50) NOT NULL, 
-	target_id VARCHAR(80) NOT NULL, 
-	details TEXT, 
-	ip_address VARCHAR(50), 
+	id SERIAL NOT NULL,
+	timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	admin_user VARCHAR(80) NOT NULL,
+	action VARCHAR(80) NOT NULL,
+	target_type VARCHAR(50) NOT NULL,
+	target_id VARCHAR(80) NOT NULL,
+	details TEXT,
+	ip_address VARCHAR(50),
 	PRIMARY KEY (id)
 )
 
@@ -42,21 +42,21 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS demo_requests (
-	id VARCHAR(32) NOT NULL, 
-	created_at VARCHAR(50) NOT NULL, 
-	created_at_dt TIMESTAMP WITHOUT TIME ZONE, 
-	phone VARCHAR(20) NOT NULL, 
-	customer_name VARCHAR(120), 
-	product_category VARCHAR(50) NOT NULL, 
-	quantity_range VARCHAR(50) NOT NULL, 
-	notes TEXT, 
-	file_path VARCHAR(255), 
-	original_filename VARCHAR(255), 
-	status VARCHAR(50) NOT NULL, 
-	sync_status VARCHAR(20) NOT NULL, 
-	sync_error TEXT, 
-	retry_count INTEGER NOT NULL, 
-	idempotency_key VARCHAR(64), 
+	id VARCHAR(32) NOT NULL,
+	created_at VARCHAR(50) NOT NULL,
+	created_at_dt TIMESTAMP WITHOUT TIME ZONE,
+	phone VARCHAR(20) NOT NULL,
+	customer_name VARCHAR(120),
+	product_category VARCHAR(50) NOT NULL,
+	quantity_range VARCHAR(50) NOT NULL,
+	notes TEXT,
+	file_path VARCHAR(255),
+	original_filename VARCHAR(255),
+	status VARCHAR(50) NOT NULL,
+	sync_status VARCHAR(20) NOT NULL,
+	sync_error TEXT,
+	retry_count INTEGER NOT NULL,
+	idempotency_key VARCHAR(64),
 	PRIMARY KEY (id)
 )
 
@@ -70,12 +70,12 @@ ALTER TABLE public.demo_requests ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS idempotency_records (
-	key VARCHAR(64) NOT NULL, 
-	request_id VARCHAR(64), 
-	content_hash VARCHAR(64), 
-	created_at TIMESTAMP WITHOUT TIME ZONE, 
-	status VARCHAR(20) NOT NULL, 
-	response_json TEXT, 
+	key VARCHAR(64) NOT NULL,
+	request_id VARCHAR(64),
+	content_hash VARCHAR(64),
+	created_at TIMESTAMP WITHOUT TIME ZONE,
+	status VARCHAR(20) NOT NULL,
+	response_json TEXT,
 	PRIMARY KEY (key)
 )
 
@@ -89,11 +89,11 @@ ALTER TABLE public.idempotency_records ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS price_tiers (
-	id SERIAL NOT NULL, 
-	category VARCHAR(50) NOT NULL, 
-	min_qty INTEGER NOT NULL, 
-	max_qty INTEGER NOT NULL, 
-	unit_price INTEGER NOT NULL, 
+	id SERIAL NOT NULL,
+	category VARCHAR(50) NOT NULL,
+	min_qty INTEGER NOT NULL,
+	max_qty INTEGER NOT NULL,
+	unit_price INTEGER NOT NULL,
 	PRIMARY KEY (id)
 )
 
@@ -105,20 +105,20 @@ ALTER TABLE public.price_tiers ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS products (
-	id VARCHAR(50) NOT NULL, 
-	name VARCHAR(255) NOT NULL, 
-	category VARCHAR(50) NOT NULL, 
-	description TEXT, 
-	images_json TEXT, 
-	width VARCHAR(100), 
-	material VARCHAR(100), 
-	min_order INTEGER, 
-	price_type VARCHAR(50), 
-	price INTEGER, 
-	featured BOOLEAN, 
-	visible BOOLEAN, 
-	badge VARCHAR(255), 
-	specs_json TEXT, 
+	id VARCHAR(50) NOT NULL,
+	name VARCHAR(255) NOT NULL,
+	category VARCHAR(50) NOT NULL,
+	description TEXT,
+	images_json TEXT,
+	width VARCHAR(100),
+	material VARCHAR(100),
+	min_order INTEGER,
+	price_type VARCHAR(50),
+	price INTEGER,
+	featured BOOLEAN,
+	visible BOOLEAN,
+	badge VARCHAR(255),
+	specs_json TEXT,
 	PRIMARY KEY (id)
 )
 
@@ -128,25 +128,25 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS quotes (
-	id VARCHAR(32) NOT NULL, 
-	created_at TIMESTAMP WITHOUT TIME ZONE, 
-	customer_name VARCHAR(120) NOT NULL, 
-	phone VARCHAR(20) NOT NULL, 
-	category VARCHAR(80) NOT NULL, 
-	quantity INTEGER NOT NULL, 
-	specs VARCHAR(255), 
-	accessories TEXT, 
-	unit_price INTEGER NOT NULL, 
-	total_price INTEGER NOT NULL, 
-	notes TEXT, 
-	status VARCHAR(50) NOT NULL, 
-	include_vat BOOLEAN, 
-	vat_amount INTEGER, 
-	punched_hole VARCHAR(20), 
-	sync_status VARCHAR(20) NOT NULL, 
-	sync_error TEXT, 
-	retry_count INTEGER NOT NULL, 
-	idempotency_key VARCHAR(64), 
+	id VARCHAR(32) NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE,
+	customer_name VARCHAR(120) NOT NULL,
+	phone VARCHAR(20) NOT NULL,
+	category VARCHAR(80) NOT NULL,
+	quantity INTEGER NOT NULL,
+	specs VARCHAR(255),
+	accessories TEXT,
+	unit_price INTEGER NOT NULL,
+	total_price INTEGER NOT NULL,
+	notes TEXT,
+	status VARCHAR(50) NOT NULL,
+	include_vat BOOLEAN,
+	vat_amount INTEGER,
+	punched_hole VARCHAR(20),
+	sync_status VARCHAR(20) NOT NULL,
+	sync_error TEXT,
+	retry_count INTEGER NOT NULL,
+	idempotency_key VARCHAR(64),
 	PRIMARY KEY (id)
 )
 
@@ -160,8 +160,8 @@ ALTER TABLE public.quotes ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
-	version VARCHAR(50) NOT NULL, 
-	applied_at TIMESTAMP WITHOUT TIME ZONE, 
+	version VARCHAR(50) NOT NULL,
+	applied_at TIMESTAMP WITHOUT TIME ZONE,
 	PRIMARY KEY (version)
 )
 
@@ -171,8 +171,8 @@ ALTER TABLE public.schema_migrations ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS site_settings (
-	key VARCHAR(80) NOT NULL, 
-	value_json TEXT NOT NULL, 
+	key VARCHAR(80) NOT NULL,
+	value_json TEXT NOT NULL,
 	PRIMARY KEY (key)
 )
 
@@ -182,19 +182,19 @@ ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS sync_tasks (
-	id SERIAL NOT NULL, 
-	event_key VARCHAR(64) NOT NULL, 
-	record_type VARCHAR(20) NOT NULL, 
-	record_id VARCHAR(50) NOT NULL, 
-	payload TEXT NOT NULL, 
-	status VARCHAR(20) NOT NULL, 
-	attempt_count INTEGER NOT NULL, 
-	next_retry_at TIMESTAMP WITHOUT TIME ZONE, 
-	last_error TEXT, 
-	lease_until TIMESTAMP WITHOUT TIME ZONE, 
-	worker_id VARCHAR(64), 
-	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
-	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
+	id SERIAL NOT NULL,
+	event_key VARCHAR(64) NOT NULL,
+	record_type VARCHAR(20) NOT NULL,
+	record_id VARCHAR(50) NOT NULL,
+	payload TEXT NOT NULL,
+	status VARCHAR(20) NOT NULL,
+	attempt_count INTEGER NOT NULL,
+	next_retry_at TIMESTAMP WITHOUT TIME ZONE,
+	last_error TEXT,
+	lease_until TIMESTAMP WITHOUT TIME ZONE,
+	worker_id VARCHAR(64),
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
 	PRIMARY KEY (id)
 )
 
@@ -214,15 +214,15 @@ ALTER TABLE public.sync_tasks ENABLE ROW LEVEL SECURITY;
 
 
 CREATE TABLE IF NOT EXISTS quote_admin_states (
-	quote_id VARCHAR(32) NOT NULL, 
-	internal_notes TEXT NOT NULL, 
-	owner VARCHAR(80) NOT NULL, 
-	priority VARCHAR(20) NOT NULL, 
-	follow_up_on DATE, 
-	version INTEGER NOT NULL, 
-	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
-	updated_by VARCHAR(80) NOT NULL, 
-	PRIMARY KEY (quote_id), 
+	quote_id VARCHAR(32) NOT NULL,
+	internal_notes TEXT NOT NULL,
+	owner VARCHAR(80) NOT NULL,
+	priority VARCHAR(20) NOT NULL,
+	follow_up_on DATE,
+	version INTEGER NOT NULL,
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	updated_by VARCHAR(80) NOT NULL,
+	PRIMARY KEY (quote_id),
 	FOREIGN KEY(quote_id) REFERENCES quotes (id) ON DELETE CASCADE
 )
 
