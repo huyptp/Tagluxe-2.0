@@ -217,6 +217,14 @@ def run_migrations(app, db):
                 [
                     ("accessories", "min_quantity", "ALTER TABLE accessories ADD COLUMN min_quantity INTEGER DEFAULT 0")
                 ]
+            ),
+            (
+                "v011_expand_idempotency_key_compatibility",
+                [
+                    ("idempotency_records", None, "ALTER TABLE idempotency_records ALTER COLUMN key TYPE VARCHAR(128)"),
+                    ("quotes", None, "ALTER TABLE quotes ALTER COLUMN idempotency_key TYPE VARCHAR(128)"),
+                    ("demo_requests", None, "ALTER TABLE demo_requests ALTER COLUMN idempotency_key TYPE VARCHAR(128)")
+                ] if engine.dialect.name == 'postgresql' else []
             )
         ]
 

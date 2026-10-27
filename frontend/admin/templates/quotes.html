@@ -2,7 +2,7 @@
 {% block content %}
 <div class="page-heading">
   <div><div class="eyebrow">QUẢN LÝ BÁN HÀNG</div><h1>Báo giá khách hàng</h1><p>Theo dõi tư vấn, lịch liên hệ và tiến độ xử lý tại một nơi.</p></div>
-  <div class="heading-actions"><a class="btn btn-secondary" href="{{ export_url }}">Xuất CSV theo bộ lọc</a><a class="btn btn-primary" href="{{ url_for('admin.admin_quotes',follow_up='due',sort='follow_up') }}">Đến hạn liên hệ</a></div>
+  <div class="heading-actions">{% if admin_can("admin.admin_export_quotes") %}<a class="btn btn-secondary" href="{{ export_url }}">Xuất CSV theo bộ lọc</a>{% endif %}<a class="btn btn-primary" href="{{ url_for('admin.admin_quotes',follow_up='due',sort='follow_up') }}">Đến hạn liên hệ</a></div>
 </div>
 <div class="kpi-grid">
   {% for label,value in [('Báo giá phù hợp',summary.count),('Giá trị chưa hủy','{:,.0f} đ'.format(summary.value)),('Giá trị đã chốt / xong','{:,.0f} đ'.format(summary.closed_value)),('Đồng bộ thất bại',summary.failed_sync)] %}

@@ -64,7 +64,7 @@ var WEBHOOK_SECRET = "";
 
 // Capability discovery only. Customer data is never returned by an unauthenticated GET.
 function doGet() {
-  return ContentService.createTextOutput(JSON.stringify({protocol: "tagluxe-quotes-read-v1"}))
+  return ContentService.createTextOutput(JSON.stringify({protocol: "tagluxe-quotes-read-v1", notification_protocol: "tagluxe-email-v2"}))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -150,10 +150,9 @@ function doPost(e) {
       result = saveQuoteOrder(ss, data);
     }
 
-    // 3. Gửi Email thông báo tức thời (chỉ gửi khi đơn hàng mới được tạo để tránh spam khi retry)
-    if (result && result.action === "created") {
-      sendEmailNotification(data, isDemo, ss.getUrl());
-    }
+    // A saved sheet row is not proof that email succeeded. Retain a pending
+    // marker on failure so a webhook retry can send mail for an updated row.
+    var notification = deliverRecordNotification(data, isDemo, ss.getUrl(), result);
 
     var recId = result ? result.record_id : (data.id || data.record_id);
     var act = result ? result.action : "processed";
@@ -163,6 +162,8 @@ function doPost(e) {
         status: "success",
         record_id: recId,
         action: act,
+        notification: notification,
+        notification_protocol: "tagluxe-email-v2",
         message: "Đã ghi nhận thành công vào Google Sheets!"
       }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -178,10 +179,60 @@ function doPost(e) {
   }
 }
 
-function sendEmailNotification(data, isDemo, sheetUrl) {
+function deliverRecordNotification(data, isDemo, sheetUrl, result) {
+  if (!result || !result.record_id) return "not_required";
+  var properties = PropertiesService.getScriptProperties();
+  var key = "tagluxe_email_pending_" + (isDemo ? "demo_" : "quote_") + result.record_id;
+  var recipients;
+  if (Object.prototype.hasOwnProperty.call(data, "notification_recipients")) {
+    if (data.notification_protocol !== "tagluxe-email-v2" ||
+        !Array.isArray(data.notification_recipients) || data.notification_recipients.length > 20) {
+      throw new Error("Invalid notification recipients protocol");
+    }
+    recipients = data.notification_recipients;
+  } else {
+    recipients = [NOTIFICATION_EMAIL || Session.getEffectiveUser().getEmail()];
+  }
+  recipients = recipients.map(function(address) {
+    address = String(address || "").trim().toLowerCase();
+    if (!/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(address)) {
+      throw new Error("Invalid notification email address");
+    }
+    return address;
+  }).filter(function(address, index, list) { return list.indexOf(address) === index; });
+  if (!recipients.length) {
+    properties.deleteProperty(key);
+    return "disabled";
+  }
+  if (result.action === "created") properties.setProperty(key, JSON.stringify(recipients));
+  var stored = properties.getProperty(key);
+  if (!stored) return "not_required";
+  var pending = stored === "pending" ? recipients.slice() : JSON.parse(stored);
+  // Apply revocation before a retry; newly added staff do not receive old mail.
+  pending = pending.filter(function(address) { return recipients.indexOf(address) !== -1; });
+  while (pending.length) {
+    sendEmailNotification(data, isDemo, sheetUrl, pending[0]);
+    pending.shift();
+    if (pending.length) properties.setProperty(key, JSON.stringify(pending));
+    else properties.deleteProperty(key);
+  }
+  properties.deleteProperty(key);
+  return "sent";
+}
+
+function escapeNotificationHtml(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, function(character) {
+    return {"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[character];
+  });
+}
+
+function sendEmailNotification(data, isDemo, sheetUrl, recipientOverride) {
   try {
-    var recipient = NOTIFICATION_EMAIL || Session.getEffectiveUser().getEmail();
-    if (!recipient) return;
+    var recipient = recipientOverride || NOTIFICATION_EMAIL || Session.getEffectiveUser().getEmail();
+    if (!recipient) throw new Error("Chưa cấu hình địa chỉ nhận email thông báo.");
+    if (MailApp.getRemainingDailyQuota() < 1) {
+      throw new Error("Google đã hết hạn mức gửi email hôm nay. Báo giá đã lưu, email chưa gửi.");
+    }
 
     var customerName = data.customer_name || "Khách hàng ẩn danh";
     var phone = String(data.phone || "").trim();
@@ -209,7 +260,7 @@ function sendEmailNotification(data, isDemo, sheetUrl) {
       <div style="background: ${mainColor}; padding: 24px 20px; text-align: center; color: #ffffff;">
         <span style="background: rgba(255,255,255,0.15); color: #d4af37; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">${badgeTitle}</span>
         <h2 style="margin: 10px 0 4px; font-size: 20px; color: #ffffff;">CÓ KHÁCH HÀNG MỚI ĐỂ LẠI THÔNG TIN!</h2>
-        <p style="margin: 0; font-size: 13px; color: #94a3b8;">Hệ thống website TagLuxe vừa ghi nhận lúc ${data.created_at || 'vừa xong'}</p>
+        <p style="margin: 0; font-size: 13px; color: #94a3b8;">Hệ thống website TagLuxe vừa ghi nhận lúc ${escapeNotificationHtml(data.created_at || 'vừa xong')}</p>
       </div>
 
       <div style="padding: 24px 20px; background: #ffffff;">
@@ -217,42 +268,42 @@ function sendEmailNotification(data, isDemo, sheetUrl) {
           <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
             <tr>
               <td style="padding: 6px 0; color: #64748b; width: 130px;">👤 Họ tên khách:</td>
-              <td style="padding: 6px 0; font-weight: bold; color: #0f172a; font-size: 15px;">${customerName}</td>
+              <td style="padding: 6px 0; font-weight: bold; color: #0f172a; font-size: 15px;">${escapeNotificationHtml(customerName)}</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b;">📞 Số điện thoại:</td>
               <td style="padding: 6px 0;">
-                <a href="${callUrl}" style="color: #0284c7; text-decoration: none; font-weight: bold; font-size: 15px;">${phone}</a>
+                <a href="${callUrl}" style="color: #0284c7; text-decoration: none; font-weight: bold; font-size: 15px;">${escapeNotificationHtml(phone)}</a>
               </td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b;">📦 Sản phẩm:</td>
-              <td style="padding: 6px 0; font-weight: bold; color: #334155;">${data.category || 'Dây đeo thẻ'}</td>
+              <td style="padding: 6px 0; font-weight: bold; color: #334155;">${escapeNotificationHtml(data.category || 'Dây đeo thẻ')}</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b;">🔢 Số lượng:</td>
-              <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${data.quantity || 0}</td>
+              <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${escapeNotificationHtml(data.quantity || 0)}</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b;">📐 Quy cách:</td>
-              <td style="padding: 6px 0; color: #334155;">${data.specs || data.width || 'Mặc định'}</td>
+              <td style="padding: 6px 0; color: #334155;">${escapeNotificationHtml(data.specs || data.width || 'Mặc định')}</td>
             </tr>
             ${!isDemo && data.accessories && data.accessories.length > 0 ? `
             <tr>
               <td style="padding: 6px 0; color: #64748b;">📎 Phụ kiện:</td>
-              <td style="padding: 6px 0; color: #334155;">${Array.isArray(data.accessories) ? data.accessories.join(', ') : data.accessories}</td>
+              <td style="padding: 6px 0; color: #334155;">${escapeNotificationHtml(Array.isArray(data.accessories) ? data.accessories.join(', ') : data.accessories)}</td>
             </tr>
             ` : ''}
             ${!isDemo ? `
             <tr>
               <td style="padding: 8px 0; color: #64748b; border-top: 1px dashed #cbd5e1;">💰 Tổng chi phí:</td>
-              <td style="padding: 8px 0; font-weight: 800; color: #b45309; font-size: 18px; border-top: 1px dashed #cbd5e1;">${(data.total_price || 0).toLocaleString('vi-VN')} đ</td>
+              <td style="padding: 8px 0; font-weight: 800; color: #b45309; font-size: 18px; border-top: 1px dashed #cbd5e1;">${escapeNotificationHtml((data.total_price || 0).toLocaleString('vi-VN'))} đ</td>
             </tr>
             ` : ''}
             ${data.notes ? `
             <tr>
               <td style="padding: 6px 0; color: #64748b; vertical-align: top;">📝 Ghi chú:</td>
-              <td style="padding: 6px 0; color: #475569; font-style: italic;">${data.notes}</td>
+              <td style="padding: 6px 0; color: #475569; font-style: italic;">${escapeNotificationHtml(data.notes)}</td>
             </tr>
             ` : ''}
           </table>
@@ -275,9 +326,12 @@ function sendEmailNotification(data, isDemo, sheetUrl) {
     </div>
     `;
 
-    MailApp.sendEmail({ to: recipient, subject: subject, htmlBody: html });
+    MailApp.sendEmail({ to: recipient, subject: subject,
+      body: "TagLuxe có yêu cầu mới. Xem chi tiết tại " + sheetUrl, htmlBody: html });
   } catch (err) {
     console.error("[EMAIL_NOTIFY_ERROR] " + err.toString());
+    // Surface permission/quota errors to the webhook and the manual test.
+    throw err;
   }
 }
 
@@ -292,10 +346,10 @@ function sendTestNotification() {
     accessories: ["Khóa an toàn sau gáy"],
     total_price: 1425000,
     notes: "Đây là email thử nghiệm tính năng thông báo!",
-    created_at: new Date().toLocaleString("vi-VN")
+    created_at: Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm:ss")
   };
   sendEmailNotification(mockData, false, ss.getUrl());
-  SpreadsheetApp.getUi().alert("Đã gửi email thông báo thử nghiệm thành công! Bạn hãy mở hộp thư Gmail lên kiểm tra nhé.");
+  console.log("Đã gửi email thông báo thử nghiệm thành công! Bạn hãy mở hộp thư Gmail lên kiểm tra nhé.");
 }
 
 function setupFullSystem() {
@@ -332,6 +386,10 @@ function getFormulaSep(ss) {
 
 function setupDashboardSheet(ss) {
   var sheet = ss.getSheetByName("📊 DASHBOARD TỔNG QUAN");
+  // Preserve the live dashboard with date filters and charts; its formulas
+  // already refresh automatically when the quote table changes.
+  if (sheet.getRange("B1").getValue() === "TAGLUXE  /  TỔNG QUAN KINH DOANH" &&
+      ss.getSheetByName("⚙️ THỐNG KÊ")) return;
   sheet.clear();
   sheet.setTabColor(THEME.GOLD);
   sheet.setHiddenGridlines(false);

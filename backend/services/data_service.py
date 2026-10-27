@@ -1032,7 +1032,9 @@ def delete_quote(quote_id):
         from backend.models import Quote
         q = Quote.query.filter_by(id=quote_id).first()
         if q:
-            db.session.delete(q)
+            from flask import has_request_context, session
+            from backend.services.customer_cleanup import delete_quote_records
+            delete_quote_records([q],session.get('admin_username','system') if has_request_context() else 'system')
             db.session.commit()
             return True
         return False
@@ -1453,6 +1455,9 @@ def send_quote_to_google_sheet(quote_data, app=None):
     Sanitizes inputs against Formula Injection and updates sync_status in Database.
     Validates secret and verifies HTTP 200 AND JSON status == 'success'.
     """
+    if app is not None:
+        with app.app_context():
+            return send_quote_to_google_sheet(quote_data)
     quote_id = quote_data.get('id')
     webhook_url = GOOGLE_SHEET_WEBHOOK_URL or os.environ.get('GOOGLE_SHEET_WEBHOOK_URL', '')
     if not webhook_url:
@@ -1472,6 +1477,8 @@ def send_quote_to_google_sheet(quote_data, app=None):
         headers['X-Webhook-Secret'] = webhook_secret
 
     try:
+        from backend.services.notification_settings import prepare_notifications
+        notification_v2_required = prepare_notifications(sanitized_data, webhook_url)
         payload = json.dumps(sanitized_data, ensure_ascii=False).encode('utf-8')
         resp_code = None
         resp_text = ""
@@ -1496,7 +1503,8 @@ def send_quote_to_google_sheet(quote_data, app=None):
                     resp_json = {}
 
         if resp_code == 200:
-            if isinstance(resp_json, dict) and resp_json.get('status') == 'success':
+            if (isinstance(resp_json, dict) and resp_json.get('status') == 'success'
+                    and (not notification_v2_required or resp_json.get('notification_protocol') == 'tagluxe-email-v2')):
                 _update_record_sync_status(quote_id, 'synced', None, app)
                 return True, "Google Sheet synced successfully"
             else:

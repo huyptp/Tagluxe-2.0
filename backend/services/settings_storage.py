@@ -4,7 +4,7 @@ import os
 from backend.database import db
 from backend.models import SiteSetting
 
-SETTINGS = {'demo_images', 'campaign_banner'}
+SETTINGS = {'demo_images', 'campaign_banner', 'notifications'}
 
 
 def read_setting(key):
@@ -27,7 +27,7 @@ def write_setting(key, value):
 
 def import_legacy_settings(base_dir):
     """One-time, non-destructive import; an existing database value always wins."""
-    for key in SETTINGS:
+    for key in ('demo_images', 'campaign_banner'):
         if db.session.get(SiteSetting, key) is not None:
             continue
         path = os.path.join(base_dir, 'storage', key + '.json')

@@ -1,5 +1,31 @@
 # HƯỚNG DẪN KẾT NỐI BÁO GIÁ TAGLUXE VÀO GOOGLE SHEETS
 
+## Khi báo giá vào bảng tính nhưng không có email
+
+Email được gửi bởi Apps Script qua `MailApp`, không phải bởi Supabase. Địa chỉ
+nhận nằm trong `NOTIFICATION_EMAIL`. Trạng thái đồng bộ bảng tính của các bản
+script cũ không xác nhận email đã gửi thành công.
+
+Bản sửa ngày 26/10/2026 không bỏ qua lỗi gửi mail. Bản ghi mới được đánh dấu
+email chờ gửi; nếu Google từ chối vì quyền hoặc hạn mức, webhook trả lỗi và giữ
+đánh dấu để lần đồng bộ lại có thể gửi email dù dòng báo giá đã tồn tại.
+Sau khi gửi thành công, đánh dấu được xóa để các lần gửi lại thông thường không
+gửi trùng. Bản ghi cũ không có đánh dấu sẽ không bị gửi email hàng loạt.
+
+Cập nhật mã trong dự án Apps Script đang dùng, giữ đúng `WEBHOOK_SECRET` hoặc
+thuộc tính script cùng tên khớp với `GOOGLE_SHEET_SECRET` trên web. Lưu code chưa
+làm thay đổi bản Web app đã triển khai: vào **Triển khai → Quản lý các bản triển
+khai → Sửa → Phiên bản mới → Triển khai**, cập nhật chính bản đang dùng để giữ URL.
+
+Để kiểm tra theo yêu cầu của chủ shop: chọn hàm `sendTestNotification` trong
+Apps Script rồi chạy, cấp quyền gửi email nếu Google yêu cầu. Bản sửa chỉ hiện
+thông báo thành công sau khi MailApp chấp nhận gửi; nếu lỗi, xem mục **Lần thực
+thi / Executions**. MailApp chấp nhận gửi không chứng minh thư đã vào Inbox;
+cần kiểm tra Gmail gồm Spam và Trash. Không gửi email thật trong kiểm thử tự động.
+
+Tài liệu Google: https://developers.google.com/apps-script/reference/mail/mail-app,
+https://developers.google.com/apps-script/concepts/deployments.
+
 Hệ thống cho phép thu thập thông tin khách hàng (Họ tên, SĐT, Số lượng, Bản dây, Phụ kiện, Tổng tiền, Ghi chú) trực tiếp từ website TagLuxe và đồng bộ tự động vào Google Sheets theo thời gian thực.
 
 ---

@@ -123,10 +123,13 @@ class IdempotencyManager:
                 content_hash = args[2]
 
         if scope and request_id:
-            return f"{scope}:{request_id.strip()}"
+            raw_key = f"{scope}:{request_id.strip()}"
+            return raw_key if len(raw_key) <= 64 else hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
         if scope and content_hash:
             time_bucket = int(time.time() // 60)
-            return f"{scope}:hash:{content_hash}:{time_bucket}"
+            # Keep the key within PostgreSQL's original VARCHAR(64) contract.
+            raw_key = f"{scope}:hash:{content_hash}:{time_bucket}"
+            return hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
 
         raw_str = "|".join(str(a if a is not None else '').strip().lower() for a in args)
         return hashlib.sha256(raw_str.encode('utf-8')).hexdigest()

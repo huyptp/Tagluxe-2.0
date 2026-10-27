@@ -142,7 +142,8 @@ def restore_missing_quotes():
             except (ValueError, TypeError, KeyError, OverflowError):
                 invalid += 1
                 continue
-            if db.session.get(Quote, quote.id):
+            from backend.models import QuoteDeletion
+            if db.session.get(Quote, quote.id) or db.session.get(QuoteDeletion, quote.id):
                 skipped += 1
                 continue
             try:

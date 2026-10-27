@@ -8,6 +8,7 @@ from backend.database import db
 from backend.models import Quote, QuoteAdminState, AuditLog
 from backend.admin.routes import admin_bp, login_required, validate_csrf, QUOTE_STATUSES
 from backend.admin.workspace_services import PRIORITIES, page_number, local_today
+from backend.services.customer_cleanup import quote_set_fingerprint, delete_quote_records
 
 
 @admin_bp.route('/quotes/<id>', methods=['GET', 'POST'])
@@ -107,5 +108,38 @@ def admin_customer_detail(phone):
     summary = quote_summary(query)
     page = min(page_number(request.args), max(1, (summary['count'] + 19) // 20))
     quotes = query.order_by(Quote.created_at.desc(), Quote.id.desc()).offset((page - 1) * 20).limit(20).all()
+    ids=[row[0] for row in query.with_entities(Quote.id).all()]
+    closed_count=query.filter(Quote.status.in_(('Đã chốt','Đã xong'))).count()
     return render_template('admin/customer_detail.html', customer=latest, quotes=quotes,
-        summary=summary, page=page, pages=max(1, (summary['count'] + 19) // 20), page_title='Hồ sơ khách hàng')
+        summary=summary, page=page, pages=max(1, (summary['count'] + 19) // 20), page_title='Hồ sơ khách hàng',
+        deletion_snapshot=quote_set_fingerprint(ids),closed_count=closed_count)
+
+
+@admin_bp.route('/customers/<phone>/delete',methods=['POST'])
+@login_required
+def admin_delete_customer(phone):
+    import secrets
+    if not validate_csrf():abort(400,'Phiên làm việc đã hết hạn. Vui lòng tải lại trang.')
+    quotes=Quote.query.filter_by(phone=phone).with_for_update().all()
+    if not quotes:abort(404)
+    try:
+        if request.form.get('confirm_delete')!='1' or request.form.get('confirm_phone','').strip()!=phone:
+            raise ValueError('Cần nhập đúng số điện thoại và đánh dấu xác nhận trước khi xóa khách hàng.')
+        expected=quote_set_fingerprint([q.id for q in quotes])
+        supplied=request.form.get('deletion_snapshot','')
+        if not secrets.compare_digest(supplied.encode('utf-8'),expected.encode('utf-8')):
+            raise ValueError('Hồ sơ vừa có thay đổi. Hãy xem lại danh sách báo giá và xác nhận xóa lần nữa.')
+        if any(q.status in ('Đã chốt','Đã xong') for q in quotes) and request.form.get('confirm_closed')!='1':
+            raise ValueError('Khách này có báo giá đã chốt hoặc đã xong. Cần xác nhận riêng trước khi xóa.')
+        count=delete_quote_records(quotes,session['admin_username'])
+        db.session.add(AuditLog(admin_user=session['admin_username'],action='delete_customer',
+            target_type='customer',target_id=quote_set_fingerprint([phone])[:16],
+            details='Xóa hồ sơ khách cùng '+str(count)+' báo giá và thông tin chăm sóc liên quan.'))
+        db.session.commit()
+        flash('Đã xóa khách hàng cùng '+str(count)+' báo giá trên web. Bản lưu trong bảng tính được giữ riêng.','success')
+        return redirect(url_for('admin.admin_customers'))
+    except ValueError as error:
+        db.session.rollback();flash(str(error),'error')
+    except SQLAlchemyError:
+        db.session.rollback();flash('Chưa xóa được hồ sơ. Dữ liệu được giữ nguyên; vui lòng thử lại.','error')
+    return redirect(url_for('admin.admin_customer_detail',phone=phone))

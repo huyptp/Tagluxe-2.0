@@ -64,6 +64,8 @@ def api_request_demo():
         return jsonify({'success': False, 'message': err_msg}), status_code
 
     request_id = request.headers.get('X-Request-ID') or data.get('request_id')
+    if request_id is not None and (not isinstance(request_id, str) or len(request_id) > 64):
+        return jsonify({'success': False, 'message': 'Mã yêu cầu không hợp lệ. Vui lòng tải lại trang và thử lại.'}), 400
     content_hash = generate_canonical_hash(clean_data)
     idemp_key = idempotency.generate_key('demo', request_id=request_id, content_hash=content_hash)
 
@@ -114,6 +116,8 @@ def api_submit_quote():
         return jsonify({'success': False, 'message': err_msg}), status_code
 
     request_id = request.headers.get('X-Request-ID') or data.get('request_id')
+    if request_id is not None and (not isinstance(request_id, str) or len(request_id) > 64):
+        return jsonify({'success': False, 'message': 'Mã yêu cầu không hợp lệ. Vui lòng tải lại trang và thử lại.'}), 400
     content_hash = generate_canonical_hash(clean_data)
     idemp_key = idempotency.generate_key('quote', request_id=request_id, content_hash=content_hash)
 

@@ -234,4 +234,35 @@ CREATE INDEX IF NOT EXISTS ix_quote_admin_states_priority ON quote_admin_states 
 
 ALTER TABLE public.quote_admin_states ENABLE ROW LEVEL SECURITY;
 
+
+CREATE TABLE IF NOT EXISTS admin_users (
+	id SERIAL NOT NULL,
+	username VARCHAR(50) NOT NULL,
+	display_name VARCHAR(100) NOT NULL,
+	email VARCHAR(254) NOT NULL,
+	password_hash VARCHAR(255) NOT NULL,
+	role VARCHAR(20) NOT NULL,
+	active BOOLEAN NOT NULL,
+	receive_notifications BOOLEAN NOT NULL,
+	auth_epoch VARCHAR(64) NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	PRIMARY KEY (id),
+	UNIQUE (username)
+)
+
+;
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
+
+
+CREATE TABLE IF NOT EXISTS quote_deletions (
+	quote_id VARCHAR(32) NOT NULL,
+	deleted_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	deleted_by VARCHAR(80) NOT NULL,
+	PRIMARY KEY (quote_id)
+)
+
+;
+ALTER TABLE public.quote_deletions ENABLE ROW LEVEL SECURITY;
+
 COMMIT;

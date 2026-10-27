@@ -1,7 +1,31 @@
 import json
+import secrets
 from datetime import datetime
 from backend.time_utils import vietnam_now
 from backend.database import db
+
+
+class AdminUser(db.Model):
+    __tablename__ = 'admin_users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    display_name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(254), nullable=False, default='')
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='sales')
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    receive_notifications = db.Column(db.Boolean, nullable=False, default=False)
+    auth_epoch = db.Column(db.String(64), nullable=False, default=lambda: secrets.token_urlsafe(32))
+    created_at = db.Column(db.DateTime, nullable=False, default=vietnam_now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=vietnam_now)
+
+
+class QuoteDeletion(db.Model):
+    """Retain only an opaque quote ID so a Sheets restore cannot undo deletion."""
+    __tablename__ = 'quote_deletions'
+    quote_id = db.Column(db.String(32), primary_key=True)
+    deleted_at = db.Column(db.DateTime, nullable=False, default=vietnam_now)
+    deleted_by = db.Column(db.String(80), nullable=False)
 
 class SiteSetting(db.Model):
     __tablename__ = 'site_settings'

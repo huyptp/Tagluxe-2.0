@@ -23,6 +23,8 @@ from backend.services.media_storage import save_public_image
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin',
                      static_folder='../../frontend/admin/static', static_url_path='/assets')
+from backend.admin.access import enforce_admin_access, can_access
+admin_bp.before_request(enforce_admin_access)
 QUOTE_STATUSES = ('Mới', 'Đang tư vấn', 'Đã tư vấn', 'Đang chốt', 'Đã chốt', 'Đã xong', 'Đã hủy')
 
 
@@ -78,15 +80,18 @@ def get_csrf_token():
 def validate_csrf():
     token = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token')
     expected = session.get('_admin_csrf_token')
-    if not token or not expected or not secrets.compare_digest(token, expected):
+    if not isinstance(token,str) or not isinstance(expected,str) or not token or not expected or not secrets.compare_digest(token.encode('utf-8'),expected.encode('utf-8')):
         return False
     return True
 
 @admin_bp.context_processor
 def inject_admin_globals():
+    from flask import g
     return {
         'csrf_token': get_csrf_token(),
-        'admin_username': session.get('admin_username', 'Quản trị viên')
+        'admin_username': session.get('admin_username', 'Quản trị viên'),
+        'admin_can': can_access,
+        'admin_identity': getattr(g, 'admin_identity', None)
     }
 
 def record_audit(action, target_type, target_id, details=""):
@@ -120,11 +125,11 @@ def login_required(f):
     return wrap
 
 def verify_admin_credentials(username, password):
-    if not secrets.compare_digest(username, ADMIN_USERNAME):
+    if not secrets.compare_digest(username.encode('utf-8'), ADMIN_USERNAME.encode('utf-8')):
         return False
     if ADMIN_PASSWORD_HASH:
         return check_password_hash(ADMIN_PASSWORD_HASH, password)
-    return bool(ADMIN_PASSWORD) and secrets.compare_digest(password, ADMIN_PASSWORD)
+    return bool(ADMIN_PASSWORD) and secrets.compare_digest(password.encode('utf-8'), ADMIN_PASSWORD.encode('utf-8'))
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 @rate_limit(limit=5, window_sec=60, error_message='Bạn đã nhập sai quá nhiều lần. Vui lòng chờ 1 phút trước khi thử lại.', is_json=False)
@@ -135,21 +140,22 @@ def admin_login():
             return redirect(url_for('admin.admin_login'))
         username = (request.form.get('username') or '').strip()
         password = request.form.get('password') or ''
-        if verify_admin_credentials(username, password):
-            session.clear()
-            session['logged_in'] = True
-            session['admin_username'] = username
-            session['_admin_csrf_token'] = secrets.token_hex(24)
+        from backend.admin.access import staff_credentials, start_admin_session, load_identity, landing_endpoint
+        owner = verify_admin_credentials(username, password)
+        staff = None if owner else staff_credentials(username, password)
+        if owner or staff:
+            start_admin_session(staff)
+            load_identity()
             limiter.reset_key(f"admin.admin_login:{get_client_ip()}")
             record_audit('login', 'admin_session', username, 'Đăng nhập thành công')
             # Sheets is the shop's existing archive. Rebuild an empty local cache
             # after a host restart, while preserving all existing admin records.
             from backend.config import GOOGLE_SHEET_WEBHOOK_URL
             from backend.models import Quote
-            if (GOOGLE_SHEET_WEBHOOK_URL and os.environ.get('GOOGLE_SHEET_RESTORE_ON_LOGIN', 'true').lower() == 'true'
+            if (owner and GOOGLE_SHEET_WEBHOOK_URL and os.environ.get('GOOGLE_SHEET_RESTORE_ON_LOGIN', 'true').lower() == 'true'
                     and Quote.query.first() is None):
                 restore_quotes_from_sheets()
-            return redirect(url_for('admin.admin_dashboard'))
+            return redirect(url_for(landing_endpoint()))
         else:
             record_audit('failed_login', 'admin_session', username, 'Đăng nhập thất bại')
             flash('Sai tên đăng nhập hoặc mật khẩu', 'error')
@@ -1260,3 +1266,4 @@ def admin_toggle_campaign_banner():
 
 # Register customer and quote-workflow pages after authentication helpers exist.
 from backend.admin import workspace_routes  # noqa: E402,F401
+from backend.admin import team_routes  # noqa: E402,F401

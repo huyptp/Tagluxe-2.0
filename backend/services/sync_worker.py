@@ -95,6 +95,13 @@ def execute_sync_task(task_id, worker_id, app):
         payload_data['id'] = task.record_id
         payload_data['event_key'] = task.event_key
 
+        from backend.services.notification_settings import prepare_notifications
+        try:
+            notification_v2_required = prepare_notifications(payload_data, webhook_url)
+        except (ValueError, RuntimeError) as error:
+            _record_task_failure(db, task, str(error))
+            return False, str(error)
+
         encoded_data = json.dumps(payload_data, ensure_ascii=False).encode('utf-8')
         headers = {
             'Content-Type': 'application/json; charset=utf-8',
@@ -153,6 +160,9 @@ def execute_sync_task(task_id, worker_id, app):
         else:
             err_detail = f"HTTP {resp_code}: {resp_text[:150]}"
 
+        if is_success and notification_v2_required and resp_json.get('notification_protocol') != 'tagluxe-email-v2':
+            is_success = False
+            err_detail = 'Apps Script chưa xác nhận giao thức email tagluxe-email-v2.'
         if is_success:
             _record_task_success(db, task)
             return True, "Synced successfully"

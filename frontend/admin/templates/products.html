@@ -394,10 +394,10 @@
                             </button>
                             {% endif %}
                             <a href="/admin/products/edit/{{ product.id }}" class="btn btn-outline" style="padding: 6px 12px;"><i data-lucide="edit"></i> Sửa</a>
-                            <form action="/admin/products/delete/{{ product.id }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+                            {% if admin_can("admin.admin_delete_product") %}<form action="/admin/products/delete/{{ product.id }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                 <button type="submit" class="btn btn-secondary" style="padding:6px 12px;background:#fff1ee;color:#a44337;border-color:#efd3cc;"><i data-lucide="trash"></i> Xóa</button>
-                            </form>
+                            </form>{% endif %}
                         </div>
                     </td>
                 </tr>

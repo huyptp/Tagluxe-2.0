@@ -153,11 +153,11 @@
                                     onclick="openEditModalFromBtn(this)">
                                 Sửa
                             </button>
-                            <button type="button"
+{% if admin_can("admin.admin_delete_accessory") %}                            <button type="button"
                                     data-id="{{ acc.id }}" data-name="{{ acc.name }}" onclick="confirmDelete(this.dataset.id,this.dataset.name)"
                                     style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 4px 9px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
                                 Xóa
-                            </button>
+                            </button>{% endif %}
                         </div>
                     </td>
                 </tr>
