@@ -1267,3 +1267,4 @@ def admin_toggle_campaign_banner():
 # Register customer and quote-workflow pages after authentication helpers exist.
 from backend.admin import workspace_routes  # noqa: E402,F401
 from backend.admin import team_routes  # noqa: E402,F401
+from backend.admin import billing_routes  # noqa: E402,F401

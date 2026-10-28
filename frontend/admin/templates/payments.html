@@ -1,0 +1,14 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">THIẾT LẬP CỬA HÀNG</div><h1>Thanh toán & in bill</h1><p>Tài khoản nhận tiền dùng trên bill của khách hàng.</p></div></div>
+<section class="admin-card" style="max-width:760px">
+<div class="panel-title"><h2>Tài khoản ngân hàng</h2><span class="badge">Chỉ chủ shop được sửa</span></div>
+<form method="POST" data-unsaved-form>
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="form-group"><label for="bank">Ngân hàng nhận tiền</label><select id="bank" name="bank_bin" class="form-control" required><option value="">Chọn ngân hàng</option>{% for bank in banks %}<option value="{{ bank.bin }}" {% if values.get('bank_bin')==bank.bin %}selected{% endif %}>{{ bank.shortName }} · {{ bank.name }}</option>{% endfor %}</select></div>
+<div class="form-two-columns"><div class="form-group"><label for="accountNumber">Số tài khoản hiển thị trên bill</label><input id="accountNumber" name="account_number" class="form-control" value="{{ values.get('account_number','') }}" maxlength="30" required autocomplete="off"></div><div class="form-group"><label for="accountName">Tên chủ tài khoản</label><input id="accountName" name="account_name" class="form-control" value="{{ values.get('account_name','') }}" maxlength="80" required autocomplete="off"></div></div>
+<details style="margin:12px 0 24px"><summary>QR ngân hàng có mã nhận tiền riêng</summary><div class="form-group" style="margin-top:16px"><label for="sourceQr">Dữ liệu QR gốc (nếu có)</label><textarea class="form-control" id="sourceQr" name="source_qr" rows="4" maxlength="1000" spellcheck="false">{{ values.get('source_qr','') }}</textarea><small class="muted">Giữ dữ liệu này nếu ngân hàng cấp QR riêng cho shop. Khi có QR gốc, bill giữ nguyên mã nhận tiền của ngân hàng và thêm số tiền, nội dung đơn hàng. Khi đổi tài khoản, cần xóa hoặc thay QR gốc.</small></div></details>
+<p class="muted">Sau khi lưu, mở một báo giá → In bill / QR. Quét thử để đối chiếu tên người nhận, ngân hàng và số tiền trước khi gửi khách.</p>
+<button class="btn btn-primary" type="submit">Lưu tài khoản nhận tiền</button>
+</form></section>
+{% endblock %}
