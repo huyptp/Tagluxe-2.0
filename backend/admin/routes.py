@@ -178,6 +178,8 @@ def admin_logout():
 def admin_dashboard():
     from backend.admin.services import get_admin_dashboard_stats
     stats = get_admin_dashboard_stats()
+    from backend.admin.customer_services import customer_list
+    stats['customer_metrics'] = customer_list({})[1]
     return render_template('admin/dashboard.html', stats=stats)
 
 

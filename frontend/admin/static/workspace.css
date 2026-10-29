@@ -1,0 +1,110 @@
+/* TAGLUXE workspace: one readable scale across legacy admin screens.
+   Reference principles: Tabler density, Radix control states. Original CSS. */
+body.admin-app,body.admin-auth{
+ --ui-ink:#20342e;--ui-muted:#566960;--ui-line:#dce5df;--ui-brand:#19543e;
+ --ui-soft:#eef5f0;--ui-canvas:#f4f7f5;--ui-radius:12px;
+ color:var(--ui-ink);background:var(--ui-canvas);font-size:14px;line-height:1.65;
+}
+.admin-app .muted,.page-heading p,.kpi-note,.section-heading p,.customer-metrics small,
+.customer-filters label,.customer-state,.directory-caption,.customer-tip,.admin-footer,
+.admin-app .eyebrow,.kpi-top,.customer-editor .form-group small{color:var(--ui-muted)}
+.admin-app .page-heading p,.admin-app .muted{font-size:13px;line-height:1.65}
+.admin-app .eyebrow{font-size:11px;letter-spacing:1.2px}
+.admin-app .page-heading h1{font-size:30px;letter-spacing:-.9px;line-height:1.25}
+.admin-app .admin-container{padding-top:30px;padding-bottom:28px}
+.admin-app .admin-card{border-radius:var(--ui-radius);padding:24px;border-color:var(--ui-line);box-shadow:0 2px 8px #243d2f03}
+.admin-app .panel-title h2{font-size:17px!important;line-height:1.4;font-weight:700}
+.admin-app .section-heading h2{font-size:19px!important;letter-spacing:-.4px}
+.admin-app .panel-title a{font-size:12px;font-weight:600;text-underline-offset:3px}
+.admin-app .panel-title a:hover{text-decoration:underline}
+.admin-app .btn{min-height:42px;font-size:13px;padding:10px 16px;line-height:1.5;border-radius:8px;transition:background .15s,border-color .15s,box-shadow .15s}
+.admin-app .btn-primary{background:var(--ui-brand);border-color:var(--ui-brand)}
+.admin-app .btn-primary:hover{background:#123f2e;border-color:#123f2e;box-shadow:0 2px 6px #123f2e22}
+.admin-app .btn-secondary:hover{background:#f1f6f2;border-color:#9bb6a4}
+.admin-app button:disabled{cursor:not-allowed;opacity:.55;box-shadow:none}
+.admin-app .icon-button{width:40px;height:40px;color:#476355;border-color:var(--ui-line)}
+.admin-app .topbar-search{padding:5px 10px;background:#f6f8f6}
+.admin-app .topbar-search input{font-size:13px;height:30px;color:var(--ui-ink)}
+.admin-app .topbar-search:focus-within{outline:2px solid #427c61;outline-offset:2px}
+.admin-app .topbar-search button{min-width:28px;min-height:28px}
+.admin-app .topbar-add{font-size:13px;min-height:40px}
+.admin-app .breadcrumb{color:#65796c;font-size:12px;display:flex;gap:8px;align-items:center;min-width:0}
+.admin-app .breadcrumb span{margin:0 2px}.admin-app .breadcrumb strong{color:var(--ui-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-app .admin-brand{padding-bottom:20px}.admin-app .admin-sidebar{padding-top:22px}
+.admin-app .admin-nav-link{font-size:13px;padding:10px 12px;line-height:1.5;color:#4c6355;min-height:42px}
+.admin-app .admin-nav-link.active{font-weight:700;background:#e6f1e9;color:#164b35}
+.admin-app .nav-caption,.admin-app .nav-group-label{font-size:10px;color:#65796c;letter-spacing:1px}
+.admin-app .nav-group-label{padding-top:16px;padding-bottom:6px}
+.admin-app .sidebar-bottom{padding-top:16px;color:#4d6958}.admin-app .sidebar-bottom small{color:#667b6d}
+.admin-app .form-control,.admin-app .customer-filters input,.admin-app .customer-filters select,
+.admin-app .filter-form input,.admin-app .filter-form select,.admin-app .bulk-toolbar select{min-height:44px;font-size:14px;border-color:#cbd9ce;border-radius:8px;color:var(--ui-ink);padding:10px 12px}
+.admin-app input::placeholder,.admin-app textarea::placeholder{color:#718076;opacity:1}
+.admin-app .form-group label,.admin-app .filter-form label,.admin-app .customer-filters label{font-size:13px;color:#405b49;font-weight:600}
+.admin-app .form-control:focus{outline:2px solid #39785a;outline-offset:1px}
+.admin-app .customer-editor label{font-size:13px}.admin-app .customer-editor .form-control{font-size:14px}
+.admin-app .customer-editor .section-heading{flex-direction:row;gap:12px}
+.admin-app .customer-editor .section-heading h2{margin-top:2px}
+.admin-app .kpi-card{border-radius:12px;padding:20px;border-color:var(--ui-line)}
+.admin-app .kpi-top{font-size:12px;font-weight:600}.admin-app .kpi-value{font-size:30px;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.admin-app .kpi-note{font-size:12px}.admin-app .customer-metrics>a,.admin-app .customer-metrics>div{padding:20px;border-radius:12px}
+.admin-app .customer-metrics span{font-size:13px}.admin-app .customer-metrics small{font-size:12px}
+.admin-app .customer-metrics .selected{background:#f4f9f3;box-shadow:inset 0 3px #347351;border-color:#86ac91}
+.admin-app .customer-table th,.admin-app .admin-card th{font-size:11px;color:#506857;background:#f0f5f1;letter-spacing:.5px;padding:13px 14px}
+.admin-app .customer-table td,.admin-app .admin-card td{font-size:13px;padding:16px 14px;border-color:#e3ebe5;line-height:1.65}
+.admin-app .customer-table td p,.admin-app .customer-table .muted{font-size:12px;color:var(--ui-muted)}
+.admin-app .customer-table .btn{font-size:12px;min-height:38px;padding:8px 12px}
+.admin-app .customer-table th:last-child{width:144px}
+.admin-app .source-chip{font-size:11px}.admin-app .customer-state{font-size:12px}
+.admin-app .record-link{color:#174e38;text-underline-offset:4px}.admin-app .record-link:hover{text-decoration:underline}
+.admin-app .badge{font-size:11px;letter-spacing:0;line-height:1.6;padding:5px 9px;border-radius:6px}
+.admin-app [data-status="Mới"]{background:#edf3ff;color:#315c9e}
+.admin-app [data-status="Đang tư vấn"],.admin-app [data-status="Đã tư vấn"]{background:#fff4de;color:#825815}
+.admin-app [data-status="Đang chốt"]{background:#f0edff;color:#63449a}
+.admin-app [data-status="Đã chốt"],.admin-app [data-status="Đã xong"]{background:#e6f4eb;color:#22613c}
+.admin-app [data-status="Đã hủy"],.admin-app [data-status="Chưa chốt"]{background:#f8ece9;color:#8d4334}
+.admin-app .customer-state[data-status]{display:table;padding:3px 7px;border-radius:5px}
+.admin-app .quote-filter-form{display:grid;grid-template-columns:minmax(200px,2fr) 1fr 1fr;background:white;border:0;border-radius:0;padding:20px 0;margin:0;gap:16px}
+.quote-filter-form>div{min-width:0}.quote-filter-form .heading-actions{grid-column:1/-1;justify-content:flex-end}
+.quote-filter-form input,.quote-filter-form select{width:100%}
+.quote-advanced{grid-column:1/-1;border:1px solid var(--ui-line);border-radius:8px;background:#f8faf8}
+.quote-advanced summary{cursor:pointer;font-size:13px;font-weight:600;padding:12px 14px;color:#405e4c}
+.quote-advanced summary span{font-size:12px;font-weight:400;margin-left:12px;color:var(--ui-muted)}
+.quote-advanced-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:4px 16px 16px}
+.quote-advanced-grid>div{min-width:0}.list-shortcuts{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--ui-line)}
+.list-shortcuts a{display:inline-flex;align-items:center;min-height:38px;padding:8px 13px;border:1px solid var(--ui-line);border-radius:7px;text-decoration:none;color:#486453;font-size:13px;font-weight:600}
+.list-shortcuts a:hover{background:#f1f6f2}.list-shortcuts a[aria-current=page]{background:#eaf4ec;border-color:#82a78d;color:#1b573a}
+.admin-app .bulk-toolbar{background:#f1f6f2;border:1px solid #d6e5d9;gap:14px;padding:14px}
+.admin-app .bulk-toolbar label{display:flex;align-items:center;gap:8px;font-size:13px}
+.admin-app input[type=checkbox]{width:17px;height:17px;flex-shrink:0}
+.admin-app .selected-row{background:#edf7f0!important;box-shadow:inset 3px 0 #347351}
+.admin-app .pagination{padding-top:20px;gap:16px;flex-wrap:wrap;font-size:13px}
+.admin-app .detail-list dt{font-size:13px;color:var(--ui-muted)}.admin-app .detail-list dd{font-size:14px}
+.admin-app .section-label{font-size:13px}.admin-app .preserve-text{font-size:14px;line-height:1.8;background:#f5f8f5}
+.admin-app .activity-list li{font-size:13px}.admin-app .copy-button{font-size:12px;min-height:30px;padding:4px 9px}
+.admin-app .customer-savebar{border-color:#bad0c0;background:#fffffffa}.admin-app .customer-savebar small{font-size:12px;color:#596d60}
+.save-indicator{font-size:12px;font-weight:600;color:#875b1b;margin-left:8px}
+.feedback-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:250;max-width:calc(100vw - 32px);padding:12px 18px;background:#203f30!important;color:white!important;border-radius:10px;box-shadow:0 6px 25px #122c2430;font-size:13px!important;margin:0!important}
+.feedback-toast:empty{display:none}.admin-app .empty-state{padding:40px 20px;color:var(--ui-muted)}
+.admin-app .empty-state h3{font-size:18px;color:#294d38}.admin-app .empty-state p{font-size:13px;margin:10px 0 18px}
+.admin-app .period-tabs button{min-height:36px;padding:7px 12px;font-size:12px}.admin-app .work-item small{font-size:12px;color:var(--ui-muted)}
+.admin-app .sales-shortcuts p,.admin-app .shortcut-link span{font-size:13px;color:var(--ui-muted)}
+@media(min-width:1800px){.admin-app .admin-container{max-width:1800px;margin-right:auto}}
+@media(max-width:1150px){.admin-app .customer-filters{grid-template-columns:1fr 1fr 1fr}.customer-filters .customer-search{grid-column:1/-1}.admin-app .website-link{display:none}}
+@media(max-width:760px){
+ .admin-app .admin-topbar{height:64px;padding:0 16px;gap:8px}.admin-app .topbar-actions{gap:10px}.admin-app .topbar-left{min-width:0;gap:10px}.admin-app .breadcrumb{max-width:130px;font-size:12px}.admin-app .breadcrumb>span,.admin-app .breadcrumb{white-space:nowrap}.admin-app .user-name,.admin-app .admin-avatar{display:none}.admin-app .topbar-add{font-size:12px}
+ .admin-app .admin-container{padding:22px 16px}.admin-app .page-heading{align-items:flex-start;gap:16px;margin-bottom:22px}.admin-app .page-heading h1{font-size:26px}.admin-app .page-heading p{font-size:14px}.admin-app .page-heading>.btn{width:100%}
+ .admin-app .btn,.admin-app .icon-button{min-height:44px}.admin-app .form-control,.admin-app .customer-filters input,.admin-app .customer-filters select,.admin-app .filter-form input,.admin-app .filter-form select,.admin-app .bulk-toolbar select{font-size:16px;min-height:46px}
+ .admin-app .admin-card{padding:20px 16px;border-radius:12px}.admin-app .kpi-grid{gap:10px}.admin-app .kpi-card{padding:16px}.admin-app .kpi-value{font-size:25px}.admin-app .kpi-note{font-size:11px}
+ .admin-app .customer-metrics>a,.admin-app .customer-metrics>div{padding:16px}.admin-app .customer-metrics small{font-size:11px}.admin-app .customer-metrics span{font-size:12px}
+ .admin-app .customer-filters{grid-template-columns:1fr 1fr;gap:12px}.admin-app .customer-filters>div:last-of-type{grid-column:1/-1}.admin-app .customer-filters>button,.admin-app .customer-filters>a{width:100%}
+ .admin-app .customer-table td{padding:0;border:0;font-size:14px}.admin-app .customer-table td p{font-size:13px}.admin-app .customer-table td[data-label]:not(:first-child)::before{font-size:12px}.admin-app .customer-state{font-size:12px}.admin-app .customer-table .btn{min-height:44px;font-size:13px}
+ .admin-app .quote-filter-form{grid-template-columns:1fr 1fr;padding:16px 0;gap:14px}.quote-filter-form>div:first-of-type{grid-column:1/-1}.quote-filter-form .heading-actions .btn{flex:1}.quote-advanced-grid{grid-template-columns:1fr}.quote-advanced summary span{display:block;margin:5px 0 0 16px;font-size:12px}.list-shortcuts{gap:8px;padding-bottom:16px}.list-shortcuts a{min-height:42px;flex:1 0 40%;justify-content:center;font-size:12px}
+ .admin-app .bulk-toolbar{gap:10px;padding:12px}.admin-app .bulk-toolbar>select{flex:1;min-width:0}.admin-app .bulk-toolbar>button{width:100%}
+ .admin-app .quotes-table,.admin-app .quotes-table tbody{display:block;min-width:0;width:100%}.quotes-table thead{display:none}.quotes-table tr{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px 0;border-bottom:1px solid var(--ui-line)}
+ .admin-app .quotes-table td{display:block;border:0;padding:0;min-width:0;overflow-wrap:anywhere}.quotes-table td[data-label]::before{content:attr(data-label);display:block;font-size:12px;color:var(--ui-muted);margin-bottom:5px}.quotes-table td:first-child,.quotes-table td:nth-child(2),.quotes-table td:last-child{grid-column:1/-1}.quotes-table .record-id{font-size:13px;white-space:normal;overflow-wrap:anywhere;word-break:break-word}.quotes-table td:first-child::before,.quotes-table td:last-child::before{display:none}.quotes-table td:last-child .btn{width:100%}.quotes-table .muted{font-size:12px}
+ .admin-app .customer-savebar{padding:12px;gap:8px;bottom:8px}.admin-app .customer-savebar>span{font-size:12px}.admin-app .customer-savebar .btn{min-height:44px;padding:10px;font-size:13px}.admin-app .section-heading{gap:10px}.admin-app .section-heading p{font-size:13px}
+ .admin-app .panel-title{flex-wrap:wrap;gap:10px}.admin-app .customer-profile-grid .detail-list{grid-template-columns:105px minmax(0,1fr)}.admin-app .admin-footer{font-size:11px;gap:12px}.admin-app .admin-footer span{max-width:65%}
+}
+@media(prefers-reduced-motion:reduce){.admin-app *{transition:none!important;scroll-behavior:auto!important}}
+@media(max-width:760px){.admin-app .customer-editor .form-control{font-size:16px}.admin-app .kpi-value{font-size:clamp(18px,5vw,25px)}}
+@media print{.feedback-toast,.list-shortcuts,.save-indicator{display:none!important}.admin-app .admin-card{padding:0;border:0}.admin-app .admin-container{margin:0;padding:0}}

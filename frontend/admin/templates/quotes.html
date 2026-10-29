@@ -8,17 +8,18 @@
   {% for label,value in [('Báo giá phù hợp',summary.count),('Giá trị chưa hủy','{:,.0f} đ'.format(summary.value)),('Giá trị đã chốt / xong','{:,.0f} đ'.format(summary.closed_value)),('Đồng bộ thất bại',summary.failed_sync)] %}
   <article class="kpi-card"><div class="kpi-top">{{ label }}</div><div class="kpi-value">{{ value }}</div><small class="muted">Theo bộ lọc hiện tại</small></article>{% endfor %}
 </div>
-<section class="admin-card">
-<form method="GET" class="filter-form advanced-filters">
+<section class="admin-card"><nav class="list-shortcuts" aria-label="Lối tắt bộ lọc báo giá"><a href="{{ url_for('admin.admin_quotes') }}" {% if not filters.status and not filters.follow_up %}aria-current="page"{% endif %}>Tất cả báo giá</a><a href="{{ url_for('admin.admin_quotes',status='Mới') }}" {% if filters.status=='Mới' %}aria-current="page"{% endif %}>Mới nhận</a><a href="{{ url_for('admin.admin_quotes',status='Đang tư vấn') }}" {% if filters.status=='Đang tư vấn' %}aria-current="page"{% endif %}>Đang tư vấn</a><a href="{{ url_for('admin.admin_quotes',follow_up='due',sort='follow_up') }}" {% if filters.follow_up=='due' %}aria-current="page"{% endif %}>Đến hẹn liên hệ</a></nav>
+<form method="GET" class="filter-form quote-filter-form">
   {% if filters.phone %}<input type="hidden" name="phone" value="{{ filters.phone }}"><p class="filter-context">Đang xem khách hàng: <strong>{{ filters.phone }}</strong></p>{% endif %}
   <div><label for="searchQuotes">Tên, số điện thoại hoặc mã</label><input id="searchQuotes" name="q" value="{{ filters.q }}" placeholder="Tìm báo giá..."></div>
   <div><label for="statusFilter">Trạng thái</label><select id="statusFilter" name="status"><option value="">Tất cả</option>{% for status in statuses %}<option value="{{ status }}" {% if filters.status==status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select></div>
-  <div><label for="syncFilter">Đồng bộ Sheets</label><select id="syncFilter" name="sync">{% for value,label in [('', 'Tất cả'),('pending','Đang chờ'),('synced','Đã đồng bộ'),('failed','Thất bại')] %}<option value="{{ value }}" {% if filters.sync==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div><label for="sortQuotes">Sắp xếp</label><select id="sortQuotes" name="sort">{% for value,label in [('', 'Mới nhất'),('oldest','Cũ nhất'),('value','Giá trị cao nhất'),('follow_up','Ngày liên hệ gần nhất')] %}<option value="{{ value }}" {% if filters.sort==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <details class="quote-advanced" {% if filters.sync or filters.priority or filters.from_date or filters.to_date or filters.follow_up %}open{% endif %}><summary>Bộ lọc nâng cao <span>Ngày tạo · Lịch hẹn · Ưu tiên · Đồng bộ</span></summary><div class="quote-advanced-grid">  <div><label for="syncFilter">Đồng bộ Sheets</label><select id="syncFilter" name="sync">{% for value,label in [('', 'Tất cả'),('pending','Đang chờ'),('synced','Đã đồng bộ'),('failed','Thất bại')] %}<option value="{{ value }}" {% if filters.sync==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
   <div><label for="priorityFilter">Ưu tiên</label><select id="priorityFilter" name="priority">{% for value,label in [('', 'Tất cả'),('normal','Bình thường'),('high','Ưu tiên'),('urgent','Khẩn cấp')] %}<option value="{{ value }}" {% if filters.priority==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
   <div><label for="fromDate">Ngày tạo từ</label><input type="date" min="1900-01-01" max="2100-12-31" id="fromDate" name="from_date" value="{{ filters.from_date }}"></div>
   <div><label for="toDate">Đến hết ngày</label><input type="date" min="1900-01-01" max="2100-12-31" id="toDate" name="to_date" value="{{ filters.to_date }}"></div>
   <div><label for="followFilter">Lịch liên hệ</label><select id="followFilter" name="follow_up">{% for value,label in [('', 'Tất cả'),('due','Đến hạn / quá hạn'),('scheduled','Có lịch cần xử lý')] %}<option value="{{ value }}" {% if filters.follow_up==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-  <div><label for="sortQuotes">Sắp xếp</label><select id="sortQuotes" name="sort">{% for value,label in [('', 'Mới nhất'),('oldest','Cũ nhất'),('value','Giá trị cao nhất'),('follow_up','Ngày liên hệ gần nhất')] %}<option value="{{ value }}" {% if filters.sort==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+</div></details>
   <div class="heading-actions"><button class="btn btn-primary">Áp dụng bộ lọc</button><a class="btn btn-secondary" href="{{ url_for('admin.admin_quotes') }}">Đặt lại</a></div>
 </form>
 {% if quotes %}
@@ -26,18 +27,18 @@
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   {# Use filter_ prefix to avoid colliding with the chosen new status. #}
   {% for key,value in filters.items() %}<input type="hidden" name="filter_{{ key }}" value="{{ value }}">{% endfor %}<input type="hidden" name="page" value="{{ pagination.page }}">
-  <label><input type="checkbox" id="selectAllQuotes"> Chọn trang này</label><span class="muted">Đã chọn: <strong id="selectedCount">0</strong></span>
+  <label><input type="checkbox" id="selectAllQuotes"> Chọn trang này</label><span class="muted" aria-live="polite">Đã chọn: <strong id="selectedCount">0</strong></span>
   <select name="status" required aria-label="Trạng thái cập nhật hàng loạt"><option value="">Chuyển trạng thái...</option>{% for status in statuses %}<option>{{ status }}</option>{% endfor %}</select><button class="btn btn-primary">Áp dụng</button>
 </form>
-<div class="table-scroll"><table class="crm-table"><thead><tr><th>Báo giá</th><th>Khách hàng</th><th>Nhu cầu & giá trị</th><th>Chăm sóc</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
+<div class="table-scroll"><table class="crm-table quotes-table"><thead><tr><th>Báo giá</th><th>Khách hàng</th><th>Nhu cầu & giá trị</th><th>Chăm sóc</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
 {% for q in quotes %}{% set state=q.admin_state %}
 <tr>
-  <td><label class="record-id"><input type="checkbox" form="bulkQuoteForm" name="quote_ids" value="{{ q.id }}" aria-label="Chọn báo giá {{ q.id }}"> #{{ q.id }}</label><small class="muted">{{ q.created_at.strftime('%d/%m/%Y %H:%M') if q.created_at else '—' }}</small></td>
-  <td><a class="record-link" href="{{ url_for('admin.admin_customer_detail',phone=q.phone) }}">{{ q.customer_name }}</a><div><a href="tel:{{ q.phone }}">{{ q.phone }}</a></div></td>
-  <td><strong>{{ q.category }}</strong><div class="muted">{{ q.quantity }} cái · {{ q.specs or 'Chưa ghi quy cách' }}</div><strong>{{ '{:,.0f}'.format(q.total_price) }} đ</strong></td>
-  <td>{% if state %}<span class="badge priority-{{ state.priority }}">{{ {'normal':'Bình thường','high':'Ưu tiên','urgent':'Khẩn cấp'}.get(state.priority,'Bình thường') }}</span><div>{{ state.owner or 'Chưa phân công' }}</div><small class="muted">{{ 'Liên hệ: '+state.follow_up_on.strftime('%d/%m/%Y') if state.follow_up_on else 'Chưa hẹn ngày' }}</small>{% else %}<span class="muted">Chưa có lịch chăm sóc</span>{% endif %}</td>
-  <td><span class="badge">{{ q.status }}</span><div class="sync-label {{ 'text-danger' if q.sync_status=='failed' else '' }}">{{ {'synced':'Đã đồng bộ Sheets','pending':'Đang chờ đồng bộ','failed':'Đồng bộ thất bại'}.get(q.sync_status,'Đang chờ') }}</div></td>
-  <td><a class="btn btn-secondary" href="{{ url_for('admin.admin_quote_detail',id=q.id) }}">Mở hồ sơ →</a></td>
+  <td data-label="Báo giá"><label class="record-id"><input type="checkbox" form="bulkQuoteForm" name="quote_ids" value="{{ q.id }}" aria-label="Chọn báo giá {{ q.id }}"> #{{ q.id }}</label><small class="muted">{{ q.created_at.strftime('%d/%m/%Y %H:%M') if q.created_at else '—' }}</small></td>
+  <td data-label="Khách hàng"><a class="record-link" href="{{ url_for('admin.admin_customer_detail',phone=q.phone) }}">{{ q.customer_name }}</a><div><a href="tel:{{ q.phone }}">{{ q.phone }}</a></div></td>
+  <td data-label="Nhu cầu & giá trị"><strong>{{ q.category }}</strong><div class="muted">{{ q.quantity }} cái · {{ q.specs or 'Chưa ghi quy cách' }}</div><strong>{{ '{:,.0f}'.format(q.total_price) }} đ</strong></td>
+  <td data-label="Chăm sóc">{% if state %}<span class="badge priority-{{ state.priority }}">{{ {'normal':'Bình thường','high':'Ưu tiên','urgent':'Khẩn cấp'}.get(state.priority,'Bình thường') }}</span><div>{{ state.owner or 'Chưa phân công' }}</div><small class="muted">{{ 'Liên hệ: '+state.follow_up_on.strftime('%d/%m/%Y') if state.follow_up_on else 'Chưa hẹn ngày' }}</small>{% else %}<span class="muted">Chưa có lịch chăm sóc</span>{% endif %}</td>
+  <td data-label="Trạng thái"><span class="badge">{{ q.status }}</span><div class="sync-label {{ 'text-danger' if q.sync_status=='failed' else '' }}">{{ {'synced':'Đã đồng bộ Sheets','pending':'Đang chờ đồng bộ','failed':'Đồng bộ thất bại'}.get(q.sync_status,'Đang chờ') }}</div></td>
+  <td data-label="Thao tác"><a class="btn btn-secondary" href="{{ url_for('admin.admin_quote_detail',id=q.id) }}">Mở hồ sơ →</a></td>
 </tr>{% endfor %}</tbody></table></div>
 <div class="pagination"><span>{{ pagination.total }} báo giá · Trang {{ pagination.page }} / {{ pagination.pages or 1 }}</span><div>{% if pagination.has_prev %}<a class="btn btn-secondary" href="{{ page_url(pagination.prev_num) }}">← Trước</a>{% endif %}{% if pagination.has_next %}<a class="btn btn-secondary" href="{{ page_url(pagination.next_num) }}">Sau →</a>{% endif %}</div></div>
 {% else %}<div class="empty-state"><h3>Chưa có báo giá phù hợp</h3><p>Thử thay đổi bộ lọc. Yêu cầu tư vấn từ website sẽ được hiển thị tại đây.</p><a class="btn btn-secondary" href="{{ url_for('admin.admin_quotes') }}">Xem tất cả báo giá</a></div>{% endif %}

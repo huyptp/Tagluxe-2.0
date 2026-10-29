@@ -265,4 +265,31 @@ CREATE TABLE IF NOT EXISTS quote_deletions (
 ;
 ALTER TABLE public.quote_deletions ENABLE ROW LEVEL SECURITY;
 
+
+CREATE TABLE IF NOT EXISTS customer_profiles (
+	phone VARCHAR(20) NOT NULL,
+	customer_name VARCHAR(120) NOT NULL,
+	source VARCHAR(20) NOT NULL,
+	status VARCHAR(30) NOT NULL,
+	company VARCHAR(160) NOT NULL,
+	email VARCHAR(254) NOT NULL,
+	address VARCHAR(500) NOT NULL,
+	needs TEXT NOT NULL,
+	notes TEXT NOT NULL,
+	owner VARCHAR(80) NOT NULL,
+	needed_on DATE,
+	follow_up_on DATE,
+	version INTEGER NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	updated_by VARCHAR(80) NOT NULL,
+	PRIMARY KEY (phone)
+)
+
+;
+CREATE INDEX IF NOT EXISTS ix_customer_profiles_follow_up_on ON customer_profiles (follow_up_on);
+CREATE INDEX IF NOT EXISTS ix_customer_profiles_status ON customer_profiles (status);
+CREATE INDEX IF NOT EXISTS ix_customer_profiles_source ON customer_profiles (source);
+ALTER TABLE public.customer_profiles ENABLE ROW LEVEL SECURITY;
+
 COMMIT;

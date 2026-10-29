@@ -114,6 +114,27 @@ class Quote(db.Model):
             'idempotency_key': self.idempotency_key
         }
 
+class CustomerProfile(db.Model):
+    """Private CRM profile shared by manual leads and web quotes with the same phone."""
+    __tablename__ = 'customer_profiles'
+    phone = db.Column(db.String(20), primary_key=True)
+    customer_name = db.Column(db.String(120), nullable=False)
+    source = db.Column(db.String(20), nullable=False, default='zalo', index=True)
+    status = db.Column(db.String(30), nullable=False, default='Đang tư vấn', index=True)
+    company = db.Column(db.String(160), nullable=False, default='')
+    email = db.Column(db.String(254), nullable=False, default='')
+    address = db.Column(db.String(500), nullable=False, default='')
+    needs = db.Column(db.Text, nullable=False, default='')
+    notes = db.Column(db.Text, nullable=False, default='')
+    owner = db.Column(db.String(80), nullable=False, default='')
+    needed_on = db.Column(db.Date, nullable=True)
+    follow_up_on = db.Column(db.Date, nullable=True, index=True)
+    version = db.Column(db.Integer, nullable=False, default=1)
+    created_at = db.Column(db.DateTime, nullable=False, default=vietnam_now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=vietnam_now)
+    updated_by = db.Column(db.String(80), nullable=False)
+
+
 class QuoteAdminState(db.Model):
     """Private sales workflow; deliberately excluded from Quote.to_dict/public APIs."""
     __tablename__ = 'quote_admin_states'
