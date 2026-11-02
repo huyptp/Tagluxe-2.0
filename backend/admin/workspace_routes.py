@@ -1,7 +1,7 @@
 """Private CRM and per-quote follow-up workflow."""
 from backend.time_utils import vietnam_now
 from datetime import date
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import render_template, request, redirect, url_for, flash, session, abort, g
 from sqlalchemy import or_, func, case
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from backend.database import db
@@ -66,6 +66,7 @@ def admin_quote_detail(id):
                 flash('Chưa lưu được hồ sơ. Vui lòng thử lại.', 'error')
                 error_code = 503
             else:
+                g.admin_saved = {'version': version + 1}
                 flash('Đã lưu thông tin chăm sóc báo giá.', 'success')
                 return redirect(url_for('admin.admin_quote_detail', id=id))
     logs = AuditLog.query.filter_by(target_type='quote', target_id=id).order_by(
@@ -147,6 +148,8 @@ def customer_form(phone=None,profile=None,latest=None):
         except SQLAlchemyError:
             db.session.rollback();flash('Chưa lưu được hồ sơ. Nội dung vừa nhập vẫn còn; vui lòng thử lại.','error');status_code=503
         else:
+            g.admin_saved = {'version': version + 1, 'phone': clean['phone'],
+                             'form_action': url_for('admin.admin_customer_edit', phone=clean['phone'])}
             flash('Đã lưu hồ sơ khách hàng. Lịch sử báo giá cùng số điện thoại được ghép tự động.','success')
             return redirect(url_for('admin.admin_customer_detail',phone=clean['phone']))
     return render_template('admin/customer_form.html',values=values,editing=editing,phone=phone,

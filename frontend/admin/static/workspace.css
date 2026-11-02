@@ -108,3 +108,10 @@ body.admin-app,body.admin-auth{
 @media(prefers-reduced-motion:reduce){.admin-app *{transition:none!important;scroll-behavior:auto!important}}
 @media(max-width:760px){.admin-app .customer-editor .form-control{font-size:16px}.admin-app .kpi-value{font-size:clamp(18px,5vw,25px)}}
 @media print{.feedback-toast,.list-shortcuts,.save-indicator{display:none!important}.admin-app .admin-card{padding:0;border:0}.admin-app .admin-container{margin:0;padding:0}}
+.admin-save-notice{position:fixed;right:24px;bottom:24px;z-index:10000;max-width:min(480px,calc(100vw - 32px));padding:16px 20px;background:#203f30;color:#fff;border:1px solid #54886b;border-radius:12px;box-shadow:0 8px 28px #122c2430;font-size:14px;line-height:1.6;overflow-wrap:anywhere;pointer-events:none}
+.admin-save-notice.is-error{background:#852f29;border-color:#c78179}.admin-save-notice[hidden]{display:none}
+#existingImagesGrid .existing-img-item{border:1px solid #cbd5e1;border-radius:6px;padding:6px;background:#f8fafc;width:96px;text-align:center}
+#existingImagesGrid .existing-img-item img{width:82px;height:68px;object-fit:cover;border-radius:4px;display:block;margin-bottom:6px}
+#existingImagesGrid .existing-img-item button{width:100%;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;padding:3px 0;font-size:12px;cursor:pointer}
+@media(max-width:760px){.admin-save-notice{right:16px;bottom:16px;max-width:calc(100vw - 32px)}}
+@media print{.admin-save-notice{display:none!important}}

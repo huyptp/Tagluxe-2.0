@@ -1,7 +1,7 @@
 {% extends 'admin/base.html' %}
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('admin.static',filename='accessories.css',v='20261023b') }}">
-<script defer src="{{ url_for('admin.static',filename='accessories.js',v='20261023b') }}"></script>
+<script defer src="{{ url_for('admin.static',filename='accessories.js',v='20261029_save1') }}"></script>
 <div class="pricing-admin-page" data-csrf="{{ csrf_token }}">
 <div class="page-heading"><div><div class="eyebrow">GIÁ BÁN & DANH MỤC</div><h1>Bảng giá & phụ kiện</h1><p>Quản lý giá theo số lượng và các lựa chọn đi kèm sản phẩm.</p></div><button type="button" class="btn btn-primary" onclick="openAddAccessoryModal()"><i data-lucide="plus" style="width:16px"></i> Thêm phụ kiện</button></div>
 <nav class="pricing-page-tabs" aria-label="Bảng giá và phụ kiện"><a href="{{ url_for('admin.admin_accessories',tab='pricing') }}" {% if active_tab!='accessories' %}aria-current="page"{% endif %}>Biểu giá theo số lượng</a><a href="{{ url_for('admin.admin_accessories',tab='accessories') }}" {% if active_tab=='accessories' %}aria-current="page"{% endif %}>Danh mục phụ kiện <span>{{ accessories|length }}</span></a></nav>
@@ -70,7 +70,7 @@
                     <th style="text-align: center; width: 130px;">Thao Tác</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="accessoryRows">
                 {% for acc in accessories %}
                 <tr class="acc-row" data-category="{{ acc.category }}" data-visible="{{ 1 if acc.visible else 0 }}">
                     <td style="text-align: center;">

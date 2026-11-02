@@ -1,6 +1,10 @@
 const pricingCSRF=document.querySelector('.pricing-admin-page').dataset.csrf;
 
     function openAddAccessoryModal() {
+        const form=document.querySelector('#addAccessoryModal form');
+        form.reset(); form.action='/admin/accessories/add';
+        const button=form.querySelector('button[type=submit]');
+        if(button){delete button.dataset.savedLabel;button.textContent='Thêm phụ kiện';}
         showAccessoryDialog('addAccessoryModal');
     }
     function closeAddAccessoryModal() {
@@ -75,7 +79,9 @@ const pricingCSRF=document.querySelector('.pricing-admin-page').dataset.csrf;
         .then(res => res.json())
         .then(data => {
             if (data && data.success) {
-                window.location.reload();
+                refreshAdminFragment('#accessoryRows', '/admin/accessories?tab=accessories')
+                    .then(()=>{applyAccessoryFilters();adminSaveNotice(data.message || 'Đã xóa ảnh.');})
+                    .catch(()=>adminSaveNotice('Đã xóa ảnh trong cơ sở dữ liệu. Danh sách chưa làm mới được.'));
             } else {
                 alert('Lỗi: ' + (data.message || 'Không thể xóa ảnh'));
             }
@@ -130,7 +136,9 @@ const pricingCSRF=document.querySelector('.pricing-admin-page').dataset.csrf;
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                refreshAdminFragment('#accessoryRows', '/admin/accessories?tab=accessories')
+                    .then(()=>{applyAccessoryFilters();adminSaveNotice(data.message || 'Đã lưu ảnh mới.');})
+                    .catch(()=>adminSaveNotice('Đã lưu ảnh trong cơ sở dữ liệu. Danh sách chưa làm mới được.'));
             } else {
                 alert('Lỗi: ' + (data.message || 'Không thể tải ảnh'));
             }
@@ -192,6 +200,11 @@ let originalPriceTables = [];
 
 function refreshPricingChanges() {
   if (!priceForm) return;
+  if(priceForm.dataset.refreshRequired==='1'){
+    document.getElementById('savePricing').disabled=true;
+    document.getElementById('resetPricing').disabled=true;
+    return;
+  }
   let changed = 0;
   priceForm.querySelectorAll('tr[data-tier-id]').forEach(row => {
     const deleted = row.dataset.deleted === '1';
@@ -249,7 +262,8 @@ if(priceForm){
   originalPriceTables=[...priceForm.querySelectorAll('tbody')].map(body=>[body,body.innerHTML]);
   priceForm.addEventListener('input',refreshPricingChanges);
   document.querySelectorAll('[data-price-group]').forEach(button=>button.addEventListener('click',()=>choosePriceGroup(button.dataset.priceGroup)));
-  document.getElementById('resetPricing').addEventListener('click',()=>{
+  priceForm.addEventListener('click',event=>{
+    if(!event.target.closest('#resetPricing'))return;
     if(!confirm('Hoàn tác toàn bộ thay đổi bảng giá chưa lưu?'))return;
     originalPriceTables.forEach(([body,html])=>body.innerHTML=html);
     priceForm.querySelectorAll('[name^=tier_deleted_]').forEach(input=>input.remove());
@@ -260,6 +274,7 @@ if(priceForm){
     const panel=event.target.closest('[data-price-panel]');if(panel)choosePriceGroup(panel.dataset.pricePanel);
   },true);
   priceForm.addEventListener('submit',event=>{
+    if(priceForm.dataset.refreshRequired==='1'){event.preventDefault();adminSaveNotice('Bảng giá đã lưu. Hãy tải lại trang trước khi chỉnh tiếp để tránh tạo trùng bậc giá.',true);return;}
     let bad=null;
     priceForm.querySelectorAll('tr[data-tier-id]').forEach(row=>{
       if(row.dataset.deleted==='1')return;
@@ -268,8 +283,19 @@ if(priceForm){
     });
     if(bad){event.preventDefault();choosePriceGroup(bad.closest('[data-price-panel]').dataset.pricePanel);document.getElementById('pricingValidation').textContent='Số lượng bắt đầu không được lớn hơn số lượng kết thúc. Vui lòng kiểm tra dòng được chọn.';bad.focus();return;}
     if(!pricingDirty){event.preventDefault();return;}
-    pricingDirty=false;
+    if(!window.adminInPlaceSave)pricingDirty=false;
   },true);
+  priceForm.addEventListener('admin:save-success',event=>{
+    if(event.detail?.ui_refreshed===false){
+      pricingDirty=false;priceForm.dataset.refreshRequired='1';refreshPricingChanges();
+      document.getElementById('pricingChangeCount').textContent='Đã lưu. Tải lại bảng giá trước khi chỉnh tiếp.';
+      return;
+    }
+    priceForm.querySelectorAll('input[type=number]').forEach(input=>input.dataset.original=input.value);
+    originalPriceTables=[...priceForm.querySelectorAll('tbody')].map(body=>[body,body.innerHTML]);
+    refreshPricingChanges();
+    document.getElementById('pricingChangeCount').textContent='Đã lưu bảng giá';
+  });
   window.addEventListener('beforeunload',event=>{if(pricingDirty){event.preventDefault();event.returnValue='';}});
 }
 
@@ -306,4 +332,4 @@ document.querySelectorAll('.modal-overlay').forEach(modal=>{
     }
   });
 });
-document.querySelectorAll('.thumb-preview-wrap').forEach(button=>button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();button.click();}}));
+document.addEventListener('keydown',event=>{const button=event.target.closest('.thumb-preview-wrap');if(button&&(event.key==='Enter'||event.key===' ')){event.preventDefault();button.click();}});

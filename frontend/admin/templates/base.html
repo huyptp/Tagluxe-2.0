@@ -8,8 +8,9 @@
 <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <link rel="stylesheet" href="{{ url_for('admin.static', filename='admin.css', v='20261029_ui2') }}">
-<script defer src="{{ url_for('admin.static', filename='admin.js', v='20261029_ui2') }}"></script>
-<link rel="stylesheet" href="{{ url_for('admin.static', filename='workspace.css', v='20261029_ui2') }}">
+<script defer src="{{ url_for('admin.static', filename='admin.js', v='20261029_save1') }}"></script>
+<script defer src="{{ url_for('admin.static', filename='save.js', v='20261029_save1') }}"></script>
+<link rel="stylesheet" href="{{ url_for('admin.static', filename='workspace.css', v='20261029_save1') }}">
 </head>
 <body class="{% if session.get('logged_in') %}admin-app{% else %}admin-auth{% endif %}">
 <a class="skip-link" href="#mainContent">Đến nội dung chính</a>

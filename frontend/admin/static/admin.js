@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const markDirty=()=>{dirty=true;indicator.textContent=' · Chưa lưu';};
     form.addEventListener('input',markDirty);form.addEventListener('change',markDirty);
     form.addEventListener('submit', e=>{if(!e.defaultPrevented && form.checkValidity())dirty=false;});
+    form.addEventListener('admin:save-start',()=>{dirty=true;indicator.textContent=' · Đang lưu…';});
+    form.addEventListener('admin:save-success',()=>{dirty=false;indicator.textContent=' · Đã lưu';});
+    form.addEventListener('admin:save-error',()=>{dirty=true;indicator.textContent=' · Chưa lưu';});
     window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
   }
 });

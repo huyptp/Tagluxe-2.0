@@ -17,12 +17,16 @@ def read_setting(key):
 def write_setting(key, value):
     if key not in SETTINGS or not isinstance(value, dict):
         raise ValueError('Invalid site setting')
-    row = db.session.get(SiteSetting, key)
-    if row is None:
-        row = SiteSetting(key=key)
-        db.session.add(row)
-    row.value_json = json.dumps(value, ensure_ascii=False)
-    db.session.commit()
+    try:
+        row = db.session.get(SiteSetting, key)
+        if row is None:
+            row = SiteSetting(key=key)
+            db.session.add(row)
+        row.value_json = json.dumps(value, ensure_ascii=False)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def import_legacy_settings(base_dir):

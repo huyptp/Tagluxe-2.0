@@ -61,9 +61,8 @@
                     {% if product %}
                     <input type="hidden" name="kept_images_present" value="1">
                     {% endif %}
-                    {% if product and product.images %}
                     <div id="existingImagesGrid" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
-                        {% for img in product.images %}
+                        {% for img in (product.images if product else []) %}
                         <div class="existing-img-item" data-img="{{ img }}" style="border:1px solid #cbd5e1; border-radius:6px; padding:6px; background:#f8fafc; width:96px; text-align:center;">
                             <input type="hidden" name="kept_images[]" value="{{ img }}">
                             <img src="{{ url_for('static', filename='uploads/' + img) }}"
@@ -78,6 +77,7 @@
                         </div>
                         {% endfor %}
                     </div>
+                    {% if product and product.images %}
                     <div style="margin-bottom: 10px;">
                         <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer; color: #374151;">
                             <input type="checkbox" name="keep_existing_images" value="1" checked>

@@ -2,7 +2,7 @@ import os
 import uuid
 import secrets
 from functools import wraps
-from flask import Blueprint, render_template, request, redirect, session, flash, url_for, send_from_directory
+from flask import Blueprint, render_template, request, redirect, session, flash, url_for, send_from_directory, g
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.config import (
@@ -30,6 +30,8 @@ QUOTE_STATUSES = ('Mới', 'Đang tư vấn', 'Đã tư vấn', 'Đang chốt', 
 
 @admin_bp.after_request
 def private_admin_response(response):
+    from backend.admin.save_responses import save_response
+    response = save_response(response)
     if request.endpoint != 'admin.static':
         response.headers['Cache-Control'] = 'private, no-store'
     return response
@@ -288,6 +290,7 @@ def admin_bulk_quote_status():
         db.session.rollback()
         flash('Không thể cập nhật. Dữ liệu chưa được thay đổi.', 'error')
         return redirect(url_for('admin.admin_quotes'))
+    g.admin_saved = {'quote_statuses': {row.id: status for row in rows}}
     flash(f'Đã cập nhật {len(rows)} báo giá sang “{status}”.', 'success')
     return redirect(url_for('admin.admin_quotes', **dict(filters, page=page_number(request.form))))
 
@@ -428,6 +431,8 @@ def admin_add_product():
             return redirect(url_for('admin.admin_products'))
 
         record_audit('create_product', 'product', new_product['id'], f"Added product {name}")
+        g.admin_saved = {'form_action': url_for('admin.admin_edit_product', id=new_product['id']),
+                         'images': saved['images'], 'product_id': new_product['id']}
         flash('Thêm sản phẩm thành công', 'success')
         return redirect(url_for('admin.admin_products'))
 
@@ -491,6 +496,7 @@ def admin_edit_product(id):
             return redirect(url_for('admin.admin_products'))
 
         record_audit('update_product', 'product', id, f"Updated product {updated_data.get('name')}")
+        g.admin_saved = {'images': saved['images'], 'product_id': id}
         flash('Cập nhật sản phẩm thành công', 'success')
         return redirect(url_for('admin.admin_products'))
 
@@ -617,6 +623,7 @@ def admin_update_quote_status(id):
         ok = update_quote_status(id, status)
         if ok:
             record_audit('update_quote_status', 'quote', id, f"Changed status to {status}")
+            g.admin_saved = {'quote_statuses': {id: status}}
             flash('Cập nhật trạng thái báo giá thành công', 'success')
         else:
             flash('Lỗi cơ sở dữ liệu: Không thể cập nhật trạng thái báo giá.', 'error')
@@ -791,6 +798,7 @@ def admin_add_accessory():
 
     if ok:
         record_audit('add_accessory', 'accessory', res.get('id', 'new'), f"Thêm phụ kiện mới: {name}")
+        g.admin_saved = {'form_action': url_for('admin.admin_edit_accessory', acc_id=res['id'])}
         if request.headers.get('Accept') == 'application/json' or request.is_json:
             return {'success': True, 'message': f'Đã thêm mẫu phụ kiện "{name}" thành công!', 'data': res}
         flash(f'Đã thêm mẫu phụ kiện "{name}" thành công!', 'success')
@@ -860,8 +868,9 @@ def admin_edit_accessory(acc_id):
         price = int(price_raw) if price_raw is not None else acc.get('price', 0)
     except ValueError:
         price = acc.get('price', 0)
-    description = request.form.get('description', '').strip() or acc.get('description')
-    title = request.form.get('title', '').strip() or acc.get('title')
+    # An explicit empty field clears the old text; omitted fields retain it.
+    description = request.form.get('description', acc.get('description') or '').strip()
+    title = request.form.get('title', acc.get('title') or '').strip()
     visible = request.form.get('visible') == '1' or request.form.get('visible') == 'true' or ('visible' in request.form and request.form.get('visible') != '0')
     min_qty_raw = request.form.get('min_quantity')
     try:
