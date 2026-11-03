@@ -76,6 +76,15 @@ def admin_quote_detail(id):
         today=local_today(), page_title=f'Báo giá {id}'), error_code
 
 
+@admin_bp.route('/crm')
+@login_required
+def admin_crm():
+    if request.args.get('tab') == 'quotes':
+        from backend.admin.routes import admin_quotes
+        return admin_quotes()
+    return admin_customers()
+
+
 @admin_bp.route('/customers')
 @login_required
 def admin_customers():
@@ -83,9 +92,11 @@ def admin_customers():
     total = query.count()
     page = min(page_number(request.args), max(1, (total + 19) // 20))
     customers = query.offset((page - 1) * 20).limit(20).all()
+    from backend.admin.crm_services import customer_quote_previews
     return render_template('admin/customers.html', customers=customers, metrics=metrics, filters=filters,
         sources=SOURCES, customer_statuses=CUSTOMER_STATUSES, today=local_today(),inactive_statuses=INACTIVE_STATUSES,
-        total=total, page=page, pages=max(1, (total + 19) // 20), page_title='Khách hàng')
+        total=total, page=page, pages=max(1, (total + 19) // 20), page_title='Khách hàng & báo giá',
+        quote_previews=customer_quote_previews([customer.phone for customer in customers]),quote_statuses=QUOTE_STATUSES)
 
 
 @admin_bp.route('/customers/new', methods=['GET','POST'])

@@ -2,7 +2,7 @@
 from backend.time_utils import vietnam_now
 from datetime import date, datetime, time, timedelta
 from sqlalchemy import or_, func, case
-from backend.models import Quote, QuoteAdminState
+from backend.models import Quote, QuoteAdminState, CustomerProfile
 
 PRIORITIES = {'normal': 'Bình thường', 'high': 'Ưu tiên', 'urgent': 'Khẩn cấp'}
 CLOSED_STATUSES = ('Đã xong', 'Đã hủy')
@@ -39,8 +39,14 @@ def quote_filters(values):
 def filtered_quotes(filters):
     query = Quote.query.outerjoin(QuoteAdminState)
     if filters['q']:
+        from backend.validators import normalize_phone
+        phone = normalize_phone(filters['q']) or filters['q']
+        contacts = CustomerProfile.query.with_entities(CustomerProfile.phone).filter(or_(
+            CustomerProfile.customer_name.icontains(filters['q'], autoescape=True),
+            CustomerProfile.company.icontains(filters['q'], autoescape=True)))
         query = query.filter(or_(Quote.customer_name.icontains(filters['q'], autoescape=True),
-            Quote.phone.contains(filters['q'], autoescape=True), Quote.id.icontains(filters['q'], autoescape=True)))
+            Quote.phone.contains(phone, autoescape=True), Quote.id.icontains(filters['q'], autoescape=True),
+            Quote.phone.in_(contacts)))
     if filters['phone']:
         query = query.filter(Quote.phone == filters['phone'])
     if filters['status'] and filters['status'] != 'all':

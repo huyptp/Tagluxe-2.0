@@ -22,6 +22,8 @@ Sửa hồ sơ dùng version để từ chối ghi đè từ màn hình cũ. S�
 
 ## Giao diện
 
+Từ 03/11/2026, Khách hàng và Báo giá được hợp nhất thành **Khách hàng & báo giá** tại `/admin/crm`, với khung mở nhanh báo giá ngay trong danh sách khách. Xem `docs/CRM_WORKSPACE.md` để biết luồng thao tác và tương thích các đường dẫn cũ.
+
 Thanh đầu trang có tìm khách nhanh và thêm khách; menu chia nhóm; dashboard có lối tắt công việc. Danh sách trên điện thoại chuyển thành thẻ. Biểu mẫu chia thông tin liên hệ, nhu cầu, kế hoạch chăm sóc, có nút lưu bám cuối màn hình và cảnh báo rời trang khi chưa lưu.
 
 Kiểm thử nằm trong `tests/test_customer_profiles.py`, dùng cơ sở dữ liệu độc lập. Bản xem thử và khách mẫu ở `backup/customer-workspace-20261029/`; không đưa lên GitHub và không tạo khách thử trong Supabase.

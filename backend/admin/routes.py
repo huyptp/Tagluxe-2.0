@@ -89,8 +89,10 @@ def validate_csrf():
 @admin_bp.context_processor
 def inject_admin_globals():
     from flask import g
+    from backend.admin.crm_services import crm_url
     return {
         'csrf_token': get_csrf_token(),
+        'crm_url': crm_url,
         'admin_username': session.get('admin_username', 'Quản trị viên'),
         'admin_can': can_access,
         'admin_identity': getattr(g, 'admin_identity', None)
@@ -578,6 +580,7 @@ def admin_requests():
 def admin_quotes():
     from backend.admin.workspace_services import quote_filters, filtered_quotes, quote_summary, page_number
     from sqlalchemy.orm import selectinload
+    from backend.admin.crm_services import crm_url
     try:
         filters = quote_filters(request.args)
     except ValueError as exc:
@@ -590,8 +593,8 @@ def admin_quotes():
     pagination = query.options(selectinload(Quote.admin_state)).paginate(page=page, per_page=20, error_out=False)
     return render_template('admin/quotes.html', quotes=pagination.items, pagination=pagination,
         filters=filters, summary=quote_summary(query), statuses=QUOTE_STATUSES,
-        page_url=lambda n: url_for('admin.admin_quotes', **dict(filters, page=n)),
-        export_url=url_for('admin.admin_export_quotes', **filters))
+        page_url=lambda n: crm_url('quotes', **dict(filters, page=n)),
+        export_url=url_for('admin.admin_export_quotes', **filters), page_title='Khách hàng & báo giá')
 
 @admin_bp.route('/quotes/export')
 @login_required

@@ -87,7 +87,8 @@ def customer_list(args):
     if sort not in ('recent','value','count'):sort='recent'
     if search:
         normalized = normalize_phone(search)
-        matching = select(Quote.phone).where(Quote.customer_name.icontains(search,autoescape=True))
+        matching = select(Quote.phone).where(or_(Quote.customer_name.icontains(search,autoescape=True),
+            Quote.id.icontains(search,autoescape=True)))
         base = base.filter(or_(rows.c.name.icontains(search,autoescape=True),
             rows.c.phone.contains(normalized or search,autoescape=True),rows.c.phone.in_(matching),
             rows.c.company.icontains(search,autoescape=True)))

@@ -93,6 +93,8 @@ def can_access(endpoint):
         return True
     if name == 'admin_dashboard':
         return 'quotes' in identity['permissions']
+    if name == 'admin_crm':
+        return 'quotes' in identity['permissions']
     if name.startswith(('admin_quote','admin_bulk_quote','admin_update_quote','admin_retry_quote','admin_customer')):
         return 'quotes' in identity['permissions']
     if name in ('admin_accessories','admin_update_pricing'):

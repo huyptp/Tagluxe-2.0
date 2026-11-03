@@ -1,17 +1,15 @@
 {% extends 'admin/base.html' %}
 {% block content %}
-<div class="page-heading">
-  <div><div class="eyebrow">QUẢN LÝ BÁN HÀNG</div><h1>Báo giá khách hàng</h1><p>Theo dõi tư vấn, lịch liên hệ và tiến độ xử lý tại một nơi.</p></div>
-  <div class="heading-actions">{% if admin_can("admin.admin_export_quotes") %}<a class="btn btn-secondary" href="{{ export_url }}">Xuất CSV theo bộ lọc</a>{% endif %}<a class="btn btn-primary" href="{{ url_for('admin.admin_quotes',follow_up='due',sort='follow_up') }}">Đến hạn liên hệ</a></div>
-</div>
+{% set crm_view='quotes' %}{% include 'admin/crm_header.html' %}
 <div class="kpi-grid">
   {% for label,value in [('Báo giá phù hợp',summary.count),('Giá trị chưa hủy','{:,.0f} đ'.format(summary.value)),('Giá trị đã chốt / xong','{:,.0f} đ'.format(summary.closed_value)),('Đồng bộ thất bại',summary.failed_sync)] %}
   <article class="kpi-card"><div class="kpi-top">{{ label }}</div><div class="kpi-value">{{ value }}</div><small class="muted">Theo bộ lọc hiện tại</small></article>{% endfor %}
 </div>
-<section class="admin-card"><nav class="list-shortcuts" aria-label="Lối tắt bộ lọc báo giá"><a href="{{ url_for('admin.admin_quotes') }}" {% if not filters.status and not filters.follow_up %}aria-current="page"{% endif %}>Tất cả báo giá</a><a href="{{ url_for('admin.admin_quotes',status='Mới') }}" {% if filters.status=='Mới' %}aria-current="page"{% endif %}>Mới nhận</a><a href="{{ url_for('admin.admin_quotes',status='Đang tư vấn') }}" {% if filters.status=='Đang tư vấn' %}aria-current="page"{% endif %}>Đang tư vấn</a><a href="{{ url_for('admin.admin_quotes',follow_up='due',sort='follow_up') }}" {% if filters.follow_up=='due' %}aria-current="page"{% endif %}>Đến hẹn liên hệ</a></nav>
-<form method="GET" class="filter-form quote-filter-form">
-  {% if filters.phone %}<input type="hidden" name="phone" value="{{ filters.phone }}"><p class="filter-context">Đang xem khách hàng: <strong>{{ filters.phone }}</strong></p>{% endif %}
-  <div><label for="searchQuotes">Tên, số điện thoại hoặc mã</label><input id="searchQuotes" name="q" value="{{ filters.q }}" placeholder="Tìm báo giá..."></div>
+<section class="admin-card"><nav class="list-shortcuts" aria-label="Lối tắt bộ lọc báo giá"><a href="{{ crm_url('quotes',phone=filters.phone,q=filters.q) }}" {% if not filters.status and not filters.follow_up %}aria-current="page"{% endif %}>Tất cả báo giá</a><a href="{{ crm_url('quotes',phone=filters.phone,q=filters.q,status='Mới') }}" {% if filters.status=='Mới' %}aria-current="page"{% endif %}>Mới nhận</a><a href="{{ crm_url('quotes',phone=filters.phone,q=filters.q,status='Đang tư vấn') }}" {% if filters.status=='Đang tư vấn' %}aria-current="page"{% endif %}>Đang tư vấn</a><a href="{{ crm_url('quotes',phone=filters.phone,q=filters.q,follow_up='due',sort='follow_up') }}" {% if filters.follow_up=='due' %}aria-current="page"{% endif %}>Đến hẹn liên hệ</a></nav>
+{% if filters.phone %}<div class="crm-scope-banner"><span>Đang xem báo giá của <strong>{{ filters.phone }}</strong></span><a href="{{ url_for('admin.admin_customer_detail',phone=filters.phone) }}">Hồ sơ khách →</a><a href="{{ crm_url('quotes') }}">Bỏ lọc khách</a></div>{% endif %}
+<form method="GET" action="{{ crm_url('quotes') }}" class="filter-form quote-filter-form"><input type="hidden" name="tab" value="quotes">
+  {% if filters.phone %}<input type="hidden" name="phone" value="{{ filters.phone }}">{% endif %}
+  <div><label for="searchQuotes">Tên, số điện thoại, công ty hoặc mã</label><input id="searchQuotes" name="q" value="{{ filters.q }}" placeholder="Tìm khách hoặc báo giá…"></div>
   <div><label for="statusFilter">Trạng thái</label><select id="statusFilter" name="status"><option value="">Tất cả</option>{% for status in statuses %}<option value="{{ status }}" {% if filters.status==status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select></div>
   <div><label for="sortQuotes">Sắp xếp</label><select id="sortQuotes" name="sort">{% for value,label in [('', 'Mới nhất'),('oldest','Cũ nhất'),('value','Giá trị cao nhất'),('follow_up','Ngày liên hệ gần nhất')] %}<option value="{{ value }}" {% if filters.sort==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
   <details class="quote-advanced" {% if filters.sync or filters.priority or filters.from_date or filters.to_date or filters.follow_up %}open{% endif %}><summary>Bộ lọc nâng cao <span>Ngày tạo · Lịch hẹn · Ưu tiên · Đồng bộ</span></summary><div class="quote-advanced-grid">  <div><label for="syncFilter">Đồng bộ Sheets</label><select id="syncFilter" name="sync">{% for value,label in [('', 'Tất cả'),('pending','Đang chờ'),('synced','Đã đồng bộ'),('failed','Thất bại')] %}<option value="{{ value }}" {% if filters.sync==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
@@ -20,7 +18,7 @@
   <div><label for="toDate">Đến hết ngày</label><input type="date" min="1900-01-01" max="2100-12-31" id="toDate" name="to_date" value="{{ filters.to_date }}"></div>
   <div><label for="followFilter">Lịch liên hệ</label><select id="followFilter" name="follow_up">{% for value,label in [('', 'Tất cả'),('due','Đến hạn / quá hạn'),('scheduled','Có lịch cần xử lý')] %}<option value="{{ value }}" {% if filters.follow_up==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
 </div></details>
-  <div class="heading-actions"><button class="btn btn-primary">Áp dụng bộ lọc</button><a class="btn btn-secondary" href="{{ url_for('admin.admin_quotes') }}">Đặt lại</a></div>
+  <div class="heading-actions"><button class="btn btn-primary">Áp dụng bộ lọc</button><a class="btn btn-secondary" href="{{ crm_url('quotes',phone=filters.phone) }}">Đặt lại</a></div>
 </form>
 {% if quotes %}
 <form id="bulkQuoteForm" method="POST" action="{{ url_for('admin.admin_bulk_quote_status') }}" class="bulk-toolbar">
@@ -41,6 +39,6 @@
   <td data-label="Thao tác"><a class="btn btn-secondary" href="{{ url_for('admin.admin_quote_detail',id=q.id) }}">Mở hồ sơ →</a></td>
 </tr>{% endfor %}</tbody></table></div>
 <div class="pagination"><span>{{ pagination.total }} báo giá · Trang {{ pagination.page }} / {{ pagination.pages or 1 }}</span><div>{% if pagination.has_prev %}<a class="btn btn-secondary" href="{{ page_url(pagination.prev_num) }}">← Trước</a>{% endif %}{% if pagination.has_next %}<a class="btn btn-secondary" href="{{ page_url(pagination.next_num) }}">Sau →</a>{% endif %}</div></div>
-{% else %}<div class="empty-state"><h3>Chưa có báo giá phù hợp</h3><p>Thử thay đổi bộ lọc. Yêu cầu tư vấn từ website sẽ được hiển thị tại đây.</p><a class="btn btn-secondary" href="{{ url_for('admin.admin_quotes') }}">Xem tất cả báo giá</a></div>{% endif %}
+{% else %}<div class="empty-state"><h3>Chưa có báo giá phù hợp</h3><p>Thử thay đổi bộ lọc. Yêu cầu tư vấn từ website sẽ được hiển thị tại đây.</p><a class="btn btn-secondary" href="{{ crm_url('quotes') }}">Xem tất cả báo giá</a></div>{% endif %}
 </section>
 {% endblock %}
