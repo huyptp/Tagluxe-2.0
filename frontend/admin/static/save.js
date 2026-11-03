@@ -34,7 +34,7 @@ window.refreshAdminFragment = async (selector, url = location.href) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const savePath = /^\/admin\/(?:products\/(?:add|edit\/[^/]+|update-specs)|pricing\/update|accessories\/(?:add|edit\/[^/]+)|demo-images\/update|campaign-banner\/update|customers\/(?:new|[^/]+\/edit)|quotes\/(?:[^/]+|status\/[^/]+)|payments|staff(?:\/\d+)?|notifications(?:\/[^/]+)?|account\/password)$/;
+  const savePath = /^\/admin\/(?:products\/(?:add|edit\/[^/]+|update-specs)|pricing\/update|accessories\/(?:add|edit\/[^/]+)|demo-images\/update|campaign-banner\/update|customers\/(?:new|[^/]+\/edit)|quotes\/(?:[^/]+|status\/[^/]+)|payments|staff(?:\/\d+)?|notifications(?:\/[^/]+)?|account\/password|reminders)$/;
   document.addEventListener('submit', async event => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement) || event.defaultPrevented || form.method.toLowerCase() !== 'post') return;
@@ -119,6 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (url.pathname.startsWith('/admin/notifications')) {
           await refreshAdminFragment('#notificationRecipients');
           if (url.pathname === '/admin/notifications') form.reset();
+        } else if (url.pathname === '/admin/reminders') {
+          await refreshAdminFragment('#reminderConnection');
+        } else if (/^\/admin\/quotes\/[^/]+$/.test(url.pathname) && document.getElementById('reminderStatus')) {
+          await refreshAdminFragment('#reminderStatus');
         }
         window.adminSaveNotice(result.message || 'Đã lưu thành công.');
       } catch {

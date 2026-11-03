@@ -2,7 +2,7 @@
 import hashlib
 from datetime import datetime
 from backend.database import db
-from backend.models import QuoteDeletion, SyncTask, IdempotencyRecord
+from backend.models import QuoteDeletion, SyncTask, IdempotencyRecord, FollowUpDelivery
 
 
 def quote_set_fingerprint(quote_ids):
@@ -18,6 +18,7 @@ def delete_quote_records(quotes, deleted_by):
     if any(t.status=='processing' and (t.lease_until is None or t.lease_until>now) for t in tasks):
         raise ValueError('Báo giá đang được đồng bộ. Vui lòng đợi ít giây rồi tải lại hồ sơ trước khi xóa.')
     for task in tasks:db.session.delete(task)
+    FollowUpDelivery.query.filter(FollowUpDelivery.kind=='quote',FollowUpDelivery.target_id.in_(ids)).delete(synchronize_session=False)
     keys=[q.idempotency_key for q in quotes if q.idempotency_key]
     if keys:IdempotencyRecord.query.filter(IdempotencyRecord.key.in_(keys)).delete(synchronize_session=False)
     existing={r[0] for r in db.session.query(QuoteDeletion.quote_id).filter(QuoteDeletion.quote_id.in_(ids)).all()}

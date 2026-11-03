@@ -1,6 +1,11 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.lucide) lucide.createIcons();
+  document.addEventListener('click', async event=>{
+    if(!event.target.closest('[data-reminder-copy]'))return;
+    try{await navigator.clipboard.writeText(document.getElementById('reminderSetup').value);window.adminSaveNotice('Đã sao chép thiết lập nhắc lịch.');}
+    catch{window.adminSaveNotice('Hãy chọn và sao chép nội dung thiết lập trong ô bên trên.',true);}
+  });
   const toggle = document.getElementById('menuToggle'), overlay = document.getElementById('sidebarOverlay');
   const sidebar=document.getElementById('adminSidebar'); const mobile=matchMedia('(max-width:760px)');
   const setMenu = open => {if(sidebar)sidebar.inert=mobile.matches&&!open; document.body.classList.toggle('menu-open', open); if(toggle) toggle.setAttribute('aria-expanded',String(open)); if(overlay) overlay.hidden=!open;};

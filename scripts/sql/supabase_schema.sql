@@ -292,4 +292,28 @@ CREATE INDEX IF NOT EXISTS ix_customer_profiles_status ON customer_profiles (sta
 CREATE INDEX IF NOT EXISTS ix_customer_profiles_source ON customer_profiles (source);
 ALTER TABLE public.customer_profiles ENABLE ROW LEVEL SECURITY;
 
+
+CREATE TABLE IF NOT EXISTS follow_up_deliveries (
+	id VARCHAR(64) NOT NULL,
+	kind VARCHAR(12) NOT NULL,
+	target_id VARCHAR(64) NOT NULL,
+	due_on DATE NOT NULL,
+	reminder_on DATE NOT NULL,
+	recipient VARCHAR(254) NOT NULL,
+	status VARCHAR(12) NOT NULL,
+	lease_token VARCHAR(64) NOT NULL,
+	lease_until TIMESTAMP WITHOUT TIME ZONE,
+	next_retry_at TIMESTAMP WITHOUT TIME ZONE,
+	attempts INTEGER NOT NULL,
+	sent_at TIMESTAMP WITHOUT TIME ZONE,
+	last_error VARCHAR(250),
+	PRIMARY KEY (id)
+)
+
+;
+CREATE INDEX IF NOT EXISTS ix_follow_up_deliveries_target_id ON follow_up_deliveries (target_id);
+CREATE INDEX IF NOT EXISTS ix_follow_up_deliveries_reminder_on ON follow_up_deliveries (reminder_on);
+CREATE INDEX IF NOT EXISTS ix_follow_up_deliveries_lease_token ON follow_up_deliveries (lease_token);
+ALTER TABLE public.follow_up_deliveries ENABLE ROW LEVEL SECURITY;
+
 COMMIT;

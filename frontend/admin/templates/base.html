@@ -8,19 +8,19 @@
 <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <link rel="stylesheet" href="{{ url_for('admin.static', filename='admin.css', v='20261029_ui2') }}">
-<script defer src="{{ url_for('admin.static', filename='admin.js', v='20261103_crm1') }}"></script>
-<script defer src="{{ url_for('admin.static', filename='save.js', v='20261103_crm1') }}"></script>
+<script defer src="{{ url_for('admin.static', filename='admin.js', v='20261103_reminders1') }}"></script>
+<script defer src="{{ url_for('admin.static', filename='save.js', v='20261103_reminders1') }}"></script>
 <script defer src="{{ url_for('admin.static', filename='crm.js', v='20261103_crm1') }}"></script>
-<link rel="stylesheet" href="{{ url_for('admin.static', filename='workspace.css', v='20261103_crm1') }}">
+<link rel="stylesheet" href="{{ url_for('admin.static', filename='workspace.css', v='20261103_reminders1') }}">
 </head>
 <body class="{% if session.get('logged_in') %}admin-app{% else %}admin-auth{% endif %}">
 <a class="skip-link" href="#mainContent">Đến nội dung chính</a>
 {% if session.get('logged_in') %}
-{% set links = [('admin.admin_dashboard','layout-dashboard','Tổng quan'),('admin.admin_crm','contact-round','Khách hàng & báo giá'),('admin.admin_products','package','Sản phẩm'),('admin.admin_accessories','layers','Bảng giá & phụ kiện'),('admin.admin_demo_images','image','Ảnh demo'),('admin.admin_campaign_banner','flag','Banner chiến dịch'),('admin.admin_staff','users-round','Nhân viên & phân quyền'),('admin.admin_notifications','mail','Email thông báo'),('admin.admin_payments','qr-code','Thanh toán & in bill'),('admin.admin_activity','history','Nhật ký hoạt động'),('admin.admin_system','activity','Tình trạng hệ thống'),('admin.admin_account_password','key-round','Tài khoản cá nhân')] %}
+{% set links = [('admin.admin_dashboard','layout-dashboard','Tổng quan'),('admin.admin_crm','contact-round','Khách hàng & báo giá'),('admin.admin_products','package','Sản phẩm'),('admin.admin_accessories','layers','Bảng giá & phụ kiện'),('admin.admin_demo_images','image','Ảnh demo'),('admin.admin_campaign_banner','flag','Banner chiến dịch'),('admin.admin_staff','users-round','Nhân viên & phân quyền'),('admin.admin_notifications','mail','Email & nhắc lịch'),('admin.admin_payments','qr-code','Thanh toán & in bill'),('admin.admin_activity','history','Nhật ký hoạt động'),('admin.admin_system','activity','Tình trạng hệ thống'),('admin.admin_account_password','key-round','Tài khoản cá nhân')] %}
 <aside class="admin-sidebar" id="adminSidebar" aria-label="Điều hướng quản trị">
 <a class="admin-brand" href="{{ url_for('admin.admin_dashboard' if admin_can('admin.admin_dashboard') else 'admin.admin_products') }}"><img class="brand-logo" src="{{ url_for('admin.static', filename='tagluxe-logo.jpg') }}" alt="Logo TAGLUXE" width="56" height="56"><span>TAGLUXE<small>Không gian quản trị</small></span></a>
 <div class="nav-caption">QUẢN LÝ CỬA HÀNG</div>
-<nav>{% for endpoint, icon, label in links %}{% if admin_can(endpoint) %}{% if endpoint=='admin.admin_products' %}<div class="nav-group-label">SẢN PHẨM & NỘI DUNG</div>{% elif endpoint=='admin.admin_staff' %}<div class="nav-group-label">THIẾT LẬP CỬA HÀNG</div>{% endif %}<a class="admin-nav-link {% if request.endpoint == endpoint or (endpoint == 'admin.admin_products' and request.path.startswith('/admin/products')) or (endpoint == 'admin.admin_crm' and request.path.startswith(('/admin/quotes','/admin/customers','/admin/crm'))) %}active{% endif %}" href="{{ url_for(endpoint) }}" {% if request.endpoint == endpoint %}aria-current="page"{% endif %}><i data-lucide="{{ icon }}" aria-hidden="true"></i>{{ label }}</a>{% endif %}{% endfor %}</nav>
+<nav>{% for endpoint, icon, label in links %}{% if admin_can(endpoint) %}{% if endpoint=='admin.admin_products' %}<div class="nav-group-label">SẢN PHẨM & NỘI DUNG</div>{% elif endpoint=='admin.admin_staff' %}<div class="nav-group-label">THIẾT LẬP CỬA HÀNG</div>{% endif %}<a class="admin-nav-link {% if request.endpoint == endpoint or (endpoint == 'admin.admin_notifications' and request.endpoint == 'admin.admin_reminders') or (endpoint == 'admin.admin_products' and request.path.startswith('/admin/products')) or (endpoint == 'admin.admin_crm' and request.path.startswith(('/admin/quotes','/admin/customers','/admin/crm'))) %}active{% endif %}" href="{{ url_for(endpoint) }}" {% if request.endpoint == endpoint %}aria-current="page"{% endif %}><i data-lucide="{{ icon }}" aria-hidden="true"></i>{{ label }}</a>{% endif %}{% endfor %}</nav>
 <div class="sidebar-bottom"><span class="live-dot"></span> TAGLUXE Workspace <small>Quản lý nội dung & vận hành</small></div>
 </aside>
 <button class="sidebar-overlay" id="sidebarOverlay" aria-label="Đóng menu" hidden></button>

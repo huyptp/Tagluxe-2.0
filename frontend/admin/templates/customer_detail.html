@@ -1,5 +1,6 @@
 {% extends 'admin/base.html' %}
 {% block content %}
+{% include 'admin/reminder_status.html' %}
 <div class="page-heading"><div><div class="eyebrow">HỒ SƠ KHÁCH HÀNG</div><h1>{{ customer.customer_name }}</h1><p>{{ customer.phone }} · {{ sources[profile.source] if profile else 'Website · Tên theo báo giá gần nhất' }} <button class="copy-button" type="button" data-copy-text="{{ customer.phone }}">Sao chép SĐT</button></p></div><div class="heading-actions"><a class="btn btn-primary" href="{{ url_for('admin.admin_customer_edit',phone=customer.phone) }}">Chỉnh hồ sơ</a><a class="btn btn-secondary" href="{{ crm_url('customers') }}">← Khách hàng</a><a class="btn btn-secondary" href="tel:{{ customer.phone }}">Gọi khách hàng</a></div></div>
 {% if profile %}
 {% if profile.follow_up_on and profile.follow_up_on<=today and profile.status not in inactive_statuses %}<div class="followup-alert customer-due-alert"><strong>Đến hẹn liên hệ {{ profile.follow_up_on.strftime('%d/%m/%Y') }}</strong><span>{{ profile.owner or 'Chưa phân công người phụ trách' }}</span><a href="{{ url_for('admin.admin_customer_edit',phone=customer.phone) }}">Cập nhật lịch hẹn →</a></div>{% endif %}

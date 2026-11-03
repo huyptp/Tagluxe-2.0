@@ -55,6 +55,9 @@ function onOpen() {
     .addItem("💬 Sửa lỗi toàn bộ Link Nhắn Zalo", "fixAllZaloLinks")
     .addItem("➕ Thêm Thử 1 Đơn Mẫu Trực Tiếp Vào Bảng", "addSampleQuoteRow")
     .addItem("✉️ Gửi Thử 1 Email Thông Báo Test", "sendTestNotification")
+    .addSeparator()
+    .addItem("⏰ Kết nối email nhắc lịch", "setupFollowUpReminders")
+    .addItem("📨 Kiểm tra lịch cần nhắc ngay", "pollFollowUpReminders")
     .addToUi();
 }
 
@@ -963,3 +966,89 @@ function fixAllZaloLinks() {
 }
 
 
+
+
+/**
+ * TAGLUXE follow-up clock, included in this complete Apps Script source.
+ * Appointments stay in the web database; no customer sheet rows are created.
+ */
+function setupFollowUpReminders() {
+  var ui = SpreadsheetApp.getUi();
+  var input = ui.prompt('Kết nối email nhắc lịch',
+    'Dán thiết lập đã sao chép từ admin → Email & nhắc lịch → Email nhắc liên hệ.', ui.ButtonSet.OK_CANCEL);
+  if (input.getSelectedButton() !== ui.Button.OK) return;
+  var settings;
+  try { settings = JSON.parse(input.getResponseText()); } catch (ignore) { throw new Error('Thiết lập chưa đúng. Hãy sao chép toàn bộ ô trong admin.'); }
+  if (!settings || typeof settings.url !== 'string' || !/^https:\/\/[a-zA-Z0-9.-]+(?::443)?\/api\/internal\/follow-up-reminders$/.test(settings.url) ||
+      typeof settings.key !== 'string' || !/^[a-zA-Z0-9_-]{40,80}$/.test(settings.key)) {
+    throw new Error('URL hoặc khóa kết nối không hợp lệ.');
+  }
+  PropertiesService.getScriptProperties().setProperties({
+    TAGLUXE_REMINDER_URL: settings.url, TAGLUXE_REMINDER_KEY: settings.key
+  }, false);
+  var triggers = ScriptApp.getProjectTriggers().filter(function(trigger) {
+    return trigger.getHandlerFunction() === 'pollFollowUpReminders';
+  });
+  if (!triggers.length) ScriptApp.newTrigger('pollFollowUpReminders').timeBased().everyMinutes(15).create();
+  // Remove only duplicate clocks belonging to this feature; keep all other triggers.
+  triggers.slice(1).forEach(function(trigger) { ScriptApp.deleteTrigger(trigger); });
+  ui.alert('Đã kết nối nhắc lịch. Hệ thống kiểm tra khoảng 15 phút một lần; giờ bắt đầu và email nhận lấy từ admin.');
+}
+
+function followUpReminderRpc(action, fields) {
+  var properties = PropertiesService.getScriptProperties();
+  var url = properties.getProperty('TAGLUXE_REMINDER_URL');
+  var key = properties.getProperty('TAGLUXE_REMINDER_KEY');
+  if (!url || !key || !/^https:\/\/[a-zA-Z0-9.-]+(?::443)?\/api\/internal\/follow-up-reminders$/.test(url)) {
+    throw new Error('Chưa kết nối email nhắc lịch. Chạy setupFollowUpReminders một lần.');
+  }
+  var payload = Object.assign({}, fields || {}, {action: action});
+  var response = UrlFetchApp.fetch(url, {method: 'post', contentType: 'application/json',
+    headers: {Authorization: 'Bearer ' + key}, payload: JSON.stringify(payload),
+    followRedirects: false, muteHttpExceptions: true});
+  var value;
+  try { value = JSON.parse(response.getContentText()); } catch (ignore) {}
+  if (response.getResponseCode() !== 200 || !value || value.status !== 'success' || value.protocol !== 'tagluxe-followups-v1') {
+    throw new Error('Chưa kết nối được nhắc lịch với website. Kiểm tra URL, khóa và bản triển khai web.');
+  }
+  return value;
+}
+
+function pollFollowUpReminders() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(1000)) return;
+  try {
+    var properties = PropertiesService.getScriptProperties();
+    // A mail accepted by Google must be acknowledged before preparing another batch.
+    var pending = properties.getProperty('TAGLUXE_REMINDER_PENDING_ACK');
+    if (pending) {
+      followUpReminderRpc('ack', {batch_token: pending});
+      properties.deleteProperty('TAGLUXE_REMINDER_PENDING_ACK');
+    }
+    var batch = followUpReminderRpc('prepare');
+    if (!batch.batch_token) return;
+    if (typeof batch.batch_token !== 'string' || !/^[a-zA-Z0-9_-]{20,64}$/.test(batch.batch_token) ||
+        typeof batch.recipient !== 'string' || !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(batch.recipient) ||
+        !Number.isInteger(batch.items_count) || batch.items_count < 1 || batch.items_count > 50 ||
+        typeof batch.subject !== 'string' || /[\r\n]/.test(batch.subject) || batch.subject.length > 200 ||
+        typeof batch.text_body !== 'string' || typeof batch.html_body !== 'string' ||
+        batch.text_body.length > 100000 || batch.html_body.length > 200000) {
+      throw new Error('Dữ liệu nhắc lịch không hợp lệ. Chưa gửi email.');
+    }
+    if (MailApp.getRemainingDailyQuota() < 1) {
+      followUpReminderRpc('fail', {batch_token: batch.batch_token, error: 'quota'});return;
+    }
+    try {
+      MailApp.sendEmail({to: batch.recipient, subject: batch.subject,
+        body: batch.text_body, htmlBody: batch.html_body, name: 'TAGLUXE · Nhắc lịch'});
+    } catch (error) {
+      followUpReminderRpc('fail', {batch_token: batch.batch_token, error: 'mail'});
+      throw new Error('Google chưa gửi được email nhắc lịch. Web đã ghi nhận để thử lại.');
+    }
+    properties.setProperty('TAGLUXE_REMINDER_PENDING_ACK', batch.batch_token);
+    followUpReminderRpc('ack', {batch_token: batch.batch_token});
+    properties.deleteProperty('TAGLUXE_REMINDER_PENDING_ACK');
+  } finally {
+    lock.releaseLock();
+  }
+}

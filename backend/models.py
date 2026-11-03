@@ -150,6 +150,24 @@ class QuoteAdminState(db.Model):
     quote = db.relationship('Quote', back_populates='admin_state')
 
 
+class FollowUpDelivery(db.Model):
+    """One reminder per appointment, recipient and Vietnam calendar day."""
+    __tablename__ = 'follow_up_deliveries'
+    id = db.Column(db.String(64), primary_key=True)
+    kind = db.Column(db.String(12), nullable=False)
+    target_id = db.Column(db.String(64), nullable=False, index=True)
+    due_on = db.Column(db.Date, nullable=False)
+    reminder_on = db.Column(db.Date, nullable=False, index=True)
+    recipient = db.Column(db.String(254), nullable=False)
+    status = db.Column(db.String(12), nullable=False, default='leased')
+    lease_token = db.Column(db.String(64), nullable=False, index=True)
+    lease_until = db.Column(db.DateTime, nullable=True)
+    next_retry_at = db.Column(db.DateTime, nullable=True)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    last_error = db.Column(db.String(250), nullable=True)
+
+
 class DemoRequest(db.Model):
     __tablename__ = 'demo_requests'
 

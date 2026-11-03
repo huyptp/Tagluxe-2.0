@@ -8,7 +8,7 @@ SAVE_ENDPOINTS = {
     'admin_customer_new', 'admin_customer_edit', 'admin_quote_detail',
     'admin_update_quote_status', 'admin_bulk_quote_status', 'admin_payments', 'admin_staff',
     'admin_staff_edit', 'admin_notifications', 'admin_notification_edit',
-    'admin_account_password',
+    'admin_account_password', 'admin_reminders',
 }
 
 

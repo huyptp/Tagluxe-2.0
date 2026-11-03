@@ -11,6 +11,8 @@ from backend.validators import validate_quote_input, validate_demo_input, ALLOWE
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
+from backend.api import reminder_routes  # noqa: E402,F401
+
 def _extract_request_data(req):
     """
     Safely extracts dict payload from request, handling JSON or Form data.

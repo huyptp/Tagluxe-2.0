@@ -71,9 +71,12 @@ def admin_quote_detail(id):
                 return redirect(url_for('admin.admin_quote_detail', id=id))
     logs = AuditLog.query.filter_by(target_type='quote', target_id=id).order_by(
         AuditLog.timestamp.desc(), AuditLog.id.desc()).limit(20).all()
+    from backend.services.followup_reminders import last_delivery,STATE_LABELS
     return render_template('admin/quote_detail.html', quote=quote, workflow=workflow,
         form_values=form_values, priorities=PRIORITIES, logs=logs, statuses=QUOTE_STATUSES,
-        today=local_today(), page_title=f'Báo giá {id}'), error_code
+        today=local_today(), page_title=f'Báo giá {id}',reminder_due=workflow.follow_up_on if workflow else None,
+        reminder_delivery=last_delivery('quote',id,workflow.follow_up_on) if workflow else None,
+        reminder_state_labels=STATE_LABELS), error_code
 
 
 @admin_bp.route('/crm')
@@ -183,10 +186,13 @@ def admin_customer_detail(phone):
     ids=[row[0] for row in query.with_entities(Quote.id).all()]
     closed_count=query.filter(Quote.status.in_(('Đã chốt','Đã xong'))).count()
     if profile:ids.append('profile:'+str(profile.version))
+    from backend.services.followup_reminders import last_delivery,STATE_LABELS
     return render_template('admin/customer_detail.html', customer=customer, profile=profile, quotes=quotes,
         summary=summary, page=page, pages=max(1, (summary['count'] + 19) // 20), page_title='Hồ sơ khách hàng',
         deletion_snapshot=quote_set_fingerprint(ids),closed_count=closed_count,sources=SOURCES,
-        today=local_today(),inactive_statuses=INACTIVE_STATUSES)
+        today=local_today(),inactive_statuses=INACTIVE_STATUSES,reminder_due=profile.follow_up_on if profile else None,
+        reminder_delivery=last_delivery('customer',phone,profile.follow_up_on) if profile else None,
+        reminder_state_labels=STATE_LABELS)
 
 
 @admin_bp.route('/customers/<phone>/delete',methods=['POST'])
@@ -209,6 +215,8 @@ def admin_delete_customer(phone):
         if any(q.status in ('Đã chốt','Đã xong') for q in quotes) and request.form.get('confirm_closed')!='1':
             raise ValueError('Khách này có báo giá đã chốt hoặc đã xong. Cần xác nhận riêng trước khi xóa.')
         count=delete_quote_records(quotes,session['admin_username'])
+        from backend.models import FollowUpDelivery
+        FollowUpDelivery.query.filter_by(kind='customer',target_id=phone).delete(synchronize_session=False)
         if profile:db.session.delete(profile)
         db.session.add(AuditLog(admin_user=session['admin_username'],action='delete_customer',
             target_type='customer',target_id=quote_set_fingerprint([phone])[:16],

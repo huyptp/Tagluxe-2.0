@@ -4,7 +4,7 @@ import os
 from backend.database import db
 from backend.models import SiteSetting
 
-SETTINGS = {'demo_images', 'campaign_banner', 'notifications', 'payments'}
+SETTINGS = {'demo_images', 'campaign_banner', 'notifications', 'payments', 'followup_reminders'}
 
 
 def read_setting(key):

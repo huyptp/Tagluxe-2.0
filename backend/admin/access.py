@@ -12,7 +12,7 @@ ROLE_PERMISSIONS = {'manager':{'quotes','catalog','pricing','content'},
 OWNER_ONLY = {'admin_staff','admin_staff_edit','admin_notifications','admin_notification_edit',
               'admin_system','admin_migration_backup','admin_restore_sheet_quotes','admin_activity',
               'admin_export_quotes','admin_delete_quote','admin_delete_customer','admin_delete_product','admin_delete_accessory',
-              'admin_payments'}
+              'admin_payments','admin_reminders'}
 
 
 def epoch_matches(value, expected):
